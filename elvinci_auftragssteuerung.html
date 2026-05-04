@@ -142,6 +142,60 @@ const ST=[
 const TM=['Janna','Dustin','Igor'];
 const ZOLL_LAENDER=['Schweiz','Großbritannien','Georgien','Kosovo','Nordmazedonien','Serbien','Türkei','Norwegen','Anderes Nicht-EU-Land'];
 
+// ═══════════════════════════════════════════════════════
+// BUCKETS — D4 (DECISIONS.md): MS Teams Planner Source-of-Truth
+// 7 Buckets in Planner-Reihenfolge. Phase 1–6 aus Stellenbeschreibung als Klammer.
+// ═══════════════════════════════════════════════════════
+const BUCKETS=[
+    {id:'verkauf',    l:'bereit für Rechnung',          ow:'Verkauf', ph:1, hint:'Saleskärtchen prüfen + übernehmen'},
+    {id:'rechnung',   l:'Offene Rechnungen',            ow:'Janna',   ph:4, hint:'JTL-Abgleich, Rechnung erstellen'},
+    {id:'kommi',      l:'Kommissionierungsplanung',     ow:'Dustin',  ph:4, hint:'Kommi-Tag festlegen'},
+    {id:'versand',    l:'Versandplanung',               ow:'Janna',   ph:5, hint:'Spedition (AMM) beauftragen'},
+    {id:'abholung',   l:'Abholplan. / Kommunikation',   ow:'Janna',   ph:3, hint:'Abholtermin + Kunden-Kommunikation'},
+    {id:'angemeldet', l:'Angemeldet',                   ow:'Janna',   ph:5, hint:'AMM bestätigt — wartet auf Versand/Abholung'},
+    {id:'beendet',    l:'Beendet (Versendet/Abgeholt)', ow:'—',       ph:6, hint:'Auftrag abgeschlossen'},
+];
+
+// Mapping zwischen alter 4-Stage-Logik und neuen 7 Buckets:
+//   stage 0 (Erfassung)        → bucket 0 (verkauf)
+//   stage 1 (Rechnung)         → bucket 1 (rechnung)
+//   stage 2 (Kommi)            → bucket 2 (kommi)
+//   stage 3 (AMM-Anmeldung)    → bucket 3 (versand) bei Lieferung,
+//                                bucket 4 (abholung) bei Abholung
+//   S.ticketOk                 → bucket 6 (beendet) — implizit auch 5 done
+function activeBucket(){
+    if(S.ticketOk) return 6;
+    if(S.stage===0) return 0;
+    if(S.stage===1) return 1;
+    if(S.stage===2) return 2;
+    if(S.stage===3) return S.va==='abholung'?4:3;
+    return 0;
+}
+
+function bucketStatus(){
+    const st=['pending','pending','pending','pending','pending','pending','pending'];
+    if(S.done[0]) st[0]='done';
+    if(S.done[1]) st[1]='done';
+    if(S.done[2]) st[2]='done';
+    if(S.done[3]){
+        st[S.va==='abholung'?4:3]='done';
+        st[5]='done';
+    }
+    if(S.ticketOk) st[6]='done';
+    if(S.va==='abholung') st[3]='skipped';
+    else if(S.va==='lieferung') st[4]='skipped';
+    const cur=activeBucket();
+    if(st[cur]==='pending') st[cur]='active';
+    return st;
+}
+
+function bucketColor(status){
+    if(status==='done') return 'var(--grn)';
+    if(status==='active') return 'var(--blue)';
+    if(status==='skipped') return 'rgba(255,255,255,.02)';
+    return 'var(--bd)';
+}
+
 // JTL INVOICE TEXT DATA (ENGLISH)
 const JTL_DATA = [
   {
@@ -1630,18 +1684,20 @@ function rHead(){
     </div>`}
 
 function rProg(){
-    return `<div style="display:flex;gap:3px;margin:8px 0 20px">${ST.map((s,i)=>{
-        const d=S.done[i],a=i===S.stage,sk=isSkip(i)&&!d&&i!==S.stage;
-        let bg='var(--bd)';if(d)bg='var(--grn)';if(a)bg='var(--blue)';if(sk)bg='rgba(255,255,255,.02)';
-        return `<div style="flex:1;height:4px;border-radius:2px;background:${bg};transition:background .3s" title="${s.l} (${s.ow})"></div>`
+    const sts=bucketStatus();
+    return `<div style="display:flex;gap:3px;margin:8px 0 20px">${BUCKETS.map((b,i)=>{
+        const bg=bucketColor(sts[i]);
+        return `<div style="flex:1;height:4px;border-radius:2px;background:${bg};transition:background .3s" title="${b.l} (${b.ow}) — Phase ${b.ph}"></div>`
     }).join('')}</div>`}
 
 function rStg(){return [rS0,rS1,rS2,rS3][S.stage]()}
 
 function sw(title,owner,body){
+    const bIdx=activeBucket(), b=BUCKETS[bIdx];
     return `<div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-        <div><p style="font-size:10px;color:var(--txd);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Stufe ${S.stage+1} von ${ST.length}</p>
-        <h2 style="font-size:18px;font-weight:800;color:var(--txb);margin-top:2px">${title}</h2></div>
+        <div><p style="font-size:10px;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;font-weight:700">Bucket ${bIdx+1} von 7 · Phase ${b.ph}</p>
+        <h2 style="font-size:18px;font-weight:800;color:var(--txb);margin-top:2px">${title}</h2>
+        <p style="font-size:10px;color:var(--txd);margin-top:2px">Planner: <span style="color:var(--tx)">${b.l}</span> · ${b.hint}</p></div>
         <span style="font-size:11px;color:var(--txd);background:var(--sf);padding:4px 10px;border-radius:6px;border:1px solid var(--bd)">↝ ${owner}</span>
     </div>${body}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
@@ -2113,9 +2169,16 @@ function rSB(){
             <button onclick="S.sbOpen=false;render()" style="background:none;border:none;color:var(--txd);cursor:pointer;font-size:18px">✕</button>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px">${tgsH()}</div>
-        <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:8px">Prozess</p>
-        ${ST.map((s,i)=>{const d=S.done[i],a=i===S.stage,sk=isSkip(i)&&!d;let c='var(--bd)';if(d)c='var(--grn)';if(a)c='var(--blue)';
-            return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;${sk?'opacity:.3':''}"><div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></div><span style="font-size:11px;color:${d?'var(--grn)':a?'var(--blue)':'var(--txd)'};${a?'font-weight:700':''}">${s.l}</span><span style="font-size:10px;color:var(--txd);margin-left:auto">${s.ow}</span></div>`}).join('')}
+        <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:8px">Planner-Buckets</p>
+        ${(()=>{const sts=bucketStatus();return BUCKETS.map((b,i)=>{
+            const s=sts[i], c=bucketColor(s), sk=s==='skipped', d=s==='done', a=s==='active';
+            const txc=d?'var(--grn)':a?'var(--blue)':'var(--txd)';
+            return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;${sk?'opacity:.3':''}" title="Phase ${b.ph} — ${b.hint}">
+                <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></div>
+                <span style="font-size:11px;color:${txc};${a?'font-weight:700':''}">${b.l}</span>
+                <span style="font-size:9px;color:var(--txd);background:var(--bg);padding:1px 5px;border-radius:3px">P${b.ph}</span>
+                <span style="font-size:10px;color:var(--txd);margin-left:auto">${b.ow}</span>
+            </div>`}).join('')})()}
         <div class="dv"></div>
         <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:8px">Kommentare (${S.komm.length})</p>
         ${S.komm.length?S.komm.map(c=>`<div style="border-left:2px solid var(--bd);padding-left:10px;margin-bottom:8px"><div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;font-weight:700;color:var(--txb)">${c.w}</span><span style="font-size:9px;color:var(--txd)">${c.ts}</span></div><p style="font-size:11px;color:var(--tx);margin-top:2px">${esc(c.t)}</p></div>`).join(''):'<p style="font-size:11px;color:var(--txd)">—</p>'}
