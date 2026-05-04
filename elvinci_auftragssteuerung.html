@@ -665,6 +665,117 @@ body {
     flex-shrink: 0;
 }
 
+/* ─── PIPELINE-IMPORT-MODAL (Tier 4.3) ─── */
+.pipe-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: none;
+    padding: 40px 20px;
+    overflow-y: auto;
+}
+.pipe-overlay.show { display: block; }
+.pipe-modal {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--bg-secondary);
+    border-radius: var(--r-card);
+    box-shadow: var(--shadow-pop);
+    padding: 28px;
+    color: var(--label);
+}
+.pipe-modal h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+}
+.pipe-modal .sub {
+    font-size: 13px;
+    color: var(--label-2);
+    margin-bottom: 20px;
+}
+.pipe-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.pipe-stat {
+    background: var(--bg-primary);
+    border-radius: var(--r-input);
+    padding: 12px 14px;
+}
+.pipe-stat .lbl {
+    font-size: 11px;
+    color: var(--label-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+.pipe-stat .val {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 2px;
+}
+.pipe-stat.new .val { color: var(--accent); }
+.pipe-stat.drift .val { color: var(--warning); }
+.pipe-stat.sync .val { color: var(--success); }
+.pipe-table {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid var(--separator);
+    border-radius: var(--r-input);
+    margin-bottom: 18px;
+}
+.pipe-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1.2fr 100px 1fr;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--separator);
+    align-items: center;
+    font-size: 12px;
+}
+.pipe-row:last-child { border-bottom: none; }
+.pipe-row.head {
+    background: var(--bg-primary);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    color: var(--label-3);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.pipe-row .au { font-family: "SF Mono", "JetBrains Mono", monospace; font-size: 11px; color: var(--label-2); }
+.pipe-row .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: var(--r-pill);
+    font-size: 11px;
+    font-weight: 600;
+}
+.pipe-row .badge.new { background: rgba(0,113,227,0.10); color: var(--accent); }
+.pipe-row .badge.drift { background: rgba(255,149,0,0.12); color: var(--warning); }
+.pipe-row .badge.sync { background: rgba(0,200,150,0.10); color: var(--success); }
+.pipe-row .drifts {
+    font-size: 11px;
+    color: var(--warning);
+    line-height: 1.4;
+}
+.pipe-row .drifts .d { display: block; }
+.pipe-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
 /* ─── KUNDEN-BRIDGE (Phase 3) — immer sichtbar ─── */
 .kun-card {
     background: var(--bg-secondary);
@@ -1033,6 +1144,7 @@ body {
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="wrap" id="app"></div>
@@ -1724,6 +1836,9 @@ const S={
     // Karten-Metadaten (Trigger Phase 1) — wer hat aktiviert, wann
     startedAt:'',         // ISO-Timestamp wenn Auftrag erstmals AU bekommen hat
     verkaufer:'',         // Verkäufer-Name aus dem Saleskärtchen (Nikoloz, Nikos, ...)
+    // Tier 4.3 — Pipeline-Import-State (transient, nicht persistiert per Order)
+    pipeImportOpen:false, // Modal sichtbar
+    pipeImportRows:[],    // geparste Pipeline-Zeilen vor Übernahme
     // Phase 3 — Kundenkommunikation (Stellenbeschreibung Phase 3)
     kundenTel:'',         // Telefonnummer (für tel:-Link)
     kundenWhatsApp:'',    // WhatsApp-Nummer (für wa.me) — leer = fällt zurück auf kundenTel
@@ -1784,7 +1899,7 @@ const STORAGE_VERSION_V2=2;
 
 // Welche Felder sind GLOBAL (geteilt über alle Aufträge) und welche reine UI-State?
 const _GLOBAL_KEYS=new Set(['config','weeklyReport','dailyChecks','notifyFired']);
-const _UI_KEYS=new Set(['sbOpen','sbLeftOpen']); // werden nicht persistiert
+const _UI_KEYS=new Set(['sbOpen','sbLeftOpen','pipeImportOpen','pipeImportRows','showKommResult','kommNote']); // werden nicht persistiert
 
 let _ORDERS={};       // id → order-state
 let _ACTIVE_ID=null;  // aktuell editierter Auftrag
@@ -1838,6 +1953,209 @@ function _orderActiveBucket(o){
     if(o.stage===2) return 2;
     if(o.stage===3) return o.va==='abholung'?4:3;
     return 0;
+}
+
+// ═══════════════════════════════════════════════════════
+// Tier 4.3 — PIPELINE-BIDI (Phase 2 Stellenbeschreibung)
+// Bidirektional: Export-Zeile (Copy-Paste in SharePoint-Excel) + CSV/XLSX-Import
+// Schema: data/pipeline_schema.json — 27 Spalten A–AA
+// ═══════════════════════════════════════════════════════
+function _fmtDateDe(iso){
+    if(!iso) return '';
+    try{
+        const d=new Date(iso.includes('T')?iso:iso+'T00:00:00');
+        if(isNaN(d.getTime())) return '';
+        return d.toLocaleDateString('de-DE');
+    }catch(e){ return ''; }
+}
+
+// Konvertiert Order-State in Pipeline-Zeile (27 Spalten) für Excel-Copy-Paste
+function _orderToPipelineRow(o){
+    const isZollOrder=o.isZoll||o.za==='zoll';
+    return [
+        '',                                                               // A: ID (Listennummer in Excel — Excel füllt selbst)
+        o.kunde||'',                                                       // B: Kunde
+        o.au||'',                                                          // C: Auftragsnr.
+        o.artAnz||'',                                                      // D: Artikel
+        '',                                                               // E: NOTIZEN AMM
+        _fmtDateDe(o.startedAt),                                           // F: Anmeldedatum
+        _fmtDateDe(o.tpKommiDatum||o.kDat),                                // G: Kommissioniertag
+        _fmtDateDe(o.vDat),                                                // H: Versand-/Abholdatum
+        o.ammAngemeldet?'angemeldet':'',                                   // I: Versand-/Abholanmeldung
+        o.vAnliefer||'',                                                   // J: Anlieferdatum
+        '',                                                               // K: Rechnungsdatum (TODO: dediziertes Feld)
+        o.jtlZZ||'0',                                                      // L: Zahlungsziel
+        o.va==='lieferung'?'Spedition':(o.va==='abholung'?'Abholung':''), // M: Versandart
+        o.bezahlt?'ja':'nein',                                             // N: Bezahlt?
+        o.besonderes||'',                                                  // O: Notizen ELVINCI
+        '',                                                               // P: Fällig am
+        o.ticketOk?'X':'',                                                 // Q: erledigt
+        '',                                                               // R: Trennspalte
+        isZollOrder?'X':'',                                                // S: Zollpapiere
+        o.pal||'',                                                         // T: Anzahl Paletten
+        '',                                                               // U: Reste
+        '',                                                               // V: Rechnungskorrektur
+        '',                                                               // W: Kundeninfo K/K
+        '',                                                               // X: Kundenabholung
+        '',                                                               // Y: Lieferung Versandauftrag
+        '',                                                               // Z: Kundeninfo Lieferung
+        o.ticketOk?'X':'',                                                 // AA: Auftrag erledigt
+    ];
+}
+
+function copyPipelineRow(){
+    if(!S.au){ alert('Auftragsnummer fehlt — bitte erst AU eintragen.'); return; }
+    const tsv=_orderToPipelineRow(S).join('\t');
+    if(navigator.clipboard?.writeText){
+        navigator.clipboard.writeText(tsv).then(()=>{
+            lg('Pipeline-Zeile kopiert', S.au+' → Zwischenablage');
+            render();
+        }).catch(()=>{ alert('Zwischenablage-Zugriff fehlgeschlagen — bitte manuell kopieren.'); });
+    } else {
+        // Fallback
+        const ta=document.createElement('textarea');
+        ta.value=tsv; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        lg('Pipeline-Zeile kopiert (Fallback)', S.au);
+        render();
+    }
+}
+
+// Parser für eine Pipeline-Zeile aus dem Import (Array, 0-indexed = Spalte A)
+function _parsePipelineRow(arr){
+    const va=String(arr[12]||'').toLowerCase();
+    return {
+        kunde:        String(arr[1]||'').trim(),
+        au:           String(arr[2]||'').trim(),
+        artAnz:       String(arr[3]||'').trim(),
+        startedAt:    '', // Excel-DE-Format zu ISO ist fragil — wir lassen Tool selbst setzen
+        kDat:         '',
+        tpKommiDatum: '',
+        vDat:         String(arr[7]||'').trim(),
+        vAnliefer:    String(arr[9]||'').trim(),
+        jtlZZ:        String(arr[11]||'7').trim() || '7',
+        va:           va.includes('spedition')||va.includes('lieferung')?'lieferung':(va.includes('abholung')?'abholung':''),
+        bezahlt:      /^ja$/i.test(String(arr[13]||'').trim()),
+        besonderes:   String(arr[14]||'').trim(),
+        ticketOk:     /^x$/i.test(String(arr[16]||'').trim()) || /^x$/i.test(String(arr[26]||'').trim()),
+        ammAngemeldet:/angemeldet/i.test(String(arr[8]||'')),
+        isZoll:       !!String(arr[18]||'').trim(),
+        pal:          String(arr[19]||'').trim(),
+    };
+}
+
+// Vergleicht Pipeline-Zeile mit existierendem Tool-Auftrag (anhand AU-Match)
+function _detectDrift(row){
+    if(!row.au) return { match:'none', drifts:[], matchId:null };
+    const entry=Object.entries(_ORDERS).find(([id,o])=>o.au===row.au);
+    if(!entry) return { match:'new', drifts:[], matchId:null };
+    const [matchId, o]=entry;
+    const drifts=[];
+    if(row.kunde && row.kunde!==o.kunde) drifts.push({ field:'Kunde', tool:o.kunde||'(leer)', pipeline:row.kunde });
+    if(row.va && row.va!==o.va) drifts.push({ field:'Versandart', tool:o.va||'(leer)', pipeline:row.va });
+    if(typeof row.bezahlt==='boolean' && row.bezahlt!==!!o.bezahlt) drifts.push({ field:'Bezahlt?', tool:o.bezahlt?'ja':'nein', pipeline:row.bezahlt?'ja':'nein' });
+    if(typeof row.ticketOk==='boolean' && row.ticketOk!==!!o.ticketOk) drifts.push({ field:'Erledigt', tool:o.ticketOk?'ja':'nein', pipeline:row.ticketOk?'ja':'nein' });
+    if(row.pal && row.pal!==o.pal) drifts.push({ field:'Paletten', tool:o.pal||'(leer)', pipeline:row.pal });
+    return { match:'existing', drifts, matchId };
+}
+
+function pipeImportFromFile(file){
+    if(typeof XLSX==='undefined'){ alert('SheetJS nicht geladen — Pipeline-Import braucht Internet beim ersten Laden des Tools.'); return; }
+    const reader=new FileReader();
+    reader.onload=(e)=>{
+        try{
+            let wb;
+            const ext=(file.name||'').toLowerCase().split('.').pop();
+            if(ext==='csv'){
+                // CSV als Text lesen — SharePoint-Excel-Export ist meist Windows-1252
+                const dec=new TextDecoder('windows-1252');
+                const text=dec.decode(new Uint8Array(e.target.result));
+                wb=XLSX.read(text, {type:'string', codepage:1252, FS:';'});
+            } else {
+                wb=XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+            }
+            const sheet=wb.Sheets[wb.SheetNames[0]];
+            const json=XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:false});
+            // Datenzeilen finden: erste Zeile, in der Spalte C eine AU-Nummer (regex) steht
+            const rows=[];
+            for(let i=0;i<json.length;i++){
+                const r=json[i];
+                if(!r) continue;
+                const c=String(r[2]||'').trim();
+                if(/AU\d{8,}/.test(c)){
+                    const parsed=_parsePipelineRow(r);
+                    parsed.drift=_detectDrift(parsed);
+                    rows.push(parsed);
+                }
+            }
+            if(rows.length===0){ alert('Keine Auftragszeilen gefunden (Suche nach AU-Nummern in Spalte C).'); return; }
+            S.pipeImportRows=rows;
+            S.pipeImportOpen=true;
+            lg('Pipeline-Import vorbereitet', `${rows.length} Aufträge aus ${file.name}`);
+            render();
+        }catch(err){
+            alert('Pipeline-Import fehlgeschlagen: '+err.message);
+            console.error(err);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function triggerPipelineImport(){
+    const inp=document.createElement('input');
+    inp.type='file';
+    inp.accept='.csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    inp.onchange=(e)=>{ if(e.target.files[0]) pipeImportFromFile(e.target.files[0]); };
+    inp.click();
+}
+
+// Übernimmt alle "neuen" Aufträge aus dem Import (existierende werden nicht überschrieben)
+function applyPipelineImport(){
+    const rows=S.pipeImportRows||[];
+    let added=0, skipped=0;
+    rows.forEach(r=>{
+        if(!r.au){ skipped++; return; }
+        if(r.drift?.match==='existing'){ skipped++; return; }
+        save(); // Aktuellen Stand sichern, bevor wir _ORDERS mutieren
+        const id=uuid();
+        _ORDERS[id]={
+            stage:0, sub:0, done:[],
+            au:r.au, kunde:r.kunde||'',
+            artAnz:r.artAnz||'', va:r.va||'',
+            za:'', // unbekannt aus Pipeline
+            vDat:r.vDat||'', vAnliefer:r.vAnliefer||'',
+            jtlZZ:r.jtlZZ||'7', jtlAppointmentStatus:'erfuellbar',
+            pal:r.pal||'',
+            bezahlt:!!r.bezahlt,
+            ammAngemeldet:!!r.ammAngemeldet,
+            ticketOk:!!r.ticketOk,
+            isZoll:!!r.isZoll,
+            besonderes:r.besonderes||'',
+            audit:[{
+                ts:new Date().toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+                st:'erfassung', a:'Aus Pipeline-Import', d:'Zeile '+r.au+' übernommen',
+            }],
+            komm:[],
+            genTodos:[false,false,false,false,false,false,false,false,false],
+            jtlAbgleich:{ mengen:false, versandart:false, zz:false },
+            endChecklist:{ teams:false, pipeline:false, sharepoint:false },
+            startedAt:new Date().toISOString(),
+        };
+        added++;
+    });
+    save();
+    S.pipeImportOpen=false;
+    S.pipeImportRows=[];
+    alert(`${added} Aufträge importiert · ${skipped} übersprungen (bereits vorhanden oder ohne AU)`);
+    lg('Pipeline-Import abgeschlossen', `${added} neue · ${skipped} übersprungen`);
+    render();
+}
+
+function closePipelineImport(){
+    S.pipeImportOpen=false;
+    S.pipeImportRows=[];
+    render();
 }
 
 // Auto-set Karten-Metadaten beim ersten Trigger (Phase 1: Saleskärtchen empfangen → AU eingetragen)
@@ -3438,7 +3756,7 @@ function rOrderList(){
 }
 
 function render(){
-    document.getElementById('app').innerHTML=rOrderList()+rHead()+rDaily()+rProg()+rKundenBridge()+'<div id="cs">'+rStg()+'</div>'+rGenTodos()+(S.ticketOk?rTick():'')+rSB();
+    document.getElementById('app').innerHTML=rOrderList()+rPipelineModal()+rHead()+rDaily()+rProg()+rKundenBridge()+'<div id="cs">'+rStg()+'</div>'+rGenTodos()+(S.ticketOk?rTick():'')+rSB();
     save();
 }
 
@@ -3481,6 +3799,54 @@ function sw(title,owner,body){
             ${S.stage===ST.length-1?'✓ Abschließen & Ticket':'Weiter → '+ST[Math.min(S.stage+1,ST.length-1)].l}
         </button>
     </div>`}
+
+// Tier 4.3 — Pipeline-Import-Modal
+function rPipelineModal(){
+    if(!S.pipeImportOpen) return '';
+    const rows=S.pipeImportRows||[];
+    const newCount=rows.filter(r=>r.drift?.match==='new').length;
+    const driftCount=rows.filter(r=>r.drift?.match==='existing' && r.drift.drifts.length>0).length;
+    const syncCount=rows.filter(r=>r.drift?.match==='existing' && r.drift.drifts.length===0).length;
+    return `<div class="pipe-overlay show no-print">
+        <div class="pipe-modal">
+            <h2>📊 Pipeline-Import</h2>
+            <p class="sub">${rows.length} Auftragszeilen aus Pipeline-Datei. Bestehende Aufträge werden NICHT überschrieben — nur neue (linke Spalte: <span style="color:var(--accent);font-weight:600">+ Neu</span>) werden importiert. Drifts (<span style="color:var(--warning);font-weight:600">⚠ Drift</span>) zeigen nur Diskrepanzen — manuelle Klärung später.</p>
+            <div class="pipe-stats">
+                <div class="pipe-stat new"><div class="lbl">Neue Aufträge</div><div class="val">${newCount}</div></div>
+                <div class="pipe-stat drift"><div class="lbl">Drifts (existieren bereits)</div><div class="val">${driftCount}</div></div>
+                <div class="pipe-stat sync"><div class="lbl">Synchron</div><div class="val">${syncCount}</div></div>
+            </div>
+            <div class="pipe-table">
+                <div class="pipe-row head">
+                    <div>Status</div>
+                    <div>Kunde</div>
+                    <div>Auftragsnr.</div>
+                    <div>Versandart</div>
+                    <div>Diskrepanzen</div>
+                </div>
+                ${rows.map(r=>{
+                    const m=r.drift?.match||'none';
+                    const ds=r.drift?.drifts||[];
+                    const badge=m==='new'?'<span class="badge new">+ Neu</span>'
+                              :m==='existing'&&ds.length===0?'<span class="badge sync">✓ Sync</span>'
+                              :m==='existing'?'<span class="badge drift">⚠ Drift</span>'
+                              :'<span class="badge drift">?</span>';
+                    return `<div class="pipe-row">
+                        <div>${badge}</div>
+                        <div>${esc(r.kunde||'—')}</div>
+                        <div class="au">${esc(r.au||'—')}</div>
+                        <div>${esc(r.va==='lieferung'?'Spedition':r.va==='abholung'?'Abholung':'—')}</div>
+                        <div class="drifts">${ds.length===0?'<span style="color:var(--label-3)">—</span>':ds.map(d=>`<span class="d"><strong>${esc(d.field)}:</strong> Tool „${esc(d.tool)}" ↔ Pipeline „${esc(d.pipeline)}"</span>`).join('')}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+            <div class="pipe-actions">
+                <button onclick="closePipelineImport()" class="btn btn-o">Abbrechen</button>
+                <button onclick="applyPipelineImport()" class="btn btn-p" ${newCount===0?'disabled':''} title="${newCount===0?'Keine neuen Aufträge zum Importieren':'Erstellt '+newCount+' neue Aufträge in der lokalen Liste'}">${newCount} neue Aufträge importieren</button>
+            </div>
+        </div>
+    </div>`;
+}
 
 // Phase 3 — Kunden-Bridges + Reaktionszeit + Inline-Result-Form
 function rKundenBridge(){
@@ -4189,6 +4555,15 @@ function rSB(){
             <button onclick="reportWeeklyPdf()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px">📄 PDF speichern</button>
             <button onclick="reportWeeklyMail()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px">📨 Email an Dustin</button>
         </div>
+
+        <div class="dv"></div>
+        <p style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">📊 Fulfilment Pipeline (Phase 2)</p>
+        <p style="font-size:11px;color:var(--label-3);margin-bottom:10px;line-height:1.4">Bidi-Sync mit der SharePoint-Excel. Import liest neue Aufträge ein und zeigt Drifts. Zeile-kopieren paste'd den aktiven Auftrag als Excel-Zeile.</p>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+            <button onclick="triggerPipelineImport()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px" title="Pipeline-CSV oder XLSX hochladen — Tool zeigt Drift-Tabelle und importiert neue Aufträge">📥 Pipeline laden</button>
+            <button onclick="copyPipelineRow()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px" title="Aktiven Auftrag als Tab-getrennte Excel-Zeile (27 Spalten A-AA) in die Zwischenablage kopieren">📋 Zeile kopieren</button>
+        </div>
+        <p style="font-size:10px;color:var(--label-3);margin-bottom:14px;text-align:center;line-height:1.4">Format: CSV (Windows-1252) oder XLSX · 27 Spalten A–AA · existierende Aufträge werden nicht überschrieben</p>
 
         <div class="dv"></div>
         <p style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">⚙ Adressen / Bridges</p>
