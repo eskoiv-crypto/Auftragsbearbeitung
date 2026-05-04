@@ -1721,6 +1721,9 @@ const S={
     tpKommiDatum:'', tpLieferzeit:'', tpKundenTermin:'', tpShowCalc:false,
     // Generelle TODOs (für alle Aufträge)
     genTodos: [false, false, false, false, false, false, false, false, false],
+    // Karten-Metadaten (Trigger Phase 1) — wer hat aktiviert, wann
+    startedAt:'',         // ISO-Timestamp wenn Auftrag erstmals AU bekommen hat
+    verkaufer:'',         // Verkäufer-Name aus dem Saleskärtchen (Nikoloz, Nikos, ...)
     // Phase 3 — Kundenkommunikation (Stellenbeschreibung Phase 3)
     kundenTel:'',         // Telefonnummer (für tel:-Link)
     kundenWhatsApp:'',    // WhatsApp-Nummer (für wa.me) — leer = fällt zurück auf kundenTel
@@ -1837,8 +1840,17 @@ function _orderActiveBucket(o){
     return 0;
 }
 
+// Auto-set Karten-Metadaten beim ersten Trigger (Phase 1: Saleskärtchen empfangen → AU eingetragen)
+function _ensureStartMeta(){
+    if(S.au && !S.startedAt){
+        S.startedAt=new Date().toISOString();
+        lg('Auftrag aktiviert', new Date(S.startedAt).toLocaleString('de-DE')+(S.verkaufer?' · Verkauf: '+S.verkaufer:''));
+    }
+}
+
 function save(){
     try{
+        _ensureStartMeta();
         if(S.id) _ORDERS[S.id]=_extractOrderFields(S);
         const blob={
             v:STORAGE_VERSION_V2, ts:new Date().toISOString(),
@@ -3207,6 +3219,11 @@ function getGates(){
                     gates.push({ label:'Lieferzeit gesetzt (Terminrechner)', ok:!!S.tpLieferzeit });
                 }
             }
+            // Vorfakturierungs-Pflichten — wenn ZZ-Kunde + sofort fakturieren
+            if(S.za==='zahlungsziel' && S.reZeit==='sofort'){
+                gates.push({ label:'Kommi-Datum gesetzt (Pflicht für Vorfakturierung)', ok:!!S.tpKommiDatum, hint:'Erfassung Sub 5 → Kommissionierungs-Datum eintragen' });
+                gates.push({ label:'Zahlungsziel im JTL verlängert', ok:S.zzOk, hint:'Vorfakturierungs-Rechner zeigt Soll-Wert' });
+            }
             gates.push({ label:'Rechnung erstellt + versendet', ok:S.reOk });
             gates.push({ label:'RE-Nummer eingetragen', ok:!!S.re });
         }
@@ -3560,12 +3577,26 @@ function subA(i,l,b){
     return `<div class="block active"><div class="bh"><div class="n na">${i+1}</div><div class="t">${l}</div></div>
         <div class="bb">${b}<div style="margin-top:14px;text-align:right"><button onclick="confirmSub(${i})" class="btn btn-p" ${subOk(i)?'':'disabled'}>Bestätigen</button></div></div></div>`}
 
-// 0: AU + Kunde + Kontakt-Daten (Phase 3 Bridges)
+// 0: AU + Kunde + Verkäufer + Kontakt-Daten (Phase 3 Bridges)
+const _VERKAUFER_DEFAULTS=['Nikoloz Artiukhov','Nikos Celaj'];
 function sub0(){
-    const l='Auftrag & Kunde',s=S.au+' · '+S.kunde;
+    const l='Auftrag & Kunde',s=S.au+' · '+S.kunde+(S.verkaufer?' · '+S.verkaufer:'');
+    const startedDisplay=S.startedAt?new Date(S.startedAt).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
     const b=`<div class="rw r2">
         <div class="f"><label>Auftragsnummer(n) *</label><input id="i0" value="${esc(S.au)}" oninput="S.au=this.value;S.isKombi=this.value.includes(',')||this.value.includes('+');sfR()" placeholder="AU2026020513372"><div class="h">Mehrere mit Komma trennen → automatisch KOMBI-AUFTRAG</div></div>
         <div class="f"><label>Kunde / Firma *</label><input id="i0b" value="${esc(S.kunde)}" oninput="S.kunde=this.value;sfR()" placeholder="Ovit Shop V.O.F."></div>
+    </div>
+    <p style="font-size:11px;color:var(--label-3);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Karten-Metadaten</p>
+    <div class="rw r2">
+        <div class="f"><label>Verkäufer (Saleskärtchen-Ersteller)</label>
+            <input list="verkaufer-list" value="${esc(S.verkaufer)}" oninput="S.verkaufer=this.value;sfR()" placeholder="Nikoloz / Nikos / …">
+            <datalist id="verkaufer-list">${_VERKAUFER_DEFAULTS.map(v=>`<option value="${esc(v)}">`).join('')}</datalist>
+            <div class="h">Rückverfolgbarkeit: wer den Auftrag eröffnet hat</div>
+        </div>
+        <div class="f"><label>Auftrag aktiviert am</label>
+            <input value="${esc(startedDisplay||'wird automatisch gesetzt')}" readonly style="${startedDisplay?'':'color:var(--label-3);font-style:italic'}">
+            <div class="h">Wird gesetzt sobald AU eingetragen ist</div>
+        </div>
     </div>
     <p style="font-size:11px;color:var(--label-3);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Kontakt-Daten — aktiviert die Bridges oben (Phase 3)</p>
     <div class="rw r3">
@@ -3852,9 +3883,39 @@ function rS1(){
                 <div class="opt ${S.reZeit==='sofort'?'sel':''}" onclick="S.reZeit='sofort';render()"><div class="ol">Sofort</div><div class="od" style="color:var(--amb)">⚠ ZZ verlängern!</div></div>
             </div>`;
             if(S.reZeit==='sofort'){
-                b+=`<div class="ck ${S.zzOk?'on':''}" style="margin-bottom:14px"><input type="checkbox" ${S.zzOk?'checked':''} onchange="S.zzOk=this.checked;render()">
-                    <span style="font-size:12px;${S.zzOk?'color:var(--grn)':'color:var(--amb)'}">Zahlungsziel entsprechend verlängert</span>
-                </div>`;
+                // Vorfakturierungs-Rechner — User-Spec 2026-05-04
+                // Effektives ZZ = Standard-ZZ + Tage zwischen heute und Kommi-Datum
+                const stdZz=parseInt(S.jtlZZ)||14;
+                if(S.tpKommiDatum){
+                    const heute=new Date(); heute.setHours(0,0,0,0);
+                    const kommi=new Date(S.tpKommiDatum+'T00:00:00');
+                    const tageDiff=Math.max(0, Math.ceil((kommi-heute)/(1000*60*60*24)));
+                    const effZz=stdZz+tageDiff;
+                    b+=`<div class="al aw" style="margin-bottom:14px">
+                        <div class="i">📐</div>
+                        <div>
+                            <strong>Vorfakturierungs-Rechner</strong> — Rechnung wird heute geschrieben, ZZ um Tage-bis-Kommi verlängert, damit Kunde sein Zahlungsziel ab Versand voll ausschöpfen kann.<br>
+                            <code style="font-size:13px;font-weight:700;color:var(--label);background:var(--bg-tertiary);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:8px">
+                                ${stdZz} Standard + ${tageDiff} Tage bis Kommi (${fmtD(S.tpKommiDatum)}) =
+                                <span style="color:var(--success);font-size:15px;font-weight:800">${effZz} Tage</span>
+                            </code><br>
+                            <span style="font-size:11px;color:var(--label-3);margin-top:8px;display:block">→ Diesen Wert (<strong>${effZz}</strong>) im JTL als Zahlungsziel eintragen.</span>
+                        </div>
+                    </div>
+                    <div class="ck ${S.zzOk?'on':''}" style="margin-bottom:14px" onclick="S.zzOk=!S.zzOk;if(S.zzOk)lg('Vorfakturierung','ZZ '+${stdZz}+'+'+${tageDiff}+'='+${effZz}+' Tage in JTL gesetzt');render()">
+                        <input type="checkbox" ${S.zzOk?'checked':''} onclick="event.stopPropagation()">
+                        <span>Zahlungsziel im JTL auf <strong>${effZz} Tage</strong> gesetzt</span>
+                    </div>`;
+                } else {
+                    b+=`<div class="al ad" style="margin-bottom:14px">
+                        <div class="i">⚠</div>
+                        <div>
+                            <strong>Kommi-Datum fehlt — Vorfakturierung blockiert</strong><br>
+                            <span style="font-size:12px;line-height:1.5">Vorfakturierungs-Rechner braucht das Kommissionierungs-Datum, um das effektive Zahlungsziel zu berechnen. Lege erst den Kommi-Termin in der Pipeline / Erfassung Sub 5 fest, dann komm hier zurück.</span><br>
+                            <span style="font-size:11px;color:var(--label-3);margin-top:6px;display:block">Solange Kommi-Datum offen ist, kann „Sofort" nicht weiter — sonst würdest Du dem Kunden sein Zahlungsziel verkürzen.</span>
+                        </div>
+                    </div>`;
+                }
             }
         } else {
             // Vorkasse / Barzahler: SOFORT
@@ -4556,6 +4617,9 @@ if(typeof S.kundenEmail==='undefined') S.kundenEmail='';
 if(typeof S.lastKommTs==='undefined') S.lastKommTs='';
 if(typeof S.showKommResult==='undefined') S.showKommResult='';
 if(typeof S.kommNote==='undefined') S.kommNote='';
+// Karten-Metadaten defensiv defaulten
+if(typeof S.startedAt==='undefined') S.startedAt='';
+if(typeof S.verkaufer==='undefined') S.verkaufer='';
 _migrateConfig(); // D3c — befüllt fehlende S.config-Felder mit Defaults
 // Tier 1.2 — Wenn nichts geladen wurde, ersten Auftrag anlegen
 if(!S.id){
