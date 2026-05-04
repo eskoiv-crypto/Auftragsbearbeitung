@@ -665,6 +665,143 @@ body {
     flex-shrink: 0;
 }
 
+/* ─── ORDER-LIST (Tier 1.2) — Linke Sidebar ─── */
+.sb-left {
+    position: fixed;
+    top: 0; left: 0;
+    width: 320px;
+    height: 100vh;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--separator);
+    transform: translateX(-100%);
+    transition: transform 0.3s var(--ease-out);
+    z-index: 100;
+    overflow-y: auto;
+    padding: 24px;
+    box-shadow: var(--shadow-3);
+    display: flex;
+    flex-direction: column;
+}
+.sb-left.open { transform: translateX(0); }
+.sbo-left {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.30);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+    display: none;
+}
+.sbo-left.show { display: block; }
+.sb-left .head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+}
+.sb-left .head h3 { font-size: 14px; font-weight: 700; color: var(--label); }
+.sb-left .head .x {
+    background: none; border: none;
+    color: var(--label-3);
+    cursor: pointer;
+    font-size: 18px;
+    width: 28px; height: 28px;
+    border-radius: var(--r-button);
+    transition: all 0.15s var(--ease-out);
+}
+.sb-left .head .x:hover { background: var(--bg-tertiary); color: var(--label); }
+.sb-left .new-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--r-button);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-bottom: 14px;
+    transition: background 0.15s var(--ease-out);
+}
+.sb-left .new-btn:hover { background: var(--accent-hover); }
+.sb-left .empty {
+    text-align: center;
+    color: var(--label-3);
+    font-size: 12px;
+    padding: 24px 12px;
+    font-style: italic;
+}
+.order-item {
+    position: relative;
+    padding: 12px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-input);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.15s var(--ease-out);
+}
+.order-item:hover { border-color: var(--separator-strong); background: var(--bg-tertiary); }
+.order-item.active {
+    border-color: var(--accent);
+    background: rgba(0, 113, 227, 0.06);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.10);
+}
+.order-item .name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--label);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 24px;
+}
+.order-item .au {
+    font-size: 11px;
+    color: var(--label-2);
+    margin-top: 2px;
+    padding-right: 24px;
+}
+.order-item .meta {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.order-item .bucket-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: var(--r-pill);
+    background: var(--bg-tertiary);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--label-2);
+}
+.order-item .bucket-pill .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.order-item .last-ts {
+    font-size: 10px;
+    color: var(--label-3);
+    margin-left: auto;
+}
+.order-item .del-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px; height: 22px;
+    border: none;
+    background: transparent;
+    color: var(--label-3);
+    cursor: pointer;
+    border-radius: 50%;
+    font-size: 14px;
+    display: grid; place-items: center;
+    opacity: 0;
+    transition: all 0.15s var(--ease-out);
+}
+.order-item:hover .del-btn { opacity: 1; }
+.order-item .del-btn:hover { background: rgba(255, 59, 48, 0.10); color: var(--error); }
+
 /* ─── SETTINGS-SEKTION (D3c) — Akkordeon-Style ─── */
 .cfg-section {
     border: 1px solid var(--separator);
@@ -1362,6 +1499,9 @@ const JTL_DATA = [
 // STATE
 // ═══════════════════════════════════════════════════════
 const S={
+    // Tier 1.2 — Multi-Order Identity
+    id:'',                 // UUID des aktiven Auftrags, wird beim Boot gesetzt
+    sbLeftOpen:false,      // Order-List Sidebar (links) Open-State
     stage:0, done:[], sub:0,
     // Erfassung
     au:'', kunde:'',
@@ -1443,43 +1583,202 @@ function cfgIsDefault(section, key){
 }
 
 // ═══════════════════════════════════════════════════════
-// PERSISTENCE — D2 (DECISIONS.md)
-// localStorage primär (single-user pro Browser), JSON-Export für Geräte-Wechsel.
+// PERSISTENCE — D2 (Single-Order) + Tier 1.2 (Multi-Order)
+// localStorage v2-Schema: { activeId, orders:{id->state}, globals:{config,weeklyReport,dailyChecks,notifyFired} }
+// V1-Migration: existierender 'elvinci_S_v1'-Schlüssel wird beim ersten Boot in v2 überführt.
 // ═══════════════════════════════════════════════════════
-const STORAGE_KEY='elvinci_S_v1';
-const STORAGE_VERSION=1;
+const STORAGE_KEY='elvinci_S_v1';      // legacy (nur lesen, für Migration)
+const STORAGE_KEY_V2='elvinci_data_v2';
+const STORAGE_VERSION_V2=2;
+
+// Welche Felder sind GLOBAL (geteilt über alle Aufträge) und welche reine UI-State?
+const _GLOBAL_KEYS=new Set(['config','weeklyReport','dailyChecks','notifyFired']);
+const _UI_KEYS=new Set(['sbOpen','sbLeftOpen']); // werden nicht persistiert
+
+let _ORDERS={};       // id → order-state
+let _ACTIVE_ID=null;  // aktuell editierter Auftrag
+
+function uuid(){
+    if(typeof crypto!=='undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+        const r=Math.random()*16|0;
+        return (c==='x'?r:(r&0x3|0x8)).toString(16);
+    });
+}
+
+function _extractOrderFields(state){
+    const out={};
+    for(const k in state){
+        if(_GLOBAL_KEYS.has(k)) continue;
+        if(_UI_KEYS.has(k)) continue;
+        out[k]=state[k];
+    }
+    return out;
+}
+
+function _resetOrderFields(){
+    const PRESERVE=new Set([..._GLOBAL_KEYS, ..._UI_KEYS, 'id']);
+    for(const k in S){
+        if(PRESERVE.has(k)) continue;
+        if(k==='audit'||k==='komm'||k==='done'){ S[k]=[]; continue; }
+        if(k==='stage'||k==='sub'){ S[k]=0; continue; }
+        if(Array.isArray(S[k])){
+            S[k]=S[k].map(v=>typeof v==='boolean'?false:typeof v==='string'?'':v);
+            continue;
+        }
+        if(typeof S[k]==='boolean'){ S[k]=false; continue; }
+        if(typeof S[k]==='string'){ S[k]=''; continue; }
+        if(S[k]&&typeof S[k]==='object'){ S[k]=null; continue; }
+    }
+    // Re-init bekannter Defaults
+    S.genTodos=[false,false,false,false,false,false,false,false,false];
+    S.audit=[]; S.komm=[]; S.done=[];
+    S.jtlZZ='7';
+    S.jtlAppointmentStatus='erfuellbar';
+}
+
+function _orderActiveBucket(o){
+    if(o.ticketOk) return 6;
+    if(o.stage===0) return 0;
+    if(o.stage===1) return 1;
+    if(o.stage===2) return 2;
+    if(o.stage===3) return o.va==='abholung'?4:3;
+    return 0;
+}
 
 function save(){
     try{
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({v:STORAGE_VERSION, ts:new Date().toISOString(), s:S}));
+        if(S.id) _ORDERS[S.id]=_extractOrderFields(S);
+        const blob={
+            v:STORAGE_VERSION_V2, ts:new Date().toISOString(),
+            activeId:_ACTIVE_ID, orders:_ORDERS,
+            globals:{ config:S.config, weeklyReport:S.weeklyReport, dailyChecks:S.dailyChecks, notifyFired:S.notifyFired },
+        };
+        localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(blob));
     }catch(e){ console.warn('Auto-Save fehlgeschlagen:', e); }
 }
 
 function loadDraft(){
     try{
-        const raw=localStorage.getItem(STORAGE_KEY);
-        if(!raw) return false;
-        const p=JSON.parse(raw);
-        if(p.v!==STORAGE_VERSION || !p.s) return false;
-        Object.assign(S, p.s);
-        return p.ts;
-    }catch(e){ console.warn('Draft-Load fehlgeschlagen:', e); return false; }
+        // V2 zuerst versuchen
+        const rawV2=localStorage.getItem(STORAGE_KEY_V2);
+        if(rawV2){
+            const p=JSON.parse(rawV2);
+            if(p.v===STORAGE_VERSION_V2){
+                _ORDERS=p.orders||{};
+                _ACTIVE_ID=p.activeId||null;
+                if(p.globals) Object.assign(S, p.globals);
+                if(_ACTIVE_ID && _ORDERS[_ACTIVE_ID]){
+                    Object.assign(S, _ORDERS[_ACTIVE_ID]);
+                    S.id=_ACTIVE_ID;
+                } else if(Object.keys(_ORDERS).length){
+                    // ActiveId verloren — nimm den ersten verfügbaren Auftrag
+                    _ACTIVE_ID=Object.keys(_ORDERS)[0];
+                    Object.assign(S, _ORDERS[_ACTIVE_ID]);
+                    S.id=_ACTIVE_ID;
+                } else {
+                    // Keine Aufträge — neuen anlegen
+                    S.id=uuid(); _ACTIVE_ID=S.id;
+                }
+                return p.ts;
+            }
+        }
+        // V1-Migration
+        const rawV1=localStorage.getItem(STORAGE_KEY);
+        if(rawV1){
+            const p=JSON.parse(rawV1);
+            if(p.v===1 && p.s){
+                const id=uuid();
+                const order={}, globals={};
+                for(const k in p.s){
+                    if(_GLOBAL_KEYS.has(k)) globals[k]=p.s[k];
+                    else if(!_UI_KEYS.has(k)) order[k]=p.s[k];
+                }
+                _ORDERS={ [id]: order };
+                _ACTIVE_ID=id;
+                Object.assign(S, globals);
+                Object.assign(S, order);
+                S.id=id;
+                save(); // direkt v2 schreiben
+                console.log('V1→V2 migriert für 1 Auftrag.');
+                return p.ts;
+            }
+        }
+    }catch(e){ console.warn('Draft-Load fehlgeschlagen:', e); }
+    return false;
 }
 
 function clearDraft(){
-    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    try{ localStorage.removeItem(STORAGE_KEY_V2); }catch(e){}
+}
+
+function newOrder(){
+    if(!confirm('Neuen Auftrag anlegen?\n\nAktueller Auftrag wird automatisch gespeichert und in der Liste sichtbar.'))return;
+    save(); // sichert aktuellen Stand in _ORDERS
+    _resetOrderFields();
+    S.id=uuid();
+    _ACTIVE_ID=S.id;
+    lg('Neuer Auftrag', S.id.slice(0,8));
+    save();
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function switchOrder(id){
+    if(!_ORDERS[id]) return;
+    if(id===S.id) return;
+    save(); // aktuellen Stand sichern
+    _resetOrderFields();
+    Object.assign(S, _ORDERS[id]);
+    S.id=id;
+    _ACTIVE_ID=id;
+    const o=_ORDERS[id];
+    lg('Auftrag aktiv', (o.kunde||o.au||id.slice(0,8)));
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function deleteOrder(id){
+    const o=_ORDERS[id];
+    if(!o) return;
+    const label=o.kunde||o.au||id.slice(0,8);
+    if(!confirm('Auftrag löschen: '+label+' ?\n\nAlle Auftragsdaten + Audit-Log gehen verloren. Adressen / Wochenreport bleiben.'))return;
+    delete _ORDERS[id];
+    if(id===S.id){
+        // Aktiver Auftrag gelöscht — auf nächsten umschalten oder leeren neuen anlegen
+        const remaining=Object.keys(_ORDERS);
+        if(remaining.length){
+            const nextId=remaining[0];
+            _resetOrderFields();
+            Object.assign(S, _ORDERS[nextId]);
+            S.id=nextId;
+            _ACTIVE_ID=nextId;
+        }else{
+            _resetOrderFields();
+            S.id=uuid();
+            _ACTIVE_ID=S.id;
+        }
+    }
+    lg('Auftrag gelöscht', label);
+    save();
+    render();
 }
 
 function exportBackup(){
-    const fn=`elvinci_backup_${(S.au||'Auftrag').replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
-    const payload={v:STORAGE_VERSION, ts:new Date().toISOString(), s:S};
-    const blob=new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    save(); // aktuellsten Stand mit aufnehmen
+    const fn=`elvinci_backup_full_${new Date().toISOString().slice(0,10)}.json`;
+    const blob_={
+        v:STORAGE_VERSION_V2, ts:new Date().toISOString(),
+        activeId:_ACTIVE_ID, orders:_ORDERS,
+        globals:{ config:S.config, weeklyReport:S.weeklyReport, dailyChecks:S.dailyChecks, notifyFired:S.notifyFired },
+    };
+    const blob=new Blob([JSON.stringify(blob_,null,2)], {type:'application/json'});
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
     a.download=fn;
     a.click();
     URL.revokeObjectURL(a.href);
-    lg('Backup exportiert', fn);
+    lg('Backup exportiert', `${Object.keys(_ORDERS).length} Aufträge → ${fn}`);
     render();
 }
 
@@ -1488,14 +1787,44 @@ function importBackup(file){
     r.onload=(e)=>{
         try{
             const p=JSON.parse(e.target.result);
-            if(p.v!==STORAGE_VERSION){ alert('Inkompatible Backup-Version: '+p.v); return; }
-            if(!p.s){ alert('Backup-Datei ohne Daten.'); return; }
-            if(!confirm('Aktuellen Stand mit Backup vom '+new Date(p.ts).toLocaleString('de-DE')+' überschreiben?')) return;
-            for(const k in S){ delete S[k]; }
-            Object.assign(S, p.s);
-            lg('Backup importiert', file.name);
-            render();
-            window.scrollTo({top:0, behavior:'smooth'});
+            // V2-Backup
+            if(p.v===STORAGE_VERSION_V2 && p.orders){
+                if(!confirm(`Aktuellen Stand mit Backup vom ${new Date(p.ts).toLocaleString('de-DE')} überschreiben?\n\nBackup enthält ${Object.keys(p.orders).length} Aufträge — alle aktuellen lokalen Aufträge werden ersetzt.`))return;
+                _ORDERS=p.orders;
+                _ACTIVE_ID=p.activeId;
+                if(p.globals) Object.assign(S, p.globals);
+                if(_ACTIVE_ID && _ORDERS[_ACTIVE_ID]){
+                    _resetOrderFields();
+                    Object.assign(S, _ORDERS[_ACTIVE_ID]);
+                    S.id=_ACTIVE_ID;
+                }
+                save();
+                lg('Backup importiert', `${Object.keys(_ORDERS).length} Aufträge aus ${file.name}`);
+                render();
+                return;
+            }
+            // V1-Backup (Single-Order) — als neuer Auftrag importieren
+            if(p.v===1 && p.s){
+                if(!confirm(`V1-Backup erkannt (Single-Order). Als neuer Auftrag in die Liste übernehmen?`))return;
+                save(); // current first
+                const id=uuid();
+                const order={};
+                for(const k in p.s){
+                    if(_GLOBAL_KEYS.has(k)) continue;
+                    if(_UI_KEYS.has(k)) continue;
+                    order[k]=p.s[k];
+                }
+                _ORDERS[id]=order;
+                _resetOrderFields();
+                Object.assign(S, order);
+                S.id=id;
+                _ACTIVE_ID=id;
+                save();
+                lg('V1-Backup importiert', file.name);
+                render();
+                return;
+            }
+            alert('Backup-Datei nicht erkannt (Version: '+(p.v||'?')+').');
         }catch(err){ alert('Backup-Datei konnte nicht gelesen werden: '+err.message); }
     };
     r.readAsText(file);
@@ -2733,8 +3062,49 @@ function rActionDock(){
     </div>`;
 }
 
+// Tier 1.2 — Order-List (linke Sidebar) — Multi-Order-Switcher
+function rOrderList(){
+    const orderList=Object.entries(_ORDERS).map(([id, o])=>{
+        const lastEntry=(o.audit&&o.audit.length)?o.audit[o.audit.length-1]:null;
+        return {
+            id,
+            kunde: o.kunde||'— ohne Kunde —',
+            au: o.au||'— ohne AU —',
+            bucket: _orderActiveBucket(o),
+            lastTs: lastEntry?lastEntry.ts:'',
+            ticketOk: !!o.ticketOk,
+        };
+    });
+    // Aktiver Auftrag oben, dann nach lastTs (DE-Format ist sortierbar via String)
+    orderList.sort((a,b)=>{
+        if(a.id===S.id) return -1;
+        if(b.id===S.id) return 1;
+        return (b.lastTs||'').localeCompare(a.lastTs||'');
+    });
+    return `<div class="sbo-left ${S.sbLeftOpen?'show':''}" onclick="S.sbLeftOpen=false;render()"></div>
+    <div class="sb-left ${S.sbLeftOpen?'open':''}">
+        <div class="head">
+            <h3>Aufträge (${Object.keys(_ORDERS).length})</h3>
+            <button class="x" onclick="S.sbLeftOpen=false;render()">✕</button>
+        </div>
+        <button class="new-btn" onclick="newOrder()">+ Neuer Auftrag</button>
+        ${orderList.length===0?'<p class="empty">Noch keine Aufträge.</p>':orderList.map(o=>{
+            const b=BUCKETS[o.bucket];
+            return `<div class="order-item ${o.id===S.id?'active':''}" onclick="switchOrder('${o.id}')">
+                <div class="name">${esc(o.kunde)}</div>
+                <div class="au mono">${esc(o.au)}</div>
+                <div class="meta">
+                    <span class="bucket-pill"><span class="dot" style="background:var(--b-${b.id})"></span>${esc(b.l)}</span>
+                    <span class="last-ts">${esc((o.lastTs||'').slice(0,10))}</span>
+                </div>
+                <button class="del-btn" onclick="event.stopPropagation();deleteOrder('${o.id}')" title="Auftrag löschen">✕</button>
+            </div>`;
+        }).join('')}
+    </div>`;
+}
+
 function render(){
-    document.getElementById('app').innerHTML=rHead()+rDaily()+rProg()+'<div id="cs">'+rStg()+'</div>'+rGenTodos()+(S.ticketOk?rTick():'')+rSB();
+    document.getElementById('app').innerHTML=rOrderList()+rHead()+rDaily()+rProg()+'<div id="cs">'+rStg()+'</div>'+rGenTodos()+(S.ticketOk?rTick():'')+rSB();
     save();
 }
 
@@ -2746,8 +3116,9 @@ function rHead(){
         </div>
         <div style="display:flex;align-items:center;gap:6px">
             ${tgsH()}
-            <button onclick="S.sbOpen=true;render()" class="btn btn-o no-print" style="padding:6px 10px;font-size:11px">☰</button>
-            <button onclick="rst()" class="btn btn-o no-print" style="padding:6px 10px;font-size:11px;color:var(--txd)">↺</button>
+            <button onclick="S.sbLeftOpen=true;render()" class="btn btn-o no-print" style="padding:6px 10px;font-size:11px" title="Aufträge — Liste öffnen">📂 ${Object.keys(_ORDERS).length||1}</button>
+            <button onclick="S.sbOpen=true;render()" class="btn btn-o no-print" style="padding:6px 10px;font-size:11px" title="Detail-Sidebar (Tags, Audit, Eskalation, Wochenreport, Adressen, Backup)">☰</button>
+            <button onclick="rst()" class="btn btn-o no-print" style="padding:6px 10px;font-size:11px;color:var(--txd)" title="Aktiven Auftrag zurücksetzen">↺</button>
         </div>
     </div>`}
 
@@ -3707,16 +4078,23 @@ function cpTick(){
 }
 
 // INIT
-const _restoredAt=loadDraft();
-// Schema-Migration: nachträglich hinzugefügte Felder ergänzen, falls aus älterem localStorage geladen
+const _restoredAt=loadDraft(); // versucht V2, fällt zurück auf V1-Migration
+// Schema-Migration: Felder ergänzen falls aus älterem localStorage / V1-Migration geladen
 if(!S.dailyChecks)  S.dailyChecks  = { date:'', tasks:{} };
 if(!S.notifyFired)  S.notifyFired  = { date:'', slots:{} };
 if(!S.weeklyReport) S.weeklyReport = { notes:'', engpaesse:'', klaerfaelle:'' };
 _migrateConfig(); // D3c — befüllt fehlende S.config-Felder mit Defaults
+// Tier 1.2 — Wenn nichts geladen wurde, ersten Auftrag anlegen
+if(!S.id){
+    S.id=uuid();
+    _ACTIVE_ID=S.id;
+}
 if(_restoredAt){
-    lg('Stand wiederhergestellt', new Date(_restoredAt).toLocaleString('de-DE'));
+    const cnt=Object.keys(_ORDERS).length;
+    lg('Stand wiederhergestellt', new Date(_restoredAt).toLocaleString('de-DE')+(cnt>1?` · ${cnt} Aufträge`:''));
 }else{
     lg('Workflow gestartet', new Date().toLocaleDateString('de-DE'));
+    save(); // initialer Auftrag in localStorage anlegen
 }
 render();
 // D3a — Notification-Timer starten, wenn bereits Permission da ist
