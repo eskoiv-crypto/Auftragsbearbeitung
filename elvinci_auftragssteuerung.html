@@ -16,6 +16,8 @@ body{font-family:'Instrument Sans',system-ui,sans-serif;background:var(--bg);col
 .t-zoll{background:#7ee787;color:#0a0c10}.t-kombi{background:#a371f7;color:#fff}.t-loose{background:#f85149;color:#fff}
 .t-klein{background:#58a6ff;color:#fff}.t-sonder{background:#f85149;color:#fff}
 .t-p1{background:#f85149;color:#fff}.t-p2{background:#d29922;color:#fff}.t-ok{background:#238636;color:#fff}
+.t-privat{background:#7e57c2;color:#fff}.t-uit{background:#0277bd;color:#fff}.t-storno{background:#424242;color:#fff;text-decoration:line-through}
+.t-warte{background:#f57c00;color:#fff}.t-kontaktiert{background:#388e3c;color:#fff}.t-abholung{background:#5d4037;color:#fff}
 .block{border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden;transition:all .3s}
 .block.locked{opacity:.25;pointer-events:none}
 .block.active{border-color:var(--bda);box-shadow:0 0 0 1px rgba(88,166,255,.1)}
@@ -760,6 +762,12 @@ const S={
     isSonder:false, sonderText:'',
     isKombi:false,
     isSonderverein:false,
+    // Planner-Labels (D5) — 1:1 zu MS Teams Planner
+    isPrivat:false,        // Privatkunde
+    hasUit:false,          // UIT-Code
+    isStorno:false,        // STORNIERT
+    isWarteZahlung:false,  // Warte auf Zahlung
+    isKontaktiert:false,   // Kontaktiert
     termin:'', besonderes:'',
     jltOk:false,
     // Rechnung
@@ -866,17 +874,41 @@ const isFix=()=>S.za==='fixtermin';
 
 function lg(a,d=''){S.audit.push({ts:new Date().toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}),st:ST[S.stage]?.id||'—',a,d})}
 
+// D5: Tag-Labels 1:1 zu MS Teams Planner. Tool-internes ZA-PRIO/FLEX bleibt
+// als Kommissionierungs-Priorität erhalten — Display-Text matcht aber Planner.
 function tgs(){
     const t=[];
-    if(S.za){const x=z();t.push({x:x.l+(x.p===1?' (PRIO)':' (FLEX)'),c:x.tag})}
-    if(S.isKombi)t.push({x:'KOMBI-AUFTRAG',c:'t-kombi'});
-    if(S.fixOverride&&S.fixOverrideVon)t.push({x:'⚠️ OVERRIDE',c:'t-sonder'});
-    if(isZoll()&&S.za!=='zoll')t.push({x:'Zolldokument',c:'t-zoll'});
-    if(S.isLoose)t.push({x:'Loose Beladung',c:'t-loose'});
-    if(S.isKlein)t.push({x:'Kleingeräte',c:'t-klein'});
-    if(S.isSonder)t.push({x:'SONDERFALL',c:'t-sonder'});
-    if(S.isSonderverein)t.push({x:'SONDERVEREINBARUNG',c:'t-kombi'});
-    if(S.bezahlt)t.push({x:'Bezahlt',c:'t-ok'});
+    // Zahlungsart → Planner-Label-Mapping
+    if(S.za){
+        const planLabel = {
+            zahlungsziel:'ZZ (PRIO)',
+            fixtermin:'Fixtermin',
+            zoll:'Zoll',
+            vorkasse:'Vorkasse (FLEX)',
+            barzahler:'Barzahlung (PRIO)', // Planner-Label — beachte: Tool-intern ist Barzahler p:2 (FLEX)
+        };
+        const x=z(); t.push({x:planLabel[S.za]||x.l, c:x.tag});
+    }
+    // Versandart
+    if(S.va==='abholung') t.push({x:'ABHOLUNG', c:'t-abholung'});
+    // Auftrag-Flags
+    if(S.isKombi) t.push({x:'KOMBI-AUFTRAG', c:'t-kombi'});
+    if(isZoll()&&S.za!=='zoll') t.push({x:'Zoll', c:'t-zoll'});
+    if(S.isLoose) t.push({x:'Loose Beladung!', c:'t-loose'});
+    if(S.isKlein) t.push({x:'Kleingeräte', c:'t-klein'});
+    if(S.isSonder) t.push({x:'SONDERFALL', c:'t-sonder'});
+    if(S.isSonderverein) t.push({x:'SONDERVEREINBARUNG', c:'t-kombi'});
+    if(S.isPrivat) t.push({x:'Privatkunde', c:'t-privat'});
+    if(S.hasUit) t.push({x:'UIT-Code', c:'t-uit'});
+    // Status
+    if(S.isStorno) t.push({x:'STORNIERT', c:'t-storno'});
+    // Zahlung-Status
+    if(S.isWarteZahlung) t.push({x:'Warte auf Zahlung', c:'t-warte'});
+    if(S.bezahlt) t.push({x:'Bezahlt', c:'t-ok'});
+    // Kommunikation
+    if(S.isKontaktiert) t.push({x:'Kontaktiert', c:'t-kontaktiert'});
+    // Tool-intern (kein Planner-Label)
+    if(S.fixOverride&&S.fixOverrideVon) t.push({x:'⚠️ OVERRIDE', c:'t-sonder'});
     return t;
 }
 function tgsH(){return tgs().map(t=>`<span class="tag ${t.c}">${t.x}</span>`).join('')}
@@ -1876,6 +1908,27 @@ function sub4(){
         <input type="checkbox" ${S.isSonderverein?'checked':''} onclick="event.stopPropagation()">
         <span class="tag t-kombi">SONDERVEREINBARUNG</span>
         <span style="font-size:11px;color:var(--txd);margin-left:auto">Verkäufer ↔ Kunde haben für diesen Auftrag etwas Spezielles vereinbart</span>
+    </div>`;
+
+    // PRIVATKUNDE (Planner-Label — relevant für Rechnungs-/Lieferungs-Pfad)
+    b+=`<div class="ck ${S.isPrivat?'on':''}" onclick="S.isPrivat=!S.isPrivat;render()">
+        <input type="checkbox" ${S.isPrivat?'checked':''} onclick="event.stopPropagation()">
+        <span class="tag t-privat">Privatkunde</span>
+        <span style="font-size:11px;color:var(--txd);margin-left:auto">B2C statt B2B — abweichende Rechnungs-Logik</span>
+    </div>`;
+
+    // UIT-CODE (Planner-Label — Zoll/Tracking-Identifier)
+    b+=`<div class="ck ${S.hasUit?'on':''}" onclick="S.hasUit=!S.hasUit;render()">
+        <input type="checkbox" ${S.hasUit?'checked':''} onclick="event.stopPropagation()">
+        <span class="tag t-uit">UIT-Code</span>
+        <span style="font-size:11px;color:var(--txd);margin-left:auto">UIT-Code erforderlich (Sendungs-Tracking / Zoll)</span>
+    </div>`;
+
+    // STORNIERT (Planner-Label — Auftrag wurde storniert)
+    b+=`<div class="ck ${S.isStorno?'on':''}" onclick="S.isStorno=!S.isStorno;render()">
+        <input type="checkbox" ${S.isStorno?'checked':''} onclick="event.stopPropagation()">
+        <span class="tag t-storno">STORNIERT</span>
+        <span style="font-size:11px;color:var(--txd);margin-left:auto">Auftrag storniert — keine Bearbeitung mehr</span>
     </div>`;
 
     return S.sub>4?subD(4,l,s,b):S.sub===4?subA(4,l,b):''}
