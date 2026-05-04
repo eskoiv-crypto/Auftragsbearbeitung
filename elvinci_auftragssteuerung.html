@@ -508,6 +508,121 @@ body {
 }
 .dp-quick button:hover { background: var(--separator); color: var(--label); }
 
+/* ─── DAILY (Tagescheckliste-Card) — D2 ─── */
+.daily-card {
+    margin-bottom: 18px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-card);
+    padding: 16px 18px;
+    box-shadow: var(--shadow-1);
+}
+.daily-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.daily-head .h-title { font-size: 15px; font-weight: 600; color: var(--label); }
+.daily-head .h-count { font-size: 12px; color: var(--label-3); }
+.daily-tasks { display: flex; flex-wrap: wrap; gap: 8px; }
+.daily-task {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: var(--r-pill);
+    border: 1px solid var(--separator);
+    background: var(--bg-primary);
+    color: var(--label-2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s var(--ease-out);
+}
+.daily-task:hover { border-color: var(--separator-strong); color: var(--label); }
+.daily-task.done {
+    background: rgba(0, 200, 150, 0.10);
+    color: var(--success);
+    text-decoration: line-through;
+    border-color: rgba(0, 200, 150, 0.30);
+}
+.daily-task .ico { font-size: 13px; line-height: 1; }
+
+/* ─── ACTION DOCK (Bridges) — D2 ─── */
+.dock {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 24px 0 8px;
+}
+.dock-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-card);
+    padding: 12px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: inherit;
+    text-align: left;
+    transition: all 0.15s var(--ease-out);
+}
+.dock-btn:hover {
+    border-color: var(--separator-strong);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-2);
+}
+.dock-btn:active { transform: scale(0.98); }
+.dock-btn .ico {
+    width: 32px; height: 32px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    color: #fff;
+    font-size: 15px;
+}
+.dock-btn .ico.amm { background: var(--accent); }
+.dock-btn .ico.plan { background: var(--info); }
+.dock-btn .ico.share { background: var(--success); }
+.dock-btn .ico.esc { background: var(--error); }
+.dock-btn .meta { display: flex; flex-direction: column; min-width: 0; }
+.dock-btn .lbl { font-size: 13px; font-weight: 600; color: var(--label); line-height: 1.2; }
+.dock-btn .sub { font-size: 11px; color: var(--label-3); margin-top: 2px; line-height: 1.2; }
+@media (max-width: 700px) { .dock { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 420px) { .dock { grid-template-columns: 1fr; } }
+
+/* ─── ESKALATIONS-PAD (Sidebar) — D2 ─── */
+.esc-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-input);
+    margin-bottom: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: all 0.15s var(--ease-out);
+}
+.esc-btn:hover { border-color: var(--separator-strong); background: var(--bg-tertiary); }
+.esc-btn .ico { color: var(--error); font-size: 14px; line-height: 1; }
+.esc-btn .situ { flex: 1; font-size: 12px; color: var(--label); font-weight: 500; line-height: 1.3; }
+.esc-btn .to {
+    font-size: 10px;
+    color: var(--label-3);
+    background: var(--bg-tertiary);
+    padding: 2px 7px;
+    border-radius: var(--r-pill);
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
 /* ─── REDUCED MOTION ─── */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -1202,6 +1317,8 @@ const S={
     tpKommiDatum:'', tpLieferzeit:'', tpKundenTermin:'', tpShowCalc:false,
     // Generelle TODOs (für alle Aufträge)
     genTodos: [false, false, false, false, false, false, false, false, false],
+    // D2 — Tagescheckliste (Kapitel 7), reset täglich
+    dailyChecks: { date:'', tasks:{} },
 };
 
 // ═══════════════════════════════════════════════════════
@@ -1269,6 +1386,101 @@ function triggerImport(){
     inp.accept='.json,application/json';
     inp.onchange=(e)=>{ if(e.target.files[0]) importBackup(e.target.files[0]); };
     inp.click();
+}
+
+// ═══════════════════════════════════════════════════════
+// D2 — TAGESCHECKLISTE (Kapitel 7 Stellenbeschreibung)
+// ═══════════════════════════════════════════════════════
+const DAILY_TASKS=[
+    { id:'outlook',  l:'Outlook prüfen',                 ico:'📥' },
+    { id:'sales',    l:'Saleskärtchen-Eingang',          ico:'📋' },
+    { id:'pipeMorn', l:'Pipeline-Update vormittags',     ico:'📊' },
+    { id:'syncMorn', l:'Sync mit Dima 09:00',            ico:'⏰' },
+    { id:'syncAft',  l:'Sync mit Dima 14:00',            ico:'⏰' },
+    { id:'pipeAft',  l:'Pipeline-Update nachmittags',    ico:'📊' },
+    { id:'weekly',   l:'Wochenreport an Dustin',         ico:'📨', onlyDay:5 }, // 5 = Freitag
+    { id:'sharepoint',l:'SharePoint-Bereich aufräumen',  ico:'📂', onlyDay:5 },
+];
+
+function _todayKey(){ return new Date().toISOString().slice(0,10); }
+function getDailyChecks(){
+    if(!S.dailyChecks || S.dailyChecks.date !== _todayKey()){
+        S.dailyChecks = { date: _todayKey(), tasks: {} };
+    }
+    return S.dailyChecks.tasks;
+}
+function toggleDaily(id){
+    const t = getDailyChecks();
+    t[id] = !t[id];
+    lg(t[id]?'Tagespflicht erledigt':'Tagespflicht geöffnet', DAILY_TASKS.find(x=>x.id===id)?.l||id);
+    render();
+}
+
+// ═══════════════════════════════════════════════════════
+// D2 — BRIDGES (D3: mailto / Planner-Tab / SharePoint)
+// ═══════════════════════════════════════════════════════
+const PLANNER_TAB_URL='https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/_djb2_msteams_prefix_1232415732?context=%7B%22channelId%22%3A%2219%3A664f0fbb39ce4048b6e3c464fa0fc617%40thread.tacv2%22%7D&tenantId=3660667e-7bd7-4e05-978c-2f9861b45376';
+
+// Platzhalter — bitte später durch echte Empfänger ersetzen (siehe OPEN_QUESTIONS 0.4–0.8)
+const AMM_TO='stefan.dehm@amm-spedition.de,bjoern.stadler@amm-spedition.de';
+const SHAREPOINT_BASE='https://elvincide.sharepoint.com/sites/elvinci/Auftragsbearbeitung';
+
+function buildMailto(to, subject, body){
+    const enc=(s)=>encodeURIComponent(s||'');
+    return `mailto:${to}?subject=${enc(subject)}&body=${enc(body)}`;
+}
+
+function ammMail(){
+    const au=S.au||'(AU)', kunde=S.kunde||'(Kunde)';
+    const subject=`AMM-Anmeldung: ${au} — ${kunde}`;
+    const body=`Hallo Stefan, hallo Björn,\n\nbitte folgende Sendung bei AMM anmelden:\n\n  Auftragsnummer: ${au}\n  Kunde:         ${kunde}\n  Versandtag:    ${S.vDat||'[bitte ergänzen]'}\n  Anzahl Paletten: ${S.pal||'[bitte ergänzen]'}\n  Versandart:    ${VS[S.va]?.l||'[bitte ergänzen]'}\n${S.fixDatum?'  Fixtermin:     '+S.fixDatum+'\n':''}${S.isLoose?'  Loose Beladung: ja '+(S.looseInfo?'('+S.looseInfo+')':'')+'\n':''}${isZoll()?'  Zoll-Zielland: '+(S.zielland||'[bitte ergänzen]')+'\n':''}\nWeitere Notizen / Sondervereinbarungen:\n[ggf. ergänzen]\n\nDanke,\nJanna\nelvinci.de GmbH`;
+    window.open(buildMailto(AMM_TO, subject, body));
+    lg('AMM-Mail erzeugt', au+' an Stefan + Björn');
+    render();
+}
+
+function openPlanner(){
+    window.open(PLANNER_TAB_URL, '_blank');
+    lg('Planner geöffnet', 'MS Teams Planner-Tab');
+    render();
+}
+
+function openSharePoint(){
+    const au=S.au||'';
+    const url=au ? SHAREPOINT_BASE+'/'+encodeURIComponent(au) : SHAREPOINT_BASE;
+    window.open(url, '_blank');
+    lg('SharePoint geöffnet', au||'Auftragsbearbeitung-Wurzel');
+    render();
+}
+
+function openEscPad(){
+    S.sbOpen=true;
+    render();
+    setTimeout(()=>document.getElementById('esc-pad')?.scrollIntoView({behavior:'smooth',block:'start'}), 250);
+}
+
+// ═══════════════════════════════════════════════════════
+// D2 — ESKALATION (Kapitel 8 Stellenbeschreibung)
+// ═══════════════════════════════════════════════════════
+const ESCALATIONS=[
+    { id:'unreach', situ:'Kunde nicht erreichbar (Email + Anruf)',  to:'dustin@elvinci.de,siyad@elvinci.de', subj:'Eskalation: Kunde nicht erreichbar — {AU}', whatsapp:true },
+    { id:'sales',   situ:'Saleskärtchen unvollständig',              to:'verkauf@elvinci.de',                  subj:'Saleskärtchen unvollständig — {AU}' },
+    { id:'jtl',     situ:'JTL / Auftragsdaten-Diskrepanz',           to:'siyad@elvinci.de',                    subj:'JTL-Diskrepanz — {AU}' },
+    { id:'logi',    situ:'Logistik-Problem (AMM / Spedition / Zoll)',to:'dustin@elvinci.de',                   subj:'Logistik-Problem — {AU}' },
+    { id:'reklam',  situ:'Reklamation / Schadensfall / juristisch',  to:'dustin@elvinci.de',                   subj:'Reklamation — {AU}' },
+    { id:'recur',   situ:'Strukturelles / wiederkehrender Fehler',   to:'dustin@elvinci.de',                   subj:'Prozess-Eskalation — {AU}' },
+];
+
+function escalate(escId){
+    const e=ESCALATIONS.find(x=>x.id===escId);
+    if(!e) return;
+    const au=S.au||'(AU noch nicht erfasst)', kunde=S.kunde||'(Kunde nicht erfasst)';
+    const bIdx=activeBucket(), bName=BUCKETS[bIdx]?.l||'—';
+    const subject=e.subj.replace('{AU}', au);
+    const body=`Hallo,\n\nbitte um Rücksprache zum Auftrag:\n\n  AU:     ${au}\n  Kunde:  ${kunde}\n  Bucket: ${bName} (Bucket ${bIdx+1} von 7)\n\nSituation: ${e.situ}\n\nDetails:\n[bitte ergänzen]\n\nDanke,\nJanna`;
+    window.open(buildMailto(e.to, subject, body));
+    lg('Eskalation', e.situ+' → '+e.to);
+    render();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2107,8 +2319,47 @@ function rst(){
 // ═══════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════
+// D2 — Tagescheckliste-Card (Kapitel 7), persistent oben im Workflow
+function rDaily(){
+    const tasks=getDailyChecks();
+    const dow=new Date().getDay();
+    const filtered=DAILY_TASKS.filter(t=>!t.onlyDay||t.onlyDay===dow);
+    const done=filtered.filter(t=>tasks[t.id]).length;
+    return `<div class="daily-card no-print">
+        <div class="daily-head">
+            <span class="h-title">☀️ Heute</span>
+            <span class="h-count">${done} / ${filtered.length} erledigt</span>
+        </div>
+        <div class="daily-tasks">
+            ${filtered.map(t=>`<button onclick="toggleDaily('${t.id}')" class="daily-task ${tasks[t.id]?'done':''}"><span class="ico">${tasks[t.id]?'✓':t.ico}</span>${t.l}</button>`).join('')}
+        </div>
+    </div>`;
+}
+
+// D2 — Action Dock (Bridges nach D3): mailto + Planner-Tab + SharePoint + Eskalation
+function rActionDock(){
+    return `<div class="dock no-print">
+        <button onclick="ammMail()" class="dock-btn" title="Sendung bei AMM anmelden — Email an Stefan + Björn mit prefilled Daten">
+            <div class="ico amm">📧</div>
+            <div class="meta"><div class="lbl">AMM-Mail</div><div class="sub">Stefan + Björn</div></div>
+        </button>
+        <button onclick="openPlanner()" class="dock-btn" title="MS Teams Planner-Tab öffnen">
+            <div class="ico plan">📋</div>
+            <div class="meta"><div class="lbl">Planner</div><div class="sub">Teams öffnen</div></div>
+        </button>
+        <button onclick="openSharePoint()" class="dock-btn" title="SharePoint-Auftragsordner öffnen">
+            <div class="ico share">📂</div>
+            <div class="meta"><div class="lbl">SharePoint</div><div class="sub">${S.au||'Wurzel-Ordner'}</div></div>
+        </button>
+        <button onclick="openEscPad()" class="dock-btn" title="Eskalations-Pad in der Sidebar öffnen">
+            <div class="ico esc">⚠</div>
+            <div class="meta"><div class="lbl">Eskalation</div><div class="sub">an Dustin / Siyad</div></div>
+        </button>
+    </div>`;
+}
+
 function render(){
-    document.getElementById('app').innerHTML=rHead()+rProg()+'<div id="cs">'+rStg()+'</div>'+rGenTodos()+(S.ticketOk?rTick():'')+rSB();
+    document.getElementById('app').innerHTML=rHead()+rDaily()+rProg()+'<div id="cs">'+rStg()+'</div>'+rGenTodos()+(S.ticketOk?rTick():'')+rSB();
     save();
 }
 
@@ -2142,6 +2393,7 @@ function sw(title,owner,body){
         <p style="font-size:10px;color:var(--txd);margin-top:2px">Planner: <span style="color:var(--tx)">${b.l}</span> · ${b.hint}</p></div>
         <span style="font-size:11px;color:var(--txd);background:var(--sf);padding:4px 10px;border-radius:6px;border:1px solid var(--bd)">↝ ${owner}</span>
     </div>${body}
+    ${rActionDock()}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
         ${S.stage>0?`<button onclick="back()" class="btn btn-o" style="font-size:11px" title="Zurück zu: ${ST[S.stage-1]?.l || ''}">← ${ST[S.stage-1]?.l || 'Zurück'}</button>`:'<div></div>'}
         <button onclick="adv()" class="btn ${canAdv()?'btn-g':'btn-p'}" ${canAdv()?'':'disabled'}>
@@ -2650,6 +2902,18 @@ function rSB(){
         <div class="dv"></div>
         <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:8px">Audit (${S.audit.length})</p>
         <div style="max-height:200px;overflow-y:auto">${S.audit.slice().reverse().map(e=>`<div class="ar"><span class="mono" style="color:var(--txd)">${e.ts}</span><span style="color:var(--txd)">${e.st}</span><span style="color:var(--tx)">${e.a}${e.d?' — '+e.d:''}</span></div>`).join('')}</div>
+        <div class="dv"></div>
+        <p id="esc-pad" style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">⚠ Eskalation</p>
+        <p style="font-size:11px;color:var(--label-3);margin-bottom:10px;line-height:1.4">Klick öffnet Email mit prefilled Subject + Body. Audit-Eintrag wird automatisch gesetzt.</p>
+        ${ESCALATIONS.map(e=>`
+            <button onclick="escalate('${e.id}')" class="esc-btn" title="${esc(e.situ)} → ${esc(e.to)}">
+                <span class="ico">⚠</span>
+                <span class="situ">${esc(e.situ)}</span>
+                <span class="to">${esc(e.to.split('@')[0].split(',')[0])}</span>
+            </button>
+        `).join('')}
+        ${S.au?`<p style="font-size:10px;color:var(--label-3);margin-top:8px;text-align:center">Aktive AU: <span class="mono" style="color:var(--label-2)">${esc(S.au)}</span></p>`:'<p style="font-size:10px;color:var(--warning);margin-top:8px;text-align:center">⚠ Keine AU erfasst — Email-Body unvollständig</p>'}
+
         <div class="dv"></div>
         <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:8px">Datensicherung</p>
         <div style="display:flex;gap:6px;margin-bottom:6px">
