@@ -658,6 +658,55 @@ body {
     flex-shrink: 0;
 }
 
+/* ─── SETTINGS-SEKTION (D3c) — Akkordeon-Style ─── */
+.cfg-section {
+    border: 1px solid var(--separator);
+    border-radius: var(--r-input);
+    background: var(--bg-secondary);
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+.cfg-section summary {
+    padding: 9px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--label);
+    list-style: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s var(--ease-out);
+}
+.cfg-section summary::-webkit-details-marker { display: none; }
+.cfg-section summary::after {
+    content: '›';
+    margin-left: auto;
+    color: var(--label-3);
+    font-size: 16px;
+    line-height: 1;
+    transition: transform 0.2s var(--ease-out);
+}
+.cfg-section[open] summary::after { transform: rotate(90deg); }
+.cfg-section summary:hover { background: var(--bg-tertiary); }
+.cfg-section[open] summary { border-bottom: 1px solid var(--separator); }
+.cfg-section .cfg-body { padding: 12px; }
+.cfg-section .cfg-body .f { margin-bottom: 10px; }
+.cfg-section .cfg-body .f:last-child { margin-bottom: 0; }
+.cfg-section .cfg-body .f input,
+.cfg-section .cfg-body .f textarea { font-size: 12px; }
+.cfg-section .cfg-status {
+    font-size: 9px;
+    background: var(--bg-tertiary);
+    color: var(--label-3);
+    padding: 1px 6px;
+    border-radius: var(--r-pill);
+    font-weight: 500;
+}
+.cfg-section .cfg-status.ok { background: rgba(0,200,150,0.10); color: var(--success); }
+.cfg-section .cfg-status.miss { background: rgba(255,149,0,0.12); color: var(--warning); }
+
 /* ─── REDUCED MOTION ─── */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -1358,7 +1407,33 @@ const S={
     notifyFired: { date:'', slots:{} },
     // D3b — Wochenreport-Inhalte (manuell editiert, persistent)
     weeklyReport: { notes:'', engpaesse:'', klaerfaelle:'' },
+    // D3c — Adressen / Bridge-Targets, in der Sidebar editierbar
+    config: null, // wird durch _migrateConfig() befüllt
 };
+
+// D3c — Default-Adressen (Platzhalter — User editiert in Sidebar-Sektion „Adressen / Bridges")
+const _CONFIG_DEFAULTS={
+    amm:        { stefan:'stefan.dehm@amm-spedition.de',  bjoern:'bjoern.stadler@amm-spedition.de' },
+    esc:        { dustin:'dustin@elvinci.de',             siyad:'siyad@elvinci.de',                 verkauf:'verkauf@elvinci.de' },
+    zoll:       { name:'',                                email:'' },
+    report:     { to:'dustin@elvinci.de' },
+    sharepoint: { base:'https://elvincide.sharepoint.com/sites/elvinci/Auftragsbearbeitung' },
+    planner:    { tabUrl:'https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/_djb2_msteams_prefix_1232415732?context=%7B%22channelId%22%3A%2219%3A664f0fbb39ce4048b6e3c464fa0fc617%40thread.tacv2%22%7D&tenantId=3660667e-7bd7-4e05-978c-2f9861b45376' },
+};
+
+function _migrateConfig(){
+    if(!S.config) S.config={};
+    Object.entries(_CONFIG_DEFAULTS).forEach(([section, fields])=>{
+        if(!S.config[section]) S.config[section]={...fields};
+        else Object.entries(fields).forEach(([key, val])=>{
+            if(S.config[section][key]===undefined) S.config[section][key]=val;
+        });
+    });
+}
+
+function cfgIsDefault(section, key){
+    return S.config?.[section]?.[key] === _CONFIG_DEFAULTS[section]?.[key];
+}
 
 // ═══════════════════════════════════════════════════════
 // PERSISTENCE — D2 (DECISIONS.md)
@@ -1456,14 +1531,8 @@ function toggleDaily(id){
 }
 
 // ═══════════════════════════════════════════════════════
-// D2 — BRIDGES (D3: mailto / Planner-Tab / SharePoint)
+// D2 — BRIDGES (D3): mailto / Planner-Tab / SharePoint — alle Adressen aus S.config
 // ═══════════════════════════════════════════════════════
-const PLANNER_TAB_URL='https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/_djb2_msteams_prefix_1232415732?context=%7B%22channelId%22%3A%2219%3A664f0fbb39ce4048b6e3c464fa0fc617%40thread.tacv2%22%7D&tenantId=3660667e-7bd7-4e05-978c-2f9861b45376';
-
-// Platzhalter — bitte später durch echte Empfänger ersetzen (siehe OPEN_QUESTIONS 0.4–0.8)
-const AMM_TO='stefan.dehm@amm-spedition.de,bjoern.stadler@amm-spedition.de';
-const SHAREPOINT_BASE='https://elvincide.sharepoint.com/sites/elvinci/Auftragsbearbeitung';
-
 function buildMailto(to, subject, body){
     const enc=(s)=>encodeURIComponent(s||'');
     return `mailto:${to}?subject=${enc(subject)}&body=${enc(body)}`;
@@ -1471,22 +1540,28 @@ function buildMailto(to, subject, body){
 
 function ammMail(){
     const au=S.au||'(AU)', kunde=S.kunde||'(Kunde)';
+    const to=[S.config.amm.stefan, S.config.amm.bjoern].filter(Boolean).join(',');
+    if(!to){ alert('AMM-Empfänger sind leer — bitte Sidebar → ⚙ Adressen → AMM ausfüllen.'); return; }
     const subject=`AMM-Anmeldung: ${au} — ${kunde}`;
     const body=`Hallo Stefan, hallo Björn,\n\nbitte folgende Sendung bei AMM anmelden:\n\n  Auftragsnummer: ${au}\n  Kunde:         ${kunde}\n  Versandtag:    ${S.vDat||'[bitte ergänzen]'}\n  Anzahl Paletten: ${S.pal||'[bitte ergänzen]'}\n  Versandart:    ${VS[S.va]?.l||'[bitte ergänzen]'}\n${S.fixDatum?'  Fixtermin:     '+S.fixDatum+'\n':''}${S.isLoose?'  Loose Beladung: ja '+(S.looseInfo?'('+S.looseInfo+')':'')+'\n':''}${isZoll()?'  Zoll-Zielland: '+(S.zielland||'[bitte ergänzen]')+'\n':''}\nWeitere Notizen / Sondervereinbarungen:\n[ggf. ergänzen]\n\nDanke,\nJanna\nelvinci.de GmbH`;
-    window.open(buildMailto(AMM_TO, subject, body));
-    lg('AMM-Mail erzeugt', au+' an Stefan + Björn');
+    window.open(buildMailto(to, subject, body));
+    lg('AMM-Mail erzeugt', au+' → '+to);
     render();
 }
 
 function openPlanner(){
-    window.open(PLANNER_TAB_URL, '_blank');
+    const url=S.config.planner.tabUrl;
+    if(!url){ alert('Planner-URL ist leer — bitte Sidebar → ⚙ Adressen → MS Teams Planner ausfüllen.'); return; }
+    window.open(url, '_blank');
     lg('Planner geöffnet', 'MS Teams Planner-Tab');
     render();
 }
 
 function openSharePoint(){
+    const base=S.config.sharepoint.base;
+    if(!base){ alert('SharePoint-URL ist leer — bitte Sidebar → ⚙ Adressen → SharePoint ausfüllen.'); return; }
     const au=S.au||'';
-    const url=au ? SHAREPOINT_BASE+'/'+encodeURIComponent(au) : SHAREPOINT_BASE;
+    const url=au ? base+'/'+encodeURIComponent(au) : base;
     window.open(url, '_blank');
     lg('SharePoint geöffnet', au||'Auftragsbearbeitung-Wurzel');
     render();
@@ -1499,20 +1574,24 @@ function openEscPad(){
 }
 
 // ═══════════════════════════════════════════════════════
-// D2 — ESKALATION (Kapitel 8 Stellenbeschreibung)
+// D2 — ESKALATION (Kapitel 8 Stellenbeschreibung) — Adressen aus S.config.esc
 // ═══════════════════════════════════════════════════════
-const ESCALATIONS=[
-    { id:'unreach', situ:'Kunde nicht erreichbar (Email + Anruf)',  to:'dustin@elvinci.de,siyad@elvinci.de', subj:'Eskalation: Kunde nicht erreichbar — {AU}', whatsapp:true },
-    { id:'sales',   situ:'Saleskärtchen unvollständig',              to:'verkauf@elvinci.de',                  subj:'Saleskärtchen unvollständig — {AU}' },
-    { id:'jtl',     situ:'JTL / Auftragsdaten-Diskrepanz',           to:'siyad@elvinci.de',                    subj:'JTL-Diskrepanz — {AU}' },
-    { id:'logi',    situ:'Logistik-Problem (AMM / Spedition / Zoll)',to:'dustin@elvinci.de',                   subj:'Logistik-Problem — {AU}' },
-    { id:'reklam',  situ:'Reklamation / Schadensfall / juristisch',  to:'dustin@elvinci.de',                   subj:'Reklamation — {AU}' },
-    { id:'recur',   situ:'Strukturelles / wiederkehrender Fehler',   to:'dustin@elvinci.de',                   subj:'Prozess-Eskalation — {AU}' },
-];
+function getEscalations(){
+    const c=S.config.esc;
+    return [
+        { id:'unreach', situ:'Kunde nicht erreichbar (Email + Anruf)',  to:[c.dustin, c.siyad].filter(Boolean).join(','), subj:'Eskalation: Kunde nicht erreichbar — {AU}', whatsapp:true },
+        { id:'sales',   situ:'Saleskärtchen unvollständig',              to:c.verkauf, subj:'Saleskärtchen unvollständig — {AU}' },
+        { id:'jtl',     situ:'JTL / Auftragsdaten-Diskrepanz',           to:c.siyad,   subj:'JTL-Diskrepanz — {AU}' },
+        { id:'logi',    situ:'Logistik-Problem (AMM / Spedition / Zoll)',to:c.dustin,  subj:'Logistik-Problem — {AU}' },
+        { id:'reklam',  situ:'Reklamation / Schadensfall / juristisch',  to:c.dustin,  subj:'Reklamation — {AU}' },
+        { id:'recur',   situ:'Strukturelles / wiederkehrender Fehler',   to:c.dustin,  subj:'Prozess-Eskalation — {AU}' },
+    ];
+}
 
 function escalate(escId){
-    const e=ESCALATIONS.find(x=>x.id===escId);
+    const e=getEscalations().find(x=>x.id===escId);
     if(!e) return;
+    if(!e.to){ alert('Eskalations-Empfänger ist leer — bitte Sidebar → ⚙ Adressen → Eskalation ausfüllen.'); return; }
     const au=S.au||'(AU noch nicht erfasst)', kunde=S.kunde||'(Kunde nicht erfasst)';
     const bIdx=activeBucket(), bName=BUCKETS[bIdx]?.l||'—';
     const subject=e.subj.replace('{AU}', au);
@@ -1597,9 +1676,8 @@ function notifyStart(){
 
 // ═══════════════════════════════════════════════════════
 // D3b — WOCHENREPORT (D7 DECISIONS): PDF via jsPDF + Email-Bridge
+// (Empfänger jetzt aus S.config.report.to — D3c)
 // ═══════════════════════════════════════════════════════
-const REPORT_TO='dustin@elvinci.de'; // Platzhalter, später aus Config
-
 function _kw(date){
     // ISO 8601 Kalenderwoche
     const d=new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -1719,8 +1797,10 @@ function reportWeeklyMail(){
     if(wr.klaerfaelle)  body+=`KLÄRFÄLLE\n${wr.klaerfaelle}\n\n`;
     if(wr.notes)        body+=`NOTIZEN\n${wr.notes}\n\n`;
     body+='Das vollständige PDF mit Audit-Trail liegt im Download-Ordner — bitte vor dem Senden anhängen (mailto kann keine Anhänge tragen).\n\nDanke,\nJanna';
-    window.open(buildMailto(REPORT_TO, subject, body));
-    lg('Wochenreport-Email erzeugt', `KW ${r.kw} → ${REPORT_TO}`);
+    const to=S.config.report.to;
+    if(!to){ alert('Wochenreport-Empfänger ist leer — bitte Sidebar → ⚙ Adressen → Reporting ausfüllen.'); return; }
+    window.open(buildMailto(to, subject, body));
+    lg('Wochenreport-Email erzeugt', `KW ${r.kw} → ${to}`);
     render();
 }
 
@@ -3156,12 +3236,12 @@ function rSB(){
         <div style="max-height:200px;overflow-y:auto">${S.audit.slice().reverse().map(e=>`<div class="ar"><span class="mono" style="color:var(--txd)">${e.ts}</span><span style="color:var(--txd)">${e.st}</span><span style="color:var(--tx)">${e.a}${e.d?' — '+e.d:''}</span></div>`).join('')}</div>
         <div class="dv"></div>
         <p id="esc-pad" style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">⚠ Eskalation</p>
-        <p style="font-size:11px;color:var(--label-3);margin-bottom:10px;line-height:1.4">Klick öffnet Email mit prefilled Subject + Body. Audit-Eintrag wird automatisch gesetzt.</p>
-        ${ESCALATIONS.map(e=>`
-            <button onclick="escalate('${e.id}')" class="esc-btn" title="${esc(e.situ)} → ${esc(e.to)}">
+        <p style="font-size:11px;color:var(--label-3);margin-bottom:10px;line-height:1.4">Klick öffnet Email mit prefilled Subject + Body. Audit-Eintrag wird automatisch gesetzt. Empfänger in „⚙ Adressen" unten editierbar.</p>
+        ${getEscalations().map(e=>`
+            <button onclick="escalate('${e.id}')" class="esc-btn" title="${esc(e.situ)} → ${esc(e.to||'(kein Empfänger)')}">
                 <span class="ico">⚠</span>
                 <span class="situ">${esc(e.situ)}</span>
-                <span class="to">${esc(e.to.split('@')[0].split(',')[0])}</span>
+                <span class="to">${esc((e.to||'').split('@')[0].split(',')[0]||'—')}</span>
             </button>
         `).join('')}
         ${S.au?`<p style="font-size:10px;color:var(--label-3);margin-top:8px;text-align:center">Aktive AU: <span class="mono" style="color:var(--label-2)">${esc(S.au)}</span></p>`:'<p style="font-size:10px;color:var(--warning);margin-top:8px;text-align:center">⚠ Keine AU erfasst — Email-Body unvollständig</p>'}
@@ -3176,6 +3256,36 @@ function rSB(){
             <button onclick="reportWeeklyPdf()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px">📄 PDF speichern</button>
             <button onclick="reportWeeklyMail()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px">📨 Email an Dustin</button>
         </div>
+
+        <div class="dv"></div>
+        <p style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">⚙ Adressen / Bridges</p>
+        <p style="font-size:11px;color:var(--label-3);margin-bottom:10px;line-height:1.4">Editierbar — Änderungen sind sofort aktiv und persistent (localStorage). Felder leer lassen → Bridge wirft Hinweis.</p>
+        ${(()=>{
+            const sec=(label, statusOk, body)=>`<details class="cfg-section"><summary>${label}<span class="cfg-status ${statusOk?'ok':'miss'}">${statusOk?'OK':'leer'}</span></summary><div class="cfg-body">${body}</div></details>`;
+            const inp=(path, ph='')=>{
+                const [s,k]=path.split('.');
+                return `<input value="${esc(S.config[s][k])}" oninput="S.config['${s}']['${k}']=this.value;sfR()" placeholder="${esc(ph)}">`;
+            };
+            const txa=(path, ph='', minH=60)=>{
+                const [s,k]=path.split('.');
+                return `<textarea oninput="S.config['${s}']['${k}']=this.value;sfR()" placeholder="${esc(ph)}" style="min-height:${minH}px;font-size:10px;font-family:'SF Mono',monospace">${esc(S.config[s][k])}</textarea>`;
+            };
+            const ammOk=!!(S.config.amm.stefan||S.config.amm.bjoern);
+            const escOk=!!(S.config.esc.dustin&&S.config.esc.siyad&&S.config.esc.verkauf);
+            const zollOk=!!S.config.zoll.email;
+            const repOk=!!S.config.report.to;
+            const spOk=!!S.config.sharepoint.base;
+            const planOk=!!S.config.planner.tabUrl;
+            return [
+                sec('AMM-Spedition', ammOk, `<div class="f"><label>Stefan Dehm — Email</label>${inp('amm.stefan','stefan.dehm@…')}</div><div class="f"><label>Björn Stadler — Email</label>${inp('amm.bjoern','bjoern.stadler@…')}</div>`),
+                sec('Eskalation (Kapitel 8)', escOk, `<div class="f"><label>Dustin (Vorgesetzter)</label>${inp('esc.dustin','dustin@elvinci.de')}</div><div class="f"><label>Siyad</label>${inp('esc.siyad','siyad@…')}</div><div class="f"><label>Verkauf</label>${inp('esc.verkauf','verkauf@…')}</div>`),
+                sec('Zollagent (Phase 5.2.1)', zollOk, `<div class="f"><label>Name / Firma</label>${inp('zoll.name','z. B. Müller Zollservice')}</div><div class="f"><label>Email</label>${inp('zoll.email','zollagent@…')}</div>`),
+                sec('Reporting (Wochenreport)', repOk, `<div class="f"><label>Empfänger</label>${inp('report.to','dustin@elvinci.de')}</div>`),
+                sec('SharePoint', spOk, `<div class="f"><label>Auftragsbearbeitung-Basis-URL</label>${inp('sharepoint.base','https://elvincide.sharepoint.com/…')}</div><p style="font-size:10px;color:var(--label-3);margin-top:-4px">Tool hängt /AU automatisch hinten dran.</p>`),
+                sec('MS Teams Planner', planOk, `<div class="f"><label>Tab-URL</label>${txa('planner.tabUrl','https://teams.microsoft.com/…',64)}<div class="h">In MS Teams: Tab → … → Link kopieren</div></div>`),
+            ].join('');
+        })()}
+        <p style="font-size:10px;color:var(--label-3);margin-top:8px;text-align:center;line-height:1.4">Status-Pille zeigt „OK" wenn Feld befüllt, „leer" wenn nicht. Backup-Datei sichert auch die Adressen mit ab.</p>
 
         <div class="dv"></div>
         <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:8px">Datensicherung</p>
@@ -3559,6 +3669,7 @@ const _restoredAt=loadDraft();
 if(!S.dailyChecks)  S.dailyChecks  = { date:'', tasks:{} };
 if(!S.notifyFired)  S.notifyFired  = { date:'', slots:{} };
 if(!S.weeklyReport) S.weeklyReport = { notes:'', engpaesse:'', klaerfaelle:'' };
+_migrateConfig(); // D3c — befüllt fehlende S.config-Felder mit Defaults
 if(_restoredAt){
     lg('Stand wiederhergestellt', new Date(_restoredAt).toLocaleString('de-DE'));
 }else{
