@@ -550,6 +550,41 @@ body {
 }
 .daily-task .ico { font-size: 13px; line-height: 1; }
 
+/* ─── NOTIFY-BADGE (D3a) ─── */
+.notify-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    font-size: 11px;
+    font-weight: 500;
+    font-family: inherit;
+    border: 1px solid transparent;
+    cursor: default;
+    transition: all 0.15s var(--ease-out);
+}
+.notify-badge.granted {
+    background: rgba(0, 200, 150, 0.10);
+    color: var(--success);
+    border-color: rgba(0, 200, 150, 0.25);
+}
+.notify-badge.enable {
+    background: rgba(0, 113, 227, 0.08);
+    color: var(--accent);
+    border-color: rgba(0, 113, 227, 0.30);
+    cursor: pointer;
+}
+.notify-badge.enable:hover {
+    background: rgba(0, 113, 227, 0.14);
+    border-color: var(--accent);
+}
+.notify-badge.denied {
+    background: rgba(120, 120, 128, 0.12);
+    color: var(--label-3);
+    border-color: var(--separator);
+}
+
 /* ─── ACTION DOCK (Bridges) — D2 ─── */
 .dock {
     display: grid;
@@ -1319,6 +1354,8 @@ const S={
     genTodos: [false, false, false, false, false, false, false, false, false],
     // D2 — Tagescheckliste (Kapitel 7), reset täglich
     dailyChecks: { date:'', tasks:{} },
+    // D3a — Browser-Notification-Tracking, reset täglich
+    notifyFired: { date:'', slots:{} },
 };
 
 // ═══════════════════════════════════════════════════════
@@ -1481,6 +1518,79 @@ function escalate(escId){
     window.open(buildMailto(e.to, subject, body));
     lg('Eskalation', e.situ+' → '+e.to);
     render();
+}
+
+// ═══════════════════════════════════════════════════════
+// D3a — BROWSER-NOTIFICATIONS für Sync-Slots + Tagespflichten
+// ═══════════════════════════════════════════════════════
+const NOTIFY_SLOTS=[
+    { id:'syncMorn', label:'Sync mit Dima 09:00',                hour:9,  minute:0, taskId:'syncMorn', windowMin:30 },
+    { id:'syncAft',  label:'Sync mit Dima 14:00',                hour:14, minute:0, taskId:'syncAft',  windowMin:30 },
+    { id:'weekly',   label:'Wochenreport an Dustin (Freitag)',   hour:10, minute:0, taskId:'weekly',   windowMin:240, onlyDay:5 },
+];
+
+let _notifyTimer=null;
+
+function notifyAvailable(){ return typeof Notification!=='undefined'; }
+function notifyPermission(){ return notifyAvailable() ? Notification.permission : 'unsupported'; }
+
+async function notifyRequest(){
+    if(!notifyAvailable()){ alert('Browser unterstützt keine Benachrichtigungen.'); return; }
+    if(Notification.permission==='granted'){ render(); return; }
+    if(Notification.permission==='denied'){
+        alert('Benachrichtigungen sind im Browser blockiert. Bitte in den Browser-Einstellungen für diese Seite freigeben (Schloss-Symbol in der Adressleiste).');
+        return;
+    }
+    const result=await Notification.requestPermission();
+    lg('Notifications-Permission', result);
+    if(result==='granted'){
+        try{ new Notification('elvinci · Erinnerungen aktiv', { body:'Du wirst zu Sync-Slots und Wochenreport erinnert.', tag:'init' }); }catch(e){}
+        notifyStart();
+    }
+    render();
+}
+
+function _firedToday(){
+    if(!S.notifyFired || S.notifyFired.date !== _todayKey()){
+        S.notifyFired={ date:_todayKey(), slots:{} };
+    }
+    return S.notifyFired.slots;
+}
+
+function _shouldFire(slot, now){
+    if(slot.onlyDay !== undefined && slot.onlyDay !== now.getDay()) return false;
+    const tasks=getDailyChecks();
+    if(tasks[slot.taskId]) return false;          // schon erledigt
+    const fired=_firedToday();
+    if(fired[slot.id]) return false;              // heute schon benachrichtigt
+    const slotMin=slot.hour*60 + slot.minute;
+    const nowMin=now.getHours()*60 + now.getMinutes();
+    return nowMin >= slotMin && nowMin <= slotMin + slot.windowMin;
+}
+
+function notifyCheck(){
+    if(notifyPermission()!=='granted') return;
+    const now=new Date();
+    NOTIFY_SLOTS.forEach(slot=>{
+        if(_shouldFire(slot, now)){
+            try{
+                new Notification('elvinci · '+slot.label, {
+                    body:'Tagespflicht ist fällig — bitte erledigen oder als erledigt markieren.',
+                    tag:slot.id,
+                    requireInteraction:false,
+                });
+                _firedToday()[slot.id]=new Date().toISOString();
+                lg('Erinnerung gesendet', slot.label);
+                save();
+            }catch(e){ console.warn('Notification failed:', e); }
+        }
+    });
+}
+
+function notifyStart(){
+    if(_notifyTimer) clearInterval(_notifyTimer);
+    notifyCheck();
+    _notifyTimer=setInterval(notifyCheck, 60*1000);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2320,15 +2430,26 @@ function rst(){
 // RENDER
 // ═══════════════════════════════════════════════════════
 // D2 — Tagescheckliste-Card (Kapitel 7), persistent oben im Workflow
+// D3a — Permission-Pille rechts im Header
 function rDaily(){
     const tasks=getDailyChecks();
     const dow=new Date().getDay();
     const filtered=DAILY_TASKS.filter(t=>!t.onlyDay||t.onlyDay===dow);
     const done=filtered.filter(t=>tasks[t.id]).length;
+    const perm=notifyPermission();
+    let notifyBadge='';
+    if(perm==='granted'){
+        notifyBadge=`<span class="notify-badge granted" title="Browser-Erinnerungen aktiv für Sync 09:00, 14:00 und Wochenreport">🔔 Erinnerungen aktiv</span>`;
+    } else if(perm==='default'){
+        notifyBadge=`<button onclick="notifyRequest()" class="notify-badge enable" title="Erlaubt diesem Tool, Dich zu Sync-Slots und Wochenreport zu erinnern">🔔 Erinnerungen aktivieren</button>`;
+    } else if(perm==='denied'){
+        notifyBadge=`<span class="notify-badge denied" title="Im Browser für diese Seite blockiert — Schloss-Symbol in der Adressleiste anklicken zum Freigeben">🔕 blockiert</span>`;
+    }
     return `<div class="daily-card no-print">
         <div class="daily-head">
             <span class="h-title">☀️ Heute</span>
             <span class="h-count">${done} / ${filtered.length} erledigt</span>
+            <span style="margin-left:auto">${notifyBadge}</span>
         </div>
         <div class="daily-tasks">
             ${filtered.map(t=>`<button onclick="toggleDaily('${t.id}')" class="daily-task ${tasks[t.id]?'done':''}"><span class="ico">${tasks[t.id]?'✓':t.ico}</span>${t.l}</button>`).join('')}
@@ -3298,6 +3419,8 @@ if(_restoredAt){
     lg('Workflow gestartet', new Date().toLocaleDateString('de-DE'));
 }
 render();
+// D3a — Notification-Timer starten, wenn bereits Permission da ist
+if(notifyPermission()==='granted') notifyStart();
 </script>
 </body>
 </html>
