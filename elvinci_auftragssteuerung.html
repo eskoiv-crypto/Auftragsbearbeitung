@@ -665,6 +665,76 @@ body {
     flex-shrink: 0;
 }
 
+/* ─── GATES (Wenn-Dann) — Pflicht-Karte über den Nav-Buttons ─── */
+.gates-card {
+    margin: 24px 0 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-card);
+    padding: 14px 18px;
+    box-shadow: var(--shadow-1);
+    transition: border-color 0.2s var(--ease-out), background 0.2s var(--ease-out);
+}
+.gates-card.gates-ok {
+    border-color: rgba(0, 200, 150, 0.45);
+    background: rgba(0, 200, 150, 0.04);
+}
+.gates-card.gates-pending {
+    border-color: rgba(255, 149, 0, 0.45);
+    background: rgba(255, 149, 0, 0.03);
+}
+.gates-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.gates-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--label);
+}
+.gates-card.gates-ok .gates-title { color: var(--success); }
+.gates-card.gates-pending .gates-title { color: var(--warning); }
+.gates-meta {
+    font-size: 11px;
+    color: var(--label-3);
+    font-weight: 500;
+}
+.gates-list { display: grid; gap: 2px; }
+.gate-row {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--separator);
+}
+.gate-row:last-child { border-bottom: none; }
+.gate-row .mark {
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.4;
+}
+.gate-row.ok .mark { color: var(--success); }
+.gate-row.ok .gate-label {
+    color: var(--label-2);
+    text-decoration: line-through;
+    text-decoration-color: rgba(0, 200, 150, 0.5);
+    opacity: 0.75;
+}
+.gate-row.open .mark { color: var(--warning); }
+.gate-row.open .gate-label { color: var(--label); font-weight: 500; }
+.gate-hint {
+    grid-column: 2;
+    font-size: 11px;
+    color: var(--label-3);
+    font-style: italic;
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
 /* ─── ORDER-LIST (Tier 1.2) — Linke Sidebar ─── */
 .sb-left {
     position: fixed;
@@ -1548,6 +1618,14 @@ const S={
     tpKommiDatum:'', tpLieferzeit:'', tpKundenTermin:'', tpShowCalc:false,
     // Generelle TODOs (für alle Aufträge)
     genTodos: [false, false, false, false, false, false, false, false, false],
+    // Wenn-Dann — neue Pflichtfelder pro Bucket
+    jtlAbgleich: { mengen:false, versandart:false, zz:false }, // Bucket 2 Pflicht
+    rePdfAttached: false,             // Bucket 2 → 3 Pflicht
+    rePdfAttachedAt: '',              // Timestamp wenn gesetzt
+    warenwert: '',                    // Bucket 4 Pflicht (Versand) / 5.2.1 Zoll
+    ammMailSent: false,               // Bucket 4 Pflicht (Versand)
+    zollMailSent: false,              // Bucket 4/5 Pflicht bei Zoll
+    endChecklist: { teams:false, pipeline:false, sharepoint:false }, // Bucket 7 Abschluss-Pflicht
     // D2 — Tagescheckliste (Kapitel 7), reset täglich
     dailyChecks: { date:'', tasks:{} },
     // D3a — Browser-Notification-Tracking, reset täglich
@@ -1635,6 +1713,9 @@ function _resetOrderFields(){
     S.audit=[]; S.komm=[]; S.done=[];
     S.jtlZZ='7';
     S.jtlAppointmentStatus='erfuellbar';
+    // Wenn-Dann — geschachtelte Pflicht-Objekte zurücksetzen statt null
+    S.jtlAbgleich={ mengen:false, versandart:false, zz:false };
+    S.endChecklist={ teams:false, pipeline:false, sharepoint:false };
 }
 
 function _orderActiveBucket(o){
@@ -1881,6 +1962,7 @@ function ammMail(){
     const subject=`AMM-Anmeldung: ${au} — ${kunde}`;
     const body=`Hallo Stefan, hallo Björn,\n\nbitte folgende Sendung bei AMM anmelden:\n\n  Auftragsnummer: ${au}\n  Kunde:         ${kunde}\n  Versandtag:    ${S.vDat||'[bitte ergänzen]'}\n  Anzahl Paletten: ${S.pal||'[bitte ergänzen]'}\n  Versandart:    ${VS[S.va]?.l||'[bitte ergänzen]'}\n${S.fixDatum?'  Fixtermin:     '+S.fixDatum+'\n':''}${S.isLoose?'  Loose Beladung: ja '+(S.looseInfo?'('+S.looseInfo+')':'')+'\n':''}${isZoll()?'  Zoll-Zielland: '+(S.zielland||'[bitte ergänzen]')+'\n':''}\nWeitere Notizen / Sondervereinbarungen:\n[ggf. ergänzen]\n\nDanke,\nJanna\nelvinci.de GmbH`;
     window.open(buildMailto(to, subject, body));
+    S.ammMailSent=true; // Wenn-Dann-Marker für Stage-3-Gate
     lg('AMM-Mail erzeugt', au+' → '+to);
     render();
 }
@@ -1913,6 +1995,7 @@ function zollMail(){
     const subject=`Zoll-Anmeldung: ${au} — ${kunde}`;
     const body=`${greet}\n\nbitte folgende Sendung zur Zollabwicklung vorbereiten:\n\n  Auftragsnummer:  ${au}\n  Kunde:           ${kunde}\n  Zielland:        ${S.zielland||'[bitte ergänzen]'}\n  Rechnungsnummer: ${S.reZoll||S.re||'[bitte ergänzen]'}\n  Anzahl Paletten: ${S.pal||'[bitte ergänzen]'}\n  Versandtag:      ${S.vDat||'[bitte ergänzen]'}\n  Warenwert:       [bitte ergänzen]\n${S.isLoose?'  Loose Beladung:  ja '+(S.looseInfo?'('+S.looseInfo+')':'')+'\n':''}\nDie Rechnung als PDF folgt — bitte vor dem Senden anhängen (mailto kann keine Anhänge tragen).\n\nDanke,\nJanna\nelvinci.de GmbH`;
     window.open(buildMailto(to, subject, body));
+    S.zollMailSent=true; // Wenn-Dann-Marker für Stage-3-Gate
     lg('Zoll-Mail erzeugt', au+' → '+to);
     render();
 }
@@ -2903,43 +2986,89 @@ function editSub(i){S.sub=i;render()}
 // ═══════════════════════════════════════════════════════
 // STAGE ADVANCE
 // ═══════════════════════════════════════════════════════
-function canAdv(){
-    const i=S.stage;
-    const isPrio2 = S.za==='vorkasse'||S.za==='barzahler';
-    const allTodosDone = genTodosCount() === getActiveGenTodos().length;
-    switch(i){
-        case 0:return S.sub>=6;
-        case 1:
-            // Zoll: RE kommt nach Beladung - nur Frachtkosten bei Lieferung prüfen
-            if(isZoll()) return isSp()?S.frachtOk:true;
-            // Lieferung: Checkbox Frachtkosten ergänzt + Lieferzeit Pflicht (wenn Terminrechner relevant)
-            if(isSp()){
-                if(!S.frachtOk)return false;
-                // Lieferzeit nur Pflicht wenn Kommidatum gesetzt UND kein Fixtermin
-                // (Bei Fixtermin ist Lieferdatum bereits vorgegeben, Terminrechner wird nicht angezeigt)
-                if(S.tpKommiDatum && !isFix() && !S.tpLieferzeit)return false;
-            }
-            return S.reOk;
-        case 2:
-            // Grundvoraussetzungen: Datum + Kapazität
-            if(!S.kDat || !S.kapOk) return false;
-            // Fixtermin: Prüfung muss abgeschlossen sein
-            if(isFix() && S.fixDatum) {
-                if(S.fixPruefung === 'machbar') return true;
-                if(S.fixPruefung === 'nicht_machbar' && S.fixAlternworfen) return true;
-                return false; // Prüfung noch nicht durchgeführt
-            }
-            return true;
-        case 3:
-            // Alle TODOs müssen erledigt sein
-            if(!allTodosDone) return false;
-            // Vorkasse: Ticket kann OHNE Zahlungseingang erstellt werden (Status: Warten auf Zahlung)
-            // AMM-Anmeldung ist optional - erfolgt erst nach Zahlungseingang
-            if(needsPayBefore()) return true; // Ticket erstellen erlaubt, auch ohne Zahlung
-            return S.ammAngemeldet; // Alle anderen: AMM checkbox Pflicht
-        default:return false;
+// Wenn-Dann-Logik — alle Pflichten pro Stage als strukturierte Liste.
+// canAdv() wird zu getGates().allOk; UI rendert die Liste live (rGates).
+// Hart, kein Override (User-Entscheidung 2026-05-04). Hinweis-Texte zeigen
+// Janna direkt wo sie den Pflicht-Schritt erfüllen muss.
+function getGates(){
+    const gates=[], i=S.stage;
+    const allTodosDone=genTodosCount()===getActiveGenTodos().length;
+
+    if(i===0){
+        // Stage 0 — Erfassung (Bucket „verkauf")
+        gates.push({ label:'Alle Erfassungs-Schritte (Sub 0–6) durchlaufen', ok:S.sub>=6, hint:'Klick durch alle Sub-Stages oben durch' });
+        gates.push({ label:'Auftragsnummer (AU)', ok:!!S.au, hint:'„AU…"-Feld in Sub 0 ausfüllen' });
+        gates.push({ label:'Kunde', ok:!!S.kunde });
+        gates.push({ label:'Versandart gewählt', ok:!!S.va });
+        gates.push({ label:'Zahlungsart gewählt', ok:!!S.za });
+        gates.push({ label:'Artikelanzahl', ok:!!S.artAnz });
+        if(isZoll()) gates.push({ label:'Zoll-Zielland', ok:!!S.zielland });
+        if(S.isSonder) gates.push({ label:'Sonderfall begründet (>5 Zeichen)', ok:S.sonderText.trim().length>5 });
+        if(isFix()) gates.push({ label:'Fixtermin-Datum gesetzt', ok:!!S.fixDatum });
+        if(S.isLoose) gates.push({ label:'Loose: Beladungshinweis', ok:!!S.looseInfo });
     }
+    else if(i===1){
+        // Stage 1 — Rechnung (Bucket „rechnung")
+        if(isZoll()){
+            // Zoll-Sonderlogik: RE kommt nach LKW-Beladung — bei Lieferung trotzdem Frachtkosten
+            if(isSp()) gates.push({ label:'Frachtkosten im JTL-Auftrag ergänzt', ok:S.frachtOk });
+        } else {
+            if(isSp()){
+                gates.push({ label:'Frachtkosten geklärt', ok:S.frachtOk });
+                if(S.tpKommiDatum && !isFix()){
+                    gates.push({ label:'Lieferzeit gesetzt (Terminrechner)', ok:!!S.tpLieferzeit });
+                }
+            }
+            gates.push({ label:'Rechnung erstellt + versendet', ok:S.reOk });
+            gates.push({ label:'RE-Nummer eingetragen', ok:!!S.re });
+        }
+        gates.push({ label:'JTL-Match generiert', ok:!!S.jtlResult, hint:'„Passenden Text finden" im JTL-Generator klicken' });
+        gates.push({ label:'JTL-Abgleich: Mengen ✓', ok:!!S.jtlAbgleich?.mengen, hint:'Saleskärtchen ↔ JTL — Stückzahl prüfen' });
+        gates.push({ label:'JTL-Abgleich: Versandart ✓', ok:!!S.jtlAbgleich?.versandart, hint:'Saleskärtchen ↔ JTL — Abholung/Spedition prüfen' });
+        gates.push({ label:'JTL-Abgleich: Zahlungsziel ✓', ok:!!S.jtlAbgleich?.zz, hint:'Saleskärtchen ↔ JTL — ZZ/Vorkasse/Barzahler prüfen' });
+        gates.push({ label:'Rechnungs-PDF in Teamskärtchen angehängt', ok:!!S.rePdfAttached, hint:'„📎 Rechnung angehängt"-Knopf klicken (setzt Audit-Eintrag)' });
+    }
+    else if(i===2){
+        // Stage 2 — Kommi (Bucket „kommi")
+        gates.push({ label:'Kommissionierungs-Datum gesetzt', ok:!!S.kDat });
+        gates.push({ label:'Kapazität bestätigt', ok:S.kapOk });
+        if(isFix() && S.fixDatum){
+            const ok = S.fixPruefung==='machbar' || (S.fixPruefung==='nicht_machbar' && !!S.fixAlternworfen);
+            gates.push({ label:'Fixtermin-Machbarkeit geprüft', ok, hint:'„Machbar" oder „Nicht machbar + Alternativdatum" wählen' });
+        }
+    }
+    else if(i===3){
+        // Stage 3 — AMM-Anmeldung (Buckets „versand"/„abholung"/„angemeldet"/„beendet")
+        gates.push({ label:'Alle generellen TODOs erledigt', ok:allTodosDone });
+        if(isSp()){
+            gates.push({ label:'Versanddatum gesetzt', ok:!!S.vDat, hint:'In Erfassung Sub 5 oder hier nachholen' });
+            gates.push({ label:'Palettenanzahl', ok:!!S.pal });
+            gates.push({ label:'Warenwert eingetragen', ok:!!S.warenwert, hint:'Pflicht für AMM/Zoll-Anmeldung' });
+            gates.push({ label:'AMM-Mail abgeschickt (Audit)', ok:!!S.ammMailSent, hint:'Action-Dock → 📧 AMM-Mail klicken' });
+        } else if(isAbh()){
+            gates.push({ label:'Abholtermin abgestimmt', ok:!!S.aTerm });
+            gates.push({ label:'Kunde kontaktiert (Tag oder Anruf-Audit)', ok:S.isKontaktiert, hint:'Tag „Kontaktiert" setzen oder Eskalation/Anruf-Audit' });
+        }
+        if(isZoll()){
+            gates.push({ label:'Zollagent-Mail abgeschickt (Audit)', ok:!!S.zollMailSent, hint:'Action-Dock → 🌍 Zollagent klicken' });
+            gates.push({ label:'LKW-Beladung dokumentiert', ok:S.lkwOk });
+            gates.push({ label:'Finale Zoll-Rechnung (RE-Nr nach Beladung)', ok:!!S.reZoll });
+        }
+        if(!needsPayBefore()){
+            gates.push({ label:'AMM-Anmeldung bestätigt', ok:S.ammAngemeldet });
+        }
+        gates.push({ label:'Bezahlt-Status gesetzt', ok:S.bezahlt, hint:'Häkchen oder Eskalation an Dustin bei Zahlungs-Verzug' });
+        // End-of-Order-Check (Kapitel 6 + 6.6)
+        gates.push({ label:'Teamskärtchen geschlossen', ok:!!S.endChecklist?.teams, hint:'Im Planner Karte auf „Beendet" verschieben' });
+        gates.push({ label:'Pipeline-Excel auf „erledigt"', ok:!!S.endChecklist?.pipeline, hint:'Spalten N + Q (bezahlt + erledigt) in der SharePoint-Excel' });
+        gates.push({ label:'SharePoint-Ablage komplett', ok:!!S.endChecklist?.sharepoint, hint:'Rechnung, Lieferschein, Mailverkehr abgelegt' });
+    }
+
+    const open=gates.filter(g=>!g.ok).length;
+    return { gates, allOk:open===0, openCount:open, doneCount:gates.length-open, total:gates.length };
 }
+
+function canAdv(){ return getGates().allOk; }
 
 function adv(){
     if(!canAdv())return;
@@ -3140,12 +3269,40 @@ function sw(title,owner,body){
         <span style="font-size:11px;color:var(--txd);background:var(--sf);padding:4px 10px;border-radius:6px;border:1px solid var(--bd)">↝ ${owner}</span>
     </div>${body}
     ${rActionDock()}
+    ${rGates()}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
         ${S.stage>0?`<button onclick="back()" class="btn btn-o" style="font-size:11px" title="Zurück zu: ${ST[S.stage-1]?.l || ''}">← ${ST[S.stage-1]?.l || 'Zurück'}</button>`:'<div></div>'}
-        <button onclick="adv()" class="btn ${canAdv()?'btn-g':'btn-p'}" ${canAdv()?'':'disabled'}>
+        <button onclick="adv()" class="btn ${canAdv()?'btn-g':'btn-p'}" ${canAdv()?'':'disabled'} title="${canAdv()?'Alle Pflichten erfüllt — Klick weiter':getGates().openCount+' Pflicht(en) offen — siehe Karte oben'}">
             ${S.stage===ST.length-1?'✓ Abschließen & Ticket':'Weiter → '+ST[Math.min(S.stage+1,ST.length-1)].l}
         </button>
     </div>`}
+
+// Wenn-Dann — Live-Pflicht-Karte über den Nav-Buttons
+function rGates(){
+    const g=getGates();
+    if(g.total===0) return '';
+    const isLast=S.stage===ST.length-1;
+    const cls=g.allOk?'gates-ok':'gates-pending';
+    const icon=g.allOk?'✓':'○';
+    const titleText=g.allOk
+        ? `Alle ${g.total} Pflichten erfüllt — Bucket-Wechsel freigegeben`
+        : `${g.doneCount} / ${g.total} Pflichten erfüllt · ${g.openCount} offen`;
+    return `<div class="gates-card no-print ${cls}">
+        <div class="gates-head">
+            <span class="gates-title">${icon} ${titleText}</span>
+            <span class="gates-meta">${isLast?'vor Abschluss & Ticket':'vor Bucket-Wechsel'}</span>
+        </div>
+        <div class="gates-list">
+            ${g.gates.map(gate=>`<div class="gate-row ${gate.ok?'ok':'open'}">
+                <span class="mark">${gate.ok?'✓':'○'}</span>
+                <div>
+                    <span class="gate-label">${esc(gate.label)}</span>
+                    ${gate.hint && !gate.ok?`<div class="gate-hint">${esc(gate.hint)}</div>`:''}
+                </div>
+            </div>`).join('')}
+        </div>
+    </div>`;
+}
 
 // ═══════════════════════════════════════════════════════
 // STAGE 0 — ERFASSUNG
@@ -3479,6 +3636,36 @@ function rS1(){
     }
     // Add JTL Generator
     b += rJTLGenerator();
+
+    // Wenn-Dann — JTL-Abgleich (3 Häkchen) Pflicht (Phase 4.2 Stellenbeschreibung)
+    b += `<div class="dv"></div>
+        <div style="background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-card);padding:14px 18px;box-shadow:var(--shadow-1);margin-bottom:14px">
+            <p style="font-size:13px;font-weight:600;color:var(--label);margin-bottom:4px">JTL-Abgleich (Phase 4.2)</p>
+            <p style="font-size:11px;color:var(--label-3);margin-bottom:12px;line-height:1.4">Saleskärtchen ↔ JTL Position für Position prüfen. Bei Diskrepanz <strong>vor</strong> Rechnungsstellung klären — niemals einfach „eine Variante" wählen.</p>
+            <div class="ck ${S.jtlAbgleich?.mengen?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.mengen=!S.jtlAbgleich.mengen;if(S.jtlAbgleich.mengen)lg('JTL-Abgleich','Mengen ✓');render()">
+                <input type="checkbox" ${S.jtlAbgleich?.mengen?'checked':''} onclick="event.stopPropagation()">
+                <span>Mengen / Stückzahl stimmt mit Saleskärtchen überein</span>
+            </div>
+            <div class="ck ${S.jtlAbgleich?.versandart?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.versandart=!S.jtlAbgleich.versandart;if(S.jtlAbgleich.versandart)lg('JTL-Abgleich','Versandart ✓');render()">
+                <input type="checkbox" ${S.jtlAbgleich?.versandart?'checked':''} onclick="event.stopPropagation()">
+                <span>Versandart (Abholung / Spedition) stimmt überein</span>
+            </div>
+            <div class="ck ${S.jtlAbgleich?.zz?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.zz=!S.jtlAbgleich.zz;if(S.jtlAbgleich.zz)lg('JTL-Abgleich','Zahlungsziel ✓');render()" style="margin-bottom:0">
+                <input type="checkbox" ${S.jtlAbgleich?.zz?'checked':''} onclick="event.stopPropagation()">
+                <span>Zahlungsziel (Vorkasse / ZZ X Tage / Barzahler) stimmt überein</span>
+            </div>
+        </div>`;
+
+    // Wenn-Dann — Rechnungs-PDF in Teamskärtchen angehängt (Phase 4.5)
+    b += `<div style="background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-card);padding:14px 18px;box-shadow:var(--shadow-1);margin-bottom:14px">
+            <p style="font-size:13px;font-weight:600;color:var(--label);margin-bottom:4px">Rechnungs-PDF im Teamskärtchen (Phase 4.5)</p>
+            <p style="font-size:11px;color:var(--label-3);margin-bottom:12px;line-height:1.4">Rechnung aus Outlook (PDF) herunterladen → in das zugehörige Teamskärtchen als Anhang einfügen. Eine versendete Rechnung ohne Anhang gilt als <strong>nicht abgelegt</strong>.</p>
+            ${S.rePdfAttached
+                ? `<div class="al ao" style="margin-bottom:0"><div class="i">✓</div><div><strong>PDF angehängt</strong> · ${esc(S.rePdfAttachedAt||'')} <button onclick="S.rePdfAttached=false;S.rePdfAttachedAt='';lg('PDF-Anhang','zurückgesetzt');render()" class="btn btn-o" style="font-size:10px;padding:3px 8px;margin-left:8px">Zurücksetzen</button></div></div>`
+                : `<button onclick="S.rePdfAttached=true;S.rePdfAttachedAt=new Date().toLocaleString('de-DE');lg('PDF-Anhang','Rechnungs-PDF im Teamskärtchen bestätigt');render()" class="btn btn-p" style="width:100%">📎 Rechnungs-PDF angehängt — bestätigen</button>`
+            }
+        </div>`;
+
     // Add Terminrechner for customer communication - nur bei Lieferung und NICHT bei Fixtermin
     // (Bei Abholung holt Kunde selbst, bei Fixtermin ist Datum bereits vorgegeben)
     if(isSp() && !isFix()) {
@@ -3594,7 +3781,15 @@ function rS2(){
 // ═══════════════════════════════════════════════════════
 function rS3(){
     let b='';
-    
+
+    // Wenn-Dann — Warenwert-Pflichtfeld (für AMM/Zoll-Anmeldung)
+    if(isSp() || isZoll()){
+        b+=`<div class="f"><label>Warenwert *</label>
+            <input value="${esc(S.warenwert)}" oninput="S.warenwert=this.value" placeholder="z. B. 12.450,00 € (für Versicherung + Zoll)" inputmode="decimal">
+            <div class="h">${isZoll()?'Pflicht für Zoll-Anmeldung':'Pflicht für AMM-Anmeldung (Versicherung)'}</div>
+        </div>`;
+    }
+
     // Vorkasse: Ticket wird mit Status "Warten auf Zahlung" erstellt
     if(needsPayBefore()){
         b+=`<div class="al aw" style="margin-bottom:14px"><div class="i">⏳</div><div><strong>Vorkasse:</strong> Ticket wird erstellt mit Status "Warten auf Zahlung".<br><span style="font-size:11px">Versand erfolgt erst nach Zahlungseingang. 7 Tage Zahlungsfrist — danach Storno.</span></div></div>`;
@@ -3617,6 +3812,32 @@ function rS3(){
             <span style="font-size:13px;font-weight:700;${S.ammAngemeldet?'color:var(--grn)':''}">Versand/Abholung bei AMM angemeldet</span>
         </div>`;
     }
+
+    // Wenn-Dann — Bezahlt-Status (Phase 5/6 Pflicht)
+    b+=`<div class="ck ${S.bezahlt?'on':''}" style="margin-top:10px" onclick="S.bezahlt=!S.bezahlt;if(S.bezahlt)lg('Bezahlt-Status','bestätigt');render()">
+        <input type="checkbox" ${S.bezahlt?'checked':''} onclick="event.stopPropagation()">
+        <span>Bezahlt-Status bestätigt</span>
+    </div>`;
+
+    // Wenn-Dann — End-of-Order-Checklist (Kapitel 6 + 6.6)
+    b+=`<div class="dv"></div>
+        <div style="background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-card);padding:14px 18px;box-shadow:var(--shadow-1);margin-bottom:14px">
+            <p style="font-size:13px;font-weight:600;color:var(--label);margin-bottom:4px">Vor Abschluss prüfen (Phase 6)</p>
+            <p style="font-size:11px;color:var(--label-3);margin-bottom:12px;line-height:1.4">Pflicht-Häkchen vor Ticket-Erstellung. „Aufträge von A bis Z begleiten — keine Übergabe ohne sauberen Wissensstand."</p>
+            <div class="ck ${S.endChecklist?.teams?'on':''}" onclick="if(!S.endChecklist)S.endChecklist={teams:false,pipeline:false,sharepoint:false};S.endChecklist.teams=!S.endChecklist.teams;if(S.endChecklist.teams)lg('End-Check','Teamskärtchen geschlossen');render()">
+                <input type="checkbox" ${S.endChecklist?.teams?'checked':''} onclick="event.stopPropagation()">
+                <span>Teamskärtchen im Planner geschlossen / auf „Beendet"</span>
+            </div>
+            <div class="ck ${S.endChecklist?.pipeline?'on':''}" onclick="if(!S.endChecklist)S.endChecklist={teams:false,pipeline:false,sharepoint:false};S.endChecklist.pipeline=!S.endChecklist.pipeline;if(S.endChecklist.pipeline)lg('End-Check','Pipeline auf erledigt');render()">
+                <input type="checkbox" ${S.endChecklist?.pipeline?'checked':''} onclick="event.stopPropagation()">
+                <span>Pipeline-Excel auf „erledigt" (Spalten N + Q)</span>
+            </div>
+            <div class="ck ${S.endChecklist?.sharepoint?'on':''}" onclick="if(!S.endChecklist)S.endChecklist={teams:false,pipeline:false,sharepoint:false};S.endChecklist.sharepoint=!S.endChecklist.sharepoint;if(S.endChecklist.sharepoint)lg('End-Check','SharePoint-Ablage komplett');render()" style="margin-bottom:0">
+                <input type="checkbox" ${S.endChecklist?.sharepoint?'checked':''} onclick="event.stopPropagation()">
+                <span>SharePoint-Ablage komplett (Rechnung, Lieferschein, Mailverkehr)</span>
+            </div>
+        </div>`;
+
     return sw('AMM Anmeldung','Dustin',b)}
 
 // ═══════════════════════════════════════════════════════
@@ -4083,6 +4304,14 @@ const _restoredAt=loadDraft(); // versucht V2, fällt zurück auf V1-Migration
 if(!S.dailyChecks)  S.dailyChecks  = { date:'', tasks:{} };
 if(!S.notifyFired)  S.notifyFired  = { date:'', slots:{} };
 if(!S.weeklyReport) S.weeklyReport = { notes:'', engpaesse:'', klaerfaelle:'' };
+// Wenn-Dann — Pflicht-Felder defensiv defaulten
+if(!S.jtlAbgleich)  S.jtlAbgleich  = { mengen:false, versandart:false, zz:false };
+if(!S.endChecklist) S.endChecklist = { teams:false, pipeline:false, sharepoint:false };
+if(typeof S.rePdfAttached==='undefined') S.rePdfAttached=false;
+if(typeof S.rePdfAttachedAt==='undefined') S.rePdfAttachedAt='';
+if(typeof S.warenwert==='undefined') S.warenwert='';
+if(typeof S.ammMailSent==='undefined') S.ammMailSent=false;
+if(typeof S.zollMailSent==='undefined') S.zollMailSent=false;
 _migrateConfig(); // D3c — befüllt fehlende S.config-Felder mit Defaults
 // Tier 1.2 — Wenn nichts geladen wurde, ersten Auftrag anlegen
 if(!S.id){
