@@ -665,6 +665,109 @@ body {
     flex-shrink: 0;
 }
 
+/* ─── KUNDEN-BRIDGE (Phase 3) — immer sichtbar ─── */
+.kun-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-card);
+    padding: 14px 18px;
+    box-shadow: var(--shadow-1);
+    margin-bottom: 18px;
+}
+.kun-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.kun-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--label);
+}
+.kun-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: var(--r-pill);
+    background: var(--bg-tertiary);
+}
+.kun-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.kun-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-card);
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: inherit;
+    text-align: left;
+    transition: all 0.15s var(--ease-out);
+}
+.kun-btn:hover:not(.disabled) {
+    border-color: var(--separator-strong);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-2);
+}
+.kun-btn:active:not(.disabled) { transform: scale(0.98); }
+.kun-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.kun-btn .ico {
+    width: 32px; height: 32px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    color: #fff;
+    font-size: 14px;
+}
+.kun-btn .lbl {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--label);
+}
+.kun-result {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--separator);
+}
+.kun-result textarea {
+    width: 100%;
+    background: var(--bg-primary);
+    border: 1px solid var(--separator);
+    color: var(--label);
+    border-radius: var(--r-input);
+    padding: 8px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    resize: vertical;
+    line-height: 1.4;
+    transition: border-color 0.15s var(--ease-out);
+}
+.kun-result textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-secondary);
+}
+.kun-empty {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--label-3);
+    font-style: italic;
+    text-align: center;
+}
+@media (max-width: 600px) {
+    .kun-actions { grid-template-columns: 1fr; }
+}
+
 /* ─── GATES (Wenn-Dann) — Pflicht-Karte über den Nav-Buttons ─── */
 .gates-card {
     margin: 24px 0 12px;
@@ -1618,6 +1721,13 @@ const S={
     tpKommiDatum:'', tpLieferzeit:'', tpKundenTermin:'', tpShowCalc:false,
     // Generelle TODOs (für alle Aufträge)
     genTodos: [false, false, false, false, false, false, false, false, false],
+    // Phase 3 — Kundenkommunikation (Stellenbeschreibung Phase 3)
+    kundenTel:'',         // Telefonnummer (für tel:-Link)
+    kundenWhatsApp:'',    // WhatsApp-Nummer (für wa.me) — leer = fällt zurück auf kundenTel
+    kundenEmail:'',       // Direkte Kunden-Email
+    lastKommTs:'',        // ISO-Timestamp letzter erfolgreicher Kunden-Kontakt
+    showKommResult:'',    // welcher Kanal erwartet Result-Eingabe ('tel'|'wa'|'email')
+    kommNote:'',          // temporäre Notiz vor Submit
     // Wenn-Dann — neue Pflichtfelder pro Bucket
     jtlAbgleich: { mengen:false, versandart:false, zz:false }, // Bucket 2 Pflicht
     rePdfAttached: false,             // Bucket 2 → 3 Pflicht
@@ -2019,6 +2129,84 @@ function getEscalations(){
         { id:'reklam',  situ:'Reklamation / Schadensfall / juristisch',  to:c.dustin,  subj:'Reklamation — {AU}' },
         { id:'recur',   situ:'Strukturelles / wiederkehrender Fehler',   to:c.dustin,  subj:'Prozess-Eskalation — {AU}' },
     ];
+}
+
+// ═══════════════════════════════════════════════════════
+// Phase 3 — KUNDENKOMMUNIKATION (Stellenbeschreibung 3.1–3.3 + 8)
+// 3 Bridges + Inline-Result-Form + Reaktionszeit-Tracking
+// ═══════════════════════════════════════════════════════
+function _waNum(){
+    // Bevorzuge WhatsApp-Feld, fallback auf Tel; nur Ziffern + optional führendes +
+    const raw=(S.kundenWhatsApp||S.kundenTel||'').trim();
+    let n=raw.replace(/[^0-9+]/g,'');
+    if(n.startsWith('+')) n=n.slice(1);
+    return n;
+}
+
+function kunStartTel(){
+    if(!S.kundenTel){ alert('Telefonnummer fehlt — in Erfassung Sub 0 (Auftrag & Kunde) eintragen.'); return; }
+    window.open('tel:'+S.kundenTel.replace(/\s/g,''), '_blank');
+    S.showKommResult='tel';
+    lg('Kunde — Anruf gestartet', S.kundenTel);
+    render();
+}
+
+function kunStartWa(){
+    const num=_waNum();
+    if(!num){ alert('WhatsApp-/Telefonnummer fehlt — in Erfassung Sub 0 eintragen.'); return; }
+    window.open('https://wa.me/'+num+'?text='+encodeURIComponent(`Hallo,\nzum Auftrag ${S.au||''} — `), '_blank');
+    S.showKommResult='wa';
+    lg('Kunde — WhatsApp gestartet', num);
+    render();
+}
+
+function kunStartEmail(){
+    if(!S.kundenEmail){ alert('Kunden-Email fehlt — in Erfassung Sub 0 eintragen.'); return; }
+    const subject=`Auftrag ${S.au||'(AU noch nicht erfasst)'}${S.kunde?' — '+S.kunde:''}`;
+    window.open(buildMailto(S.kundenEmail, subject, ''));
+    S.showKommResult='email';
+    lg('Kunde — Email gestartet', S.kundenEmail);
+    render();
+}
+
+function kommSubmitResult(success){
+    const ch=S.showKommResult;
+    const chL={tel:'Anruf', wa:'WhatsApp', email:'Email'}[ch] || 'Kontakt';
+    const note=(S.kommNote||'').trim();
+    const detail=note || (success?'erfolgreich':'kein Erfolg');
+    lg(`Kunde-${chL} ${success?'✓ erreicht':'✕ nicht erreicht'}`, detail);
+    if(success){
+        S.lastKommTs=new Date().toISOString();
+        S.isKontaktiert=true; // löst Wenn-Dann-Gate für Bucket „Abholung"
+    }
+    S.showKommResult='';
+    S.kommNote='';
+    render();
+}
+
+function kommCancelResult(){
+    S.showKommResult='';
+    S.kommNote='';
+    render();
+}
+
+function _formatLastKomm(){
+    if(!S.lastKommTs) return null;
+    const min=Math.floor((Date.now()-new Date(S.lastKommTs).getTime())/60000);
+    if(min<1) return 'gerade eben';
+    if(min<60) return `vor ${min} min`;
+    const h=Math.floor(min/60);
+    if(h<24) return `vor ${h} h`;
+    const d=Math.floor(h/24);
+    return `vor ${d} Tag${d===1?'':'en'}`;
+}
+
+function _kommColor(){
+    if(!S.lastKommTs) return 'var(--label-3)';
+    const min=Math.floor((Date.now()-new Date(S.lastKommTs).getTime())/60000);
+    if(min<120) return 'var(--success)';   // <2h frisch
+    if(min<24*60) return 'var(--warning)'; // <24h
+    return 'var(--error)';                 // >24h überfällig
 }
 
 function escalate(escId){
@@ -3233,7 +3421,7 @@ function rOrderList(){
 }
 
 function render(){
-    document.getElementById('app').innerHTML=rOrderList()+rHead()+rDaily()+rProg()+'<div id="cs">'+rStg()+'</div>'+rGenTodos()+(S.ticketOk?rTick():'')+rSB();
+    document.getElementById('app').innerHTML=rOrderList()+rHead()+rDaily()+rProg()+rKundenBridge()+'<div id="cs">'+rStg()+'</div>'+rGenTodos()+(S.ticketOk?rTick():'')+rSB();
     save();
 }
 
@@ -3276,6 +3464,49 @@ function sw(title,owner,body){
             ${S.stage===ST.length-1?'✓ Abschließen & Ticket':'Weiter → '+ST[Math.min(S.stage+1,ST.length-1)].l}
         </button>
     </div>`}
+
+// Phase 3 — Kunden-Bridges + Reaktionszeit + Inline-Result-Form
+function rKundenBridge(){
+    const hasTel=!!S.kundenTel;
+    const hasWa=!!_waNum();
+    const hasEmail=!!S.kundenEmail;
+    const anyData=hasTel||hasWa||hasEmail;
+    const lastKomm=_formatLastKomm();
+    const ch=S.showKommResult;
+    const chLabel={tel:'Anruf', wa:'WhatsApp', email:'Email'}[ch] || '';
+    return `<div class="kun-card no-print">
+        <div class="kun-head">
+            <span class="kun-title">📞 Kundenkommunikation</span>
+            ${lastKomm
+                ? `<span class="kun-badge" style="color:${_kommColor()}" title="Letzter erreichter Kontakt — &lt;2h grün, &lt;24h gelb, &gt;24h rot">letzter Kontakt: ${esc(lastKomm)}</span>`
+                : `<span class="kun-badge" title="Noch kein erfolgreicher Kontakt für diesen Auftrag protokolliert">noch kein Kontakt</span>`}
+        </div>
+        <div class="kun-actions">
+            <button onclick="kunStartTel()" class="kun-btn ${hasTel?'':'disabled'}" ${hasTel?'':'disabled'} title="${hasTel?'Anrufen — '+esc(S.kundenTel):'Telefonnummer fehlt'}">
+                <span class="ico" style="background:var(--label-2)">📞</span>
+                <span class="lbl">Anruf</span>
+            </button>
+            <button onclick="kunStartWa()" class="kun-btn ${hasWa?'':'disabled'}" ${hasWa?'':'disabled'} title="${hasWa?'WhatsApp öffnen — '+esc(_waNum()):'WhatsApp/Tel-Nummer fehlt'}">
+                <span class="ico" style="background:#25d366">💬</span>
+                <span class="lbl">WhatsApp</span>
+            </button>
+            <button onclick="kunStartEmail()" class="kun-btn ${hasEmail?'':'disabled'}" ${hasEmail?'':'disabled'} title="${hasEmail?'Email — '+esc(S.kundenEmail):'Kunden-Email fehlt'}">
+                <span class="ico" style="background:var(--accent)">✉</span>
+                <span class="lbl">Email</span>
+            </button>
+        </div>
+        ${ch?`<div class="kun-result">
+            <p style="font-size:12px;color:var(--label);font-weight:500;margin-bottom:8px">${esc(chLabel)}: Was war das Ergebnis?</p>
+            <textarea oninput="S.kommNote=this.value" placeholder="z. B. „Wartet auf Rückmeldung Spediteur" · „14:30 erneut versuchen" · „Anlieferzeitfenster bestätigt">${esc(S.kommNote||'')}</textarea>
+            <div style="display:flex;gap:6px;margin-top:8px">
+                <button onclick="kommSubmitResult(true)" class="btn btn-g" style="flex:1;font-size:12px">✓ Erreicht</button>
+                <button onclick="kommSubmitResult(false)" class="btn btn-d" style="flex:1;font-size:12px">✕ Nicht erreicht</button>
+                <button onclick="kommCancelResult()" class="btn btn-o" style="flex:1;font-size:12px">Abbrechen</button>
+            </div>
+        </div>`:''}
+        ${!anyData?`<p class="kun-empty">Kontaktdaten in Erfassung Sub 0 (Auftrag &amp; Kunde) eintragen — dann werden die Knöpfe aktiv.</p>`:''}
+    </div>`;
+}
 
 // Wenn-Dann — Live-Pflicht-Karte über den Nav-Buttons
 function rGates(){
@@ -3329,12 +3560,18 @@ function subA(i,l,b){
     return `<div class="block active"><div class="bh"><div class="n na">${i+1}</div><div class="t">${l}</div></div>
         <div class="bb">${b}<div style="margin-top:14px;text-align:right"><button onclick="confirmSub(${i})" class="btn btn-p" ${subOk(i)?'':'disabled'}>Bestätigen</button></div></div></div>`}
 
-// 0: AU + Kunde
+// 0: AU + Kunde + Kontakt-Daten (Phase 3 Bridges)
 function sub0(){
     const l='Auftrag & Kunde',s=S.au+' · '+S.kunde;
     const b=`<div class="rw r2">
         <div class="f"><label>Auftragsnummer(n) *</label><input id="i0" value="${esc(S.au)}" oninput="S.au=this.value;S.isKombi=this.value.includes(',')||this.value.includes('+');sfR()" placeholder="AU2026020513372"><div class="h">Mehrere mit Komma trennen → automatisch KOMBI-AUFTRAG</div></div>
         <div class="f"><label>Kunde / Firma *</label><input id="i0b" value="${esc(S.kunde)}" oninput="S.kunde=this.value;sfR()" placeholder="Ovit Shop V.O.F."></div>
+    </div>
+    <p style="font-size:11px;color:var(--label-3);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Kontakt-Daten — aktiviert die Bridges oben (Phase 3)</p>
+    <div class="rw r3">
+        <div class="f"><label>Telefon</label><input value="${esc(S.kundenTel)}" oninput="S.kundenTel=this.value;sfR()" placeholder="+49 911 …" inputmode="tel"><div class="h">tel:-Link</div></div>
+        <div class="f"><label>WhatsApp</label><input value="${esc(S.kundenWhatsApp)}" oninput="S.kundenWhatsApp=this.value;sfR()" placeholder="leer = wie Telefon" inputmode="tel"><div class="h">wa.me/-Link</div></div>
+        <div class="f"><label>Email</label><input value="${esc(S.kundenEmail)}" oninput="S.kundenEmail=this.value;sfR()" placeholder="kontakt@kunde.com" inputmode="email"><div class="h">mailto:-Link</div></div>
     </div>`;
     return S.sub>0?subD(0,l,s,b):subA(0,l,b)}
 
@@ -4312,6 +4549,13 @@ if(typeof S.rePdfAttachedAt==='undefined') S.rePdfAttachedAt='';
 if(typeof S.warenwert==='undefined') S.warenwert='';
 if(typeof S.ammMailSent==='undefined') S.ammMailSent=false;
 if(typeof S.zollMailSent==='undefined') S.zollMailSent=false;
+// Phase 3 — Kundenkommunikation defensiv defaulten
+if(typeof S.kundenTel==='undefined') S.kundenTel='';
+if(typeof S.kundenWhatsApp==='undefined') S.kundenWhatsApp='';
+if(typeof S.kundenEmail==='undefined') S.kundenEmail='';
+if(typeof S.lastKommTs==='undefined') S.lastKommTs='';
+if(typeof S.showKommResult==='undefined') S.showKommResult='';
+if(typeof S.kommNote==='undefined') S.kommNote='';
 _migrateConfig(); // D3c — befüllt fehlende S.config-Felder mit Defaults
 // Tier 1.2 — Wenn nichts geladen wurde, ersten Auftrag anlegen
 if(!S.id){
