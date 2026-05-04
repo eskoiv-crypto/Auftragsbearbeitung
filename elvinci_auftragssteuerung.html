@@ -665,6 +665,89 @@ body {
     flex-shrink: 0;
 }
 
+/* ─── STEP-CARDS (Stage 1 Restructure) — Apple-Style nummerierte Schritte ─── */
+.step-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-left: 3px solid var(--separator);
+    border-radius: var(--r-card);
+    padding: 16px 20px;
+    box-shadow: var(--shadow-1);
+    margin-bottom: 14px;
+    transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+.step-card.done {
+    border-left-color: var(--success);
+}
+.step-card.pending {
+    border-left-color: rgba(120, 120, 128, 0.30);
+    opacity: 0.75;
+}
+.step-card.active {
+    border-left-color: var(--accent);
+    box-shadow: var(--shadow-2), 0 0 0 4px rgba(0, 113, 227, 0.08);
+    opacity: 1;
+}
+.step-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    color: var(--label-2);
+    display: grid; place-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.2s var(--ease-out);
+}
+.step-card.done .step-num {
+    background: var(--success);
+    color: #fff;
+}
+.step-card.active .step-num {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.18);
+}
+.step-titles {
+    flex: 1;
+    min-width: 0;
+    padding-top: 3px;
+}
+.step-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--label);
+    line-height: 1.3;
+}
+.step-card.done .step-title { color: var(--label-2); }
+.step-card.pending .step-title { color: var(--label-2); }
+.step-card.active .step-title { color: var(--label); }
+.step-sub {
+    font-size: 11px;
+    color: var(--label-3);
+    margin-top: 3px;
+    line-height: 1.4;
+}
+.step-status {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    padding-top: 6px;
+}
+.step-card.done .step-status { color: var(--success); }
+.step-card.active .step-status { color: var(--accent); }
+.step-card.pending .step-status { color: var(--label-3); }
+.step-body { font-size: 13px; color: var(--label); }
+.step-body > *:last-child { margin-bottom: 0; }
+
 /* ─── PIPELINE-IMPORT-MODAL (Tier 4.3) ─── */
 .pipe-overlay {
     position: fixed;
@@ -3714,30 +3797,34 @@ function getGates(){
         if(S.isLoose) gates.push({ label:'Loose: Beladungshinweis', ok:!!S.looseInfo });
     }
     else if(i===1){
-        // Stage 1 — Rechnung (Bucket „rechnung")
-        if(isZoll()){
-            // Zoll-Sonderlogik: RE kommt nach LKW-Beladung — bei Lieferung trotzdem Frachtkosten
-            if(isSp()) gates.push({ label:'Frachtkosten im JTL-Auftrag ergänzt', ok:S.frachtOk });
-        } else {
-            if(isSp()){
-                gates.push({ label:'Frachtkosten geklärt', ok:S.frachtOk });
-                if(S.tpKommiDatum && !isFix()){
-                    gates.push({ label:'Lieferzeit gesetzt (Terminrechner)', ok:!!S.tpLieferzeit });
-                }
-            }
-            // Vorfakturierungs-Pflichten — wenn ZZ-Kunde + sofort fakturieren
+        // Stage 1 — Rechnung. Reihenfolge spiegelt rS1()-Step-Cards 1..7
+        // Step 1: Frachtkosten (nur Lieferung; Abholung auto-done, kein Gate nötig)
+        if(isSp()){
+            gates.push({ label:'Frachtkosten im JTL-Auftrag eingetragen', ok:S.frachtOk });
+        }
+        // Step 2: JTL-Match
+        gates.push({ label:'JTL-Rechnungstext gefunden', ok:!!S.jtlResult, hint:'JTL-Generator → „Passenden Text finden" klicken' });
+        // Step 3: JTL-Abgleich (3 Häkchen) — Labels ohne redundantes ✓
+        gates.push({ label:'JTL-Abgleich: Mengen', ok:!!S.jtlAbgleich?.mengen, hint:'Saleskärtchen ↔ JTL — Stückzahl prüfen' });
+        gates.push({ label:'JTL-Abgleich: Versandart', ok:!!S.jtlAbgleich?.versandart, hint:'Saleskärtchen ↔ JTL — Abholung/Spedition prüfen' });
+        gates.push({ label:'JTL-Abgleich: Zahlungsziel', ok:!!S.jtlAbgleich?.zz, hint:'Saleskärtchen ↔ JTL — ZZ/Vorkasse/Barzahler prüfen' });
+
+        if(!isZoll()){
+            // Step 4: Rechnungszeitpunkt + Vorfakturierung (nur ZZ/Fixtermin)
             if(S.za==='zahlungsziel' && S.reZeit==='sofort'){
-                gates.push({ label:'Kommi-Datum gesetzt (Pflicht für Vorfakturierung)', ok:!!S.tpKommiDatum, hint:'Erfassung Sub 5 → Kommissionierungs-Datum eintragen' });
+                gates.push({ label:'Kommi-Datum gesetzt (Pflicht für Vorfakturierung)', ok:!!S.tpKommiDatum, hint:'Erfassung Sub 5 → Kommi-Datum eintragen' });
                 gates.push({ label:'Zahlungsziel im JTL verlängert', ok:S.zzOk, hint:'Vorfakturierungs-Rechner zeigt Soll-Wert' });
             }
+            // Step 5: Rechnung erstellen + RE-Nummer
             gates.push({ label:'Rechnung erstellt + versendet', ok:S.reOk });
             gates.push({ label:'RE-Nummer eingetragen', ok:!!S.re });
+            // Step 6: PDF angehängt
+            gates.push({ label:'Rechnungs-PDF in Teamskärtchen angehängt', ok:!!S.rePdfAttached, hint:'„📎 Rechnungs-PDF — bestätigen" klicken' });
         }
-        gates.push({ label:'JTL-Match generiert', ok:!!S.jtlResult, hint:'„Passenden Text finden" im JTL-Generator klicken' });
-        gates.push({ label:'JTL-Abgleich: Mengen ✓', ok:!!S.jtlAbgleich?.mengen, hint:'Saleskärtchen ↔ JTL — Stückzahl prüfen' });
-        gates.push({ label:'JTL-Abgleich: Versandart ✓', ok:!!S.jtlAbgleich?.versandart, hint:'Saleskärtchen ↔ JTL — Abholung/Spedition prüfen' });
-        gates.push({ label:'JTL-Abgleich: Zahlungsziel ✓', ok:!!S.jtlAbgleich?.zz, hint:'Saleskärtchen ↔ JTL — ZZ/Vorkasse/Barzahler prüfen' });
-        gates.push({ label:'Rechnungs-PDF in Teamskärtchen angehängt', ok:!!S.rePdfAttached, hint:'„📎 Rechnung angehängt"-Knopf klicken (setzt Audit-Eintrag)' });
+        // Step 7: Lieferzeit (Terminrechner) — nur Lieferung + kein Fixtermin + Kommi-Datum bekannt
+        if(isSp() && !isZoll() && S.tpKommiDatum && !isFix()){
+            gates.push({ label:'Lieferzeit gesetzt (Terminrechner)', ok:!!S.tpLieferzeit });
+        }
     }
     else if(i===2){
         // Stage 2 — Kommi (Bucket „kommi")
@@ -4435,127 +4522,192 @@ function sub5(){
 // ═══════════════════════════════════════════════════════
 // STAGE 1 — RECHNUNG
 // ═══════════════════════════════════════════════════════
-function rS1(){
-    let b='';
-    // Fracht
-    if(isSp()){
-        b+=`<div style="background:var(--bg);border:1px solid var(--bdd);border-radius:8px;padding:12px;margin-bottom:12px">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-                <div>
-                    <div style="font-size:10px;color:var(--grn);text-transform:uppercase;font-weight:600">✓ Frachtkosten (aus Auftragserfassung)</div>
-                    <div style="font-size:16px;font-weight:700;color:var(--txb);margin-top:4px">${S.frachtkosten || '—'}</div>
-                </div>
+// Helper für Stage-1-Step-Cards
+function rStep(num, title, status, body, subtitle){
+    const numContent=status==='done'?'✓':String(num);
+    const statusLabel=status==='done'?'erledigt':status==='active'?'aktiv':'';
+    return `<div class="step-card ${status}">
+        <div class="step-head">
+            <div class="step-num">${numContent}</div>
+            <div class="step-titles">
+                <div class="step-title">${esc(title)}</div>
+                ${subtitle?`<div class="step-sub">${esc(subtitle)}</div>`:''}
             </div>
+            ${statusLabel?`<div class="step-status">${statusLabel}</div>`:''}
         </div>
-        <div class="ck ${S.frachtOk?'on':''}" style="margin-bottom:16px"><input type="checkbox" ${S.frachtOk?'checked':''} onchange="S.frachtOk=this.checked;if(this.checked)lg('Frachtkosten',S.frachtkosten+' im AU ergänzt');render()">
-            <span style="font-size:12px;${S.frachtOk?'color:var(--grn)':'font-weight:700;color:var(--red)'}">Frachtkosten im JTL-Auftrag ergänzt</span>
-        </div>`;
-    } else {
-        b+=`<div class="al ao"><div class="i">✓</div><div>Abholung — keine Frachtkosten</div></div>`;
+        <div class="step-body">${body}</div>
+    </div>`;
+}
+
+// Stage 1 — Rechnungsstellung neu strukturiert als nummerierte Step-Cards in
+// logischer Reihenfolge gemäß Stellenbeschreibung Phase 4 + User-Walkthrough.
+function rS1(){
+    const steps=[]; // { title, body, subtitle, ok }
+
+    // ─── Step 1: Versandart-Voraussetzung ───
+    if(isSp()){
+        const fk=S.frachtkosten||'—';
+        steps.push({
+            title:'Frachtkosten ins JTL übertragen',
+            subtitle:'Spedition: Frachtangebot aus Sub 0 → JTL-Auftrags-Position „Versand"',
+            ok:S.frachtOk,
+            body:`<div style="background:var(--bg-primary);border:1px solid var(--separator);border-radius:var(--r-input);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+                <div><div style="font-size:10px;color:var(--label-3);text-transform:uppercase;letter-spacing:.06em;font-weight:600">aus Auftragserfassung</div><div style="font-size:15px;font-weight:700;color:var(--label);margin-top:2px">${esc(fk)}</div></div>
+            </div>
+            <div class="ck ${S.frachtOk?'on':''}" onclick="S.frachtOk=!S.frachtOk;if(S.frachtOk)lg('Frachtkosten',S.frachtkosten+' im AU ergänzt');render()" style="margin-bottom:0">
+                <input type="checkbox" ${S.frachtOk?'checked':''} onclick="event.stopPropagation()">
+                <span>Frachtkosten im JTL-Auftrag eingetragen</span>
+            </div>`,
+        });
+    } else if(isAbh()){
+        steps.push({
+            title:'Versandart: Abholung',
+            subtitle:'Kunde holt selbst ab — keine Frachtkosten zu pflegen',
+            ok:true,
+            body:`<div class="al ao" style="margin-bottom:0"><div class="i">✓</div><div>Bei Abholung entfällt der Frachtkosten-Schritt.</div></div>`,
+        });
     }
-    b+=`<div class="dv"></div>`;
+
+    // ─── Step 2: JTL-Generator → Rechnungstext finden ───
+    steps.push({
+        title:'JTL-Rechnungstext finden',
+        subtitle:'Phase 4.3.1 — passender Text aus 45 Templates · „Passenden Text finden" klicken',
+        ok:!!S.jtlResult,
+        body:rJTLGenerator(),
+    });
+
+    // ─── Step 3: JTL-Abgleich (3 Häkchen) ───
+    const abgleichOk=!!(S.jtlAbgleich?.mengen && S.jtlAbgleich?.versandart && S.jtlAbgleich?.zz);
+    steps.push({
+        title:'JTL-Abgleich',
+        subtitle:'Phase 4.2 — Saleskärtchen ↔ JTL Position für Position prüfen. Bei Diskrepanz vor Rechnungsstellung klären, niemals „eine Variante" raten.',
+        ok:abgleichOk,
+        body:`<div class="ck ${S.jtlAbgleich?.mengen?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.mengen=!S.jtlAbgleich.mengen;if(S.jtlAbgleich.mengen)lg('JTL-Abgleich','Mengen');render()">
+            <input type="checkbox" ${S.jtlAbgleich?.mengen?'checked':''} onclick="event.stopPropagation()">
+            <span>Mengen / Stückzahl stimmt mit Saleskärtchen überein</span>
+        </div>
+        <div class="ck ${S.jtlAbgleich?.versandart?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.versandart=!S.jtlAbgleich.versandart;if(S.jtlAbgleich.versandart)lg('JTL-Abgleich','Versandart');render()">
+            <input type="checkbox" ${S.jtlAbgleich?.versandart?'checked':''} onclick="event.stopPropagation()">
+            <span>Versandart (Abholung / Spedition) stimmt überein</span>
+        </div>
+        <div class="ck ${S.jtlAbgleich?.zz?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.zz=!S.jtlAbgleich.zz;if(S.jtlAbgleich.zz)lg('JTL-Abgleich','Zahlungsziel');render()" style="margin-bottom:0">
+            <input type="checkbox" ${S.jtlAbgleich?.zz?'checked':''} onclick="event.stopPropagation()">
+            <span>Zahlungsziel (Vorkasse / ZZ X Tage / Barzahler) stimmt überein</span>
+        </div>`,
+    });
 
     if(isZoll()){
-        b+=`<div class="al aw"><div class="i">🌍</div><div><strong>Zoll-Auftrag:</strong> Rechnung wird NICHT jetzt erstellt — erst nach LKW-Beladung mit korrigierten Mengen.${isSp()?' Frachtkosten trotzdem jetzt im AU hinterlegen.':''}</div></div>
-        <div class="al ai"><div class="i">ℹ</div><div>Zoll-Ablauf: 1) LKW beladen → 2) Rechnung erstellen → 3) Zollpapiere → 4) Abfahrt. Rechnung und Zollpapiere werden separat nach der Beladung erstellt.</div></div>`;
+        // ─── Zoll-Sonderpfad: Rechnung kommt erst nach LKW-Beladung in Stage 3 ───
+        steps.push({
+            title:'Zoll-Sonderlogik — Rechnung folgt nach Beladung',
+            subtitle:'Bei Zoll wird die Rechnung erst nach LKW-Beladung mit korrigierten Mengen erstellt (Stage 3).',
+            ok:true,
+            body:`<div class="al aw" style="margin-bottom:10px"><div class="i">🌍</div><div><strong>Ablauf:</strong> 1) LKW beladen → 2) Rechnung erstellen → 3) Zollpapiere → 4) Abfahrt.${isSp()?' Frachtkosten oben sind trotzdem jetzt zu hinterlegen.':''}</div></div>
+            <div class="al ai" style="margin-bottom:0"><div class="i">ℹ</div><div>JTL-Vorlage hier nur vorbereiten — finale Werte später.</div></div>`,
+        });
     } else {
-        b+=`<div class="al ai"><div class="i">📄</div><div><strong>Rechnungsregel:</strong> ${z().re}</div></div>`;
-
-        // Zahlungsziel / Fixtermin: Zeitpunkt wählen
-        if(S.za==='zahlungsziel'||isFix()){
-            b+=`<p style="font-size:12px;color:var(--txd);margin-bottom:10px">Rechnungszeitpunkt:</p>
-            <div class="rw r2" style="margin-bottom:14px">
-                <div class="opt ${S.reZeit==='bereit'?'sel':''}" onclick="S.reZeit='bereit';render()"><div class="ol">Bei Versandbereitschaft</div><div class="od">Standard — Tag der Kommi</div></div>
-                <div class="opt ${S.reZeit==='sofort'?'sel':''}" onclick="S.reZeit='sofort';render()"><div class="ol">Sofort</div><div class="od" style="color:var(--amb)">⚠ ZZ verlängern!</div></div>
-            </div>`;
-            if(S.reZeit==='sofort'){
-                // Vorfakturierungs-Rechner — User-Spec 2026-05-04
-                // Effektives ZZ = Standard-ZZ + Tage zwischen heute und Kommi-Datum
-                const stdZz=parseInt(S.jtlZZ)||14;
+        // ─── Step 4: Rechnungszeitpunkt + Vorfakturierung ───
+        if(S.za==='zahlungsziel' || isFix()){
+            const stdZz=parseInt(S.jtlZZ)||14;
+            let zeitOk=false;
+            let zeitBody=`<div class="al ai" style="margin-bottom:12px"><div class="i">📄</div><div><strong>Rechnungsregel:</strong> ${esc(z().re)}</div></div>
+                <p style="font-size:12px;color:var(--label-2);margin-bottom:10px">Wann wird die Rechnung gestellt?</p>
+                <div class="rw r2" style="margin-bottom:14px">
+                    <div class="opt ${S.reZeit==='bereit'?'sel':''}" onclick="S.reZeit='bereit';lg('Rechnungszeitpunkt','Bei Versandbereitschaft');render()"><div class="ol">Bei Versandbereitschaft</div><div class="od">Standard — Tag der Kommi</div></div>
+                    <div class="opt ${S.reZeit==='sofort'?'sel':''}" onclick="S.reZeit='sofort';lg('Rechnungszeitpunkt','Sofort (Vorfakturierung)');render()"><div class="ol">Sofort fakturieren</div><div class="od" style="color:var(--warning)">⚠ ZZ verlängern!</div></div>
+                </div>`;
+            if(S.reZeit==='bereit'){
+                zeitOk=true;
+            } else if(S.reZeit==='sofort'){
                 if(S.tpKommiDatum){
                     const heute=new Date(); heute.setHours(0,0,0,0);
                     const kommi=new Date(S.tpKommiDatum+'T00:00:00');
                     const tageDiff=Math.max(0, Math.ceil((kommi-heute)/(1000*60*60*24)));
                     const effZz=stdZz+tageDiff;
-                    b+=`<div class="al aw" style="margin-bottom:14px">
+                    zeitOk=!!S.zzOk;
+                    zeitBody+=`<div class="al aw" style="margin-bottom:14px">
                         <div class="i">📐</div>
-                        <div>
-                            <strong>Vorfakturierungs-Rechner</strong> — Rechnung wird heute geschrieben, ZZ um Tage-bis-Kommi verlängert, damit Kunde sein Zahlungsziel ab Versand voll ausschöpfen kann.<br>
-                            <code style="font-size:13px;font-weight:700;color:var(--label);background:var(--bg-tertiary);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:8px">
-                                ${stdZz} Standard + ${tageDiff} Tage bis Kommi (${fmtD(S.tpKommiDatum)}) =
-                                <span style="color:var(--success);font-size:15px;font-weight:800">${effZz} Tage</span>
-                            </code><br>
-                            <span style="font-size:11px;color:var(--label-3);margin-top:8px;display:block">→ Diesen Wert (<strong>${effZz}</strong>) im JTL als Zahlungsziel eintragen.</span>
-                        </div>
+                        <div><strong>Vorfakturierungs-Rechner</strong> — ZZ wird um Tage-bis-Kommi verlängert, damit Kunde sein Zahlungsziel ab Versand voll ausschöpfen kann.<br>
+                        <code style="font-size:13px;font-weight:700;color:var(--label);background:var(--bg-tertiary);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:8px">
+                            ${stdZz} Standard + ${tageDiff} Tage bis Kommi (${esc(fmtD(S.tpKommiDatum))}) =
+                            <span style="color:var(--success);font-size:15px;font-weight:800">${effZz} Tage</span>
+                        </code><br>
+                        <span style="font-size:11px;color:var(--label-3);margin-top:8px;display:block">→ Diesen Wert (<strong>${effZz}</strong>) im JTL als Zahlungsziel eintragen.</span></div>
                     </div>
-                    <div class="ck ${S.zzOk?'on':''}" style="margin-bottom:14px" onclick="S.zzOk=!S.zzOk;if(S.zzOk)lg('Vorfakturierung','ZZ '+${stdZz}+'+'+${tageDiff}+'='+${effZz}+' Tage in JTL gesetzt');render()">
+                    <div class="ck ${S.zzOk?'on':''}" onclick="S.zzOk=!S.zzOk;if(S.zzOk)lg('Vorfakturierung','ZZ '+${stdZz}+'+'+${tageDiff}+'='+${effZz}+' Tage in JTL gesetzt');render()" style="margin-bottom:0">
                         <input type="checkbox" ${S.zzOk?'checked':''} onclick="event.stopPropagation()">
                         <span>Zahlungsziel im JTL auf <strong>${effZz} Tage</strong> gesetzt</span>
                     </div>`;
                 } else {
-                    b+=`<div class="al ad" style="margin-bottom:14px">
-                        <div class="i">⚠</div>
-                        <div>
-                            <strong>Kommi-Datum fehlt — Vorfakturierung blockiert</strong><br>
-                            <span style="font-size:12px;line-height:1.5">Vorfakturierungs-Rechner braucht das Kommissionierungs-Datum, um das effektive Zahlungsziel zu berechnen. Lege erst den Kommi-Termin in der Pipeline / Erfassung Sub 5 fest, dann komm hier zurück.</span><br>
-                            <span style="font-size:11px;color:var(--label-3);margin-top:6px;display:block">Solange Kommi-Datum offen ist, kann „Sofort" nicht weiter — sonst würdest Du dem Kunden sein Zahlungsziel verkürzen.</span>
-                        </div>
-                    </div>`;
+                    zeitBody+=`<div class="al ad" style="margin-bottom:0"><div class="i">⚠</div><div>
+                        <strong>Kommi-Datum fehlt — Vorfakturierung blockiert.</strong><br>
+                        <span style="font-size:11px;line-height:1.5">Lege erst den Kommi-Termin in Erfassung Sub 5 fest, dann kommt der Rechner zurück.</span>
+                    </div></div>`;
                 }
             }
+            steps.push({
+                title:'Rechnungszeitpunkt',
+                subtitle:'Bereit-Termin (Standard) oder Sofort mit Vorfakturierungs-Rechner',
+                ok:zeitOk,
+                body:zeitBody,
+            });
         } else {
-            // Vorkasse / Barzahler: SOFORT
-            b+=`<div class="al ad"><div class="i">⚡</div><div><strong>Rechnung SOFORT erstellen!</strong> ${S.za==='vorkasse'?'7 Tage Zahlungsfrist.':isAbh()?'Zahlung bar bei Abholung.':'Zahlung bar bei Übergabe / Nachnahme.'}</div></div>`;
+            // Vorkasse / Barzahler: kein Zeitpunkt-Step nötig — Auto-Done-Hinweis
+            steps.push({
+                title:'Rechnungszeitpunkt: Sofort',
+                subtitle:S.za==='vorkasse'?'Vorkasse — 7 Tage Zahlungsfrist':isAbh()?'Barzahler — Zahlung bei Abholung':'Barzahler — Zahlung bei Übergabe',
+                ok:true,
+                body:`<div class="al ad" style="margin-bottom:0"><div class="i">⚡</div><div><strong>Rechnung sofort erstellen!</strong> ${esc(z().re)}</div></div>`,
+            });
         }
 
-        b+=`<div class="ck ${S.reOk?'on':''}"><input type="checkbox" ${S.reOk?'checked':''} onchange="S.reOk=this.checked;if(this.checked)lg('Rechnung','Erstellt und versendet');render()">
-            <span style="font-size:12px;font-weight:600;${S.reOk?'color:var(--grn)':''}">Rechnung erstellt und an Kunden versendet</span>
-        </div>`;
-        if(S.reOk){
-            b+=`<div class="f" style="margin-top:12px"><label>Rechnungsnummer</label>
+        // ─── Step 5: Rechnung erstellen + RE-Nummer ───
+        const recOk=S.reOk && !!S.re;
+        steps.push({
+            title:'Rechnung erstellen + Nummer übernehmen',
+            subtitle:'Phase 4.4 — Im JTL „Speichern und Rechnung erstellen", danach RE-Nummer hier eintragen',
+            ok:recOk,
+            body:`<div class="ck ${S.reOk?'on':''}" onclick="S.reOk=!S.reOk;if(S.reOk)lg('Rechnung','Erstellt und versendet');render()">
+                <input type="checkbox" ${S.reOk?'checked':''} onclick="event.stopPropagation()">
+                <span>Rechnung erstellt und an Kunden versendet</span>
+            </div>
+            ${S.reOk?`<div class="f" style="margin-top:12px;margin-bottom:0"><label>Rechnungsnummer</label>
                 <input value="${esc(S.re)}" oninput="S.re=this.value" placeholder="RE202602069487" class="mono">
-                <div class="h">Wird im Ticket dokumentiert</div>
-            </div>`;
-        }
+                <div class="h">Wird im Audit + Wochenreport dokumentiert</div>
+            </div>`:''}`,
+        });
+
+        // ─── Step 6: PDF in Teamskärtchen ───
+        steps.push({
+            title:'Rechnungs-PDF im Teamskärtchen',
+            subtitle:'Phase 4.5 — PDF aus Outlook in das zugehörige Teamskärtchen einfügen. Eine versendete Rechnung ohne Anhang gilt als nicht abgelegt.',
+            ok:!!S.rePdfAttached,
+            body:S.rePdfAttached
+                ?`<div class="al ao" style="margin-bottom:0"><div class="i">✓</div><div>PDF bestätigt am ${esc(S.rePdfAttachedAt||'')} <button onclick="S.rePdfAttached=false;S.rePdfAttachedAt='';lg('PDF-Anhang','zurückgesetzt');render()" class="btn btn-o" style="font-size:10px;padding:3px 8px;margin-left:8px">Zurücksetzen</button></div></div>`
+                :`<button onclick="S.rePdfAttached=true;S.rePdfAttachedAt=new Date().toLocaleString('de-DE');lg('PDF-Anhang','Rechnungs-PDF im Teamskärtchen bestätigt');render()" class="btn btn-p" style="width:100%">📎 Rechnungs-PDF im Teamskärtchen — bestätigen</button>`,
+        });
     }
-    // Add JTL Generator
-    b += rJTLGenerator();
 
-    // Wenn-Dann — JTL-Abgleich (3 Häkchen) Pflicht (Phase 4.2 Stellenbeschreibung)
-    b += `<div class="dv"></div>
-        <div style="background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-card);padding:14px 18px;box-shadow:var(--shadow-1);margin-bottom:14px">
-            <p style="font-size:13px;font-weight:600;color:var(--label);margin-bottom:4px">JTL-Abgleich (Phase 4.2)</p>
-            <p style="font-size:11px;color:var(--label-3);margin-bottom:12px;line-height:1.4">Saleskärtchen ↔ JTL Position für Position prüfen. Bei Diskrepanz <strong>vor</strong> Rechnungsstellung klären — niemals einfach „eine Variante" wählen.</p>
-            <div class="ck ${S.jtlAbgleich?.mengen?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.mengen=!S.jtlAbgleich.mengen;if(S.jtlAbgleich.mengen)lg('JTL-Abgleich','Mengen ✓');render()">
-                <input type="checkbox" ${S.jtlAbgleich?.mengen?'checked':''} onclick="event.stopPropagation()">
-                <span>Mengen / Stückzahl stimmt mit Saleskärtchen überein</span>
-            </div>
-            <div class="ck ${S.jtlAbgleich?.versandart?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.versandart=!S.jtlAbgleich.versandart;if(S.jtlAbgleich.versandart)lg('JTL-Abgleich','Versandart ✓');render()">
-                <input type="checkbox" ${S.jtlAbgleich?.versandart?'checked':''} onclick="event.stopPropagation()">
-                <span>Versandart (Abholung / Spedition) stimmt überein</span>
-            </div>
-            <div class="ck ${S.jtlAbgleich?.zz?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.zz=!S.jtlAbgleich.zz;if(S.jtlAbgleich.zz)lg('JTL-Abgleich','Zahlungsziel ✓');render()" style="margin-bottom:0">
-                <input type="checkbox" ${S.jtlAbgleich?.zz?'checked':''} onclick="event.stopPropagation()">
-                <span>Zahlungsziel (Vorkasse / ZZ X Tage / Barzahler) stimmt überein</span>
-            </div>
-        </div>`;
-
-    // Wenn-Dann — Rechnungs-PDF in Teamskärtchen angehängt (Phase 4.5)
-    b += `<div style="background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-card);padding:14px 18px;box-shadow:var(--shadow-1);margin-bottom:14px">
-            <p style="font-size:13px;font-weight:600;color:var(--label);margin-bottom:4px">Rechnungs-PDF im Teamskärtchen (Phase 4.5)</p>
-            <p style="font-size:11px;color:var(--label-3);margin-bottom:12px;line-height:1.4">Rechnung aus Outlook (PDF) herunterladen → in das zugehörige Teamskärtchen als Anhang einfügen. Eine versendete Rechnung ohne Anhang gilt als <strong>nicht abgelegt</strong>.</p>
-            ${S.rePdfAttached
-                ? `<div class="al ao" style="margin-bottom:0"><div class="i">✓</div><div><strong>PDF angehängt</strong> · ${esc(S.rePdfAttachedAt||'')} <button onclick="S.rePdfAttached=false;S.rePdfAttachedAt='';lg('PDF-Anhang','zurückgesetzt');render()" class="btn btn-o" style="font-size:10px;padding:3px 8px;margin-left:8px">Zurücksetzen</button></div></div>`
-                : `<button onclick="S.rePdfAttached=true;S.rePdfAttachedAt=new Date().toLocaleString('de-DE');lg('PDF-Anhang','Rechnungs-PDF im Teamskärtchen bestätigt');render()" class="btn btn-p" style="width:100%">📎 Rechnungs-PDF angehängt — bestätigen</button>`
-            }
-        </div>`;
-
-    // Add Terminrechner for customer communication - nur bei Lieferung und NICHT bei Fixtermin
-    // (Bei Abholung holt Kunde selbst, bei Fixtermin ist Datum bereits vorgegeben)
-    if(isSp() && !isFix()) {
-        b += rTerminrechner();
+    // ─── Step 7: Lieferzeit / Terminrechner (nur Lieferung + nicht Fixtermin) ───
+    if(isSp() && !isFix()){
+        steps.push({
+            title:'Terminrechner — Lieferzeitfenster',
+            subtitle:'Berechnet das Anlieferzeitfenster für die Kundenkommunikation (Phase 3 Vorbereitung)',
+            ok:!!S.tpLieferzeit,
+            body:rTerminrechner(),
+        });
     }
-    return sw('Rechnungsstellung','Janna',b)}
+
+    // Erste pending-Step als 'active' markieren
+    let firstPending=-1;
+    steps.forEach((s,i)=>{ if(firstPending<0 && !s.ok) firstPending=i; });
+
+    const html=steps.map((s,i)=>{
+        const status=s.ok?'done':(i===firstPending?'active':'pending');
+        return rStep(i+1, s.title, status, s.body, s.subtitle);
+    }).join('');
+
+    return sw('Rechnungsstellung','Janna',html)}
 
 // ═══════════════════════════════════════════════════════
 // STAGE 2 — KOMMI
