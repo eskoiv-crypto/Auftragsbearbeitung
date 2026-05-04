@@ -2036,6 +2036,51 @@ function _fmtDateDe(iso){
     }catch(e){ return ''; }
 }
 
+// Excel-/Pipeline-Datum-Parser → ISO YYYY-MM-DD (oder leer)
+// Behandelt: DE-Format `13.01.2026` · `13.1.26` · mit Uhrzeit `12.01.2026, 11:11` ·
+// ISO `2026-01-13` · DE-Monat-Wort `15. Apr` (nimmt aktuelles Jahr) ·
+// Excel-Serial-Number (selten, falls SheetJS raw values zurückgibt)
+const _DE_MONTH={ jan:'01', feb:'02', mär:'03', mar:'03', apr:'04', mai:'05', jun:'06', jul:'07', aug:'08', sep:'09', okt:'10', nov:'11', dez:'12' };
+function _parseExcelDate(val){
+    if(val===null||val===undefined) return '';
+    const s=String(val).trim();
+    if(!s) return '';
+    // Excel-Serial-Number (1899-12-30 als Tag 0)
+    if(/^\d{5}(\.\d+)?$/.test(s)){
+        const n=parseFloat(s);
+        if(n>=25569 && n<=80000){ // ~1970 bis ~2118
+            const ms=(n-25569)*86400*1000;
+            const d=new Date(ms);
+            if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+        }
+    }
+    // ISO 2026-01-13(T...)
+    const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+    // DE TT.MM.JJJJ (auch zweistelliges Jahr; auch mit Uhrzeit/Komma dahinter)
+    const de=s.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
+    if(de){
+        const day=de[1].padStart(2,'0');
+        const month=de[2].padStart(2,'0');
+        let year=de[3];
+        if(year.length===2) year=parseInt(year,10)>50?'19'+year:'20'+year;
+        // Plausibilität
+        if(parseInt(month)<=12 && parseInt(day)<=31) return `${year}-${month}-${day}`;
+    }
+    // DE-Monat-Wort: '15. Apr' / '20. Jan' / '04. Feb' — Jahr aus Kontext (heutiges Jahr)
+    const dm=s.match(/^(\d{1,2})\.\s*([a-zäöü]+)/i);
+    if(dm){
+        const day=dm[1].padStart(2,'0');
+        const monKey=dm[2].toLowerCase().slice(0,3);
+        const month=_DE_MONTH[monKey];
+        if(month){
+            const year=new Date().getFullYear();
+            return `${year}-${month}-${day}`;
+        }
+    }
+    return '';
+}
+
 // Konvertiert Order-State in Pipeline-Zeile (27 Spalten) für Excel-Copy-Paste
 function _orderToPipelineRow(o){
     const isZollOrder=o.isZoll||o.za==='zoll';
@@ -2092,15 +2137,23 @@ function copyPipelineRow(){
 // Parser für eine Pipeline-Zeile aus dem Import (Array, 0-indexed = Spalte A)
 function _parsePipelineRow(arr){
     const va=String(arr[12]||'').toLowerCase();
+    // Datum-Felder via _parseExcelDate (DE-Format / ISO / Excel-Serial / Monat-Wort)
+    const dStarted=_parseExcelDate(arr[5]);   // F: Anmeldedatum
+    const dKommi=_parseExcelDate(arr[6]);     // G: Kommissioniertag
+    const dVersand=_parseExcelDate(arr[7]);   // H: Versanddatum
+    const dAnliefer=_parseExcelDate(arr[9]);  // J: Anlieferdatum
     return {
         kunde:        String(arr[1]||'').trim(),
         au:           String(arr[2]||'').trim(),
         artAnz:       String(arr[3]||'').trim(),
-        startedAt:    '', // Excel-DE-Format zu ISO ist fragil — wir lassen Tool selbst setzen
-        kDat:         '',
-        tpKommiDatum: '',
-        vDat:         String(arr[7]||'').trim(),
-        vAnliefer:    String(arr[9]||'').trim(),
+        // ISO-Timestamp für startedAt (mittag UTC, damit Zeitzone egal ist)
+        startedAt:    dStarted ? dStarted+'T12:00:00.000Z' : '',
+        kDat:         dKommi,
+        tpKommiDatum: dKommi,
+        vDat:         dVersand,
+        // vAnliefer kann „21.01.2026 / AU…" oder ein Freitext-Bereich sein →
+        // wenn Datum extrahiert wurde, ISO; sonst Original-Text behalten
+        vAnliefer:    dAnliefer || String(arr[9]||'').trim(),
         jtlZZ:        String(arr[11]||'7').trim() || '7',
         va:           va.includes('spedition')||va.includes('lieferung')?'lieferung':(va.includes('abholung')?'abholung':''),
         bezahlt:      /^ja$/i.test(String(arr[13]||'').trim()),
@@ -2216,6 +2269,7 @@ function applyPipelineImport(){
                 au:r.au, kunde:r.kunde||'',
                 artAnz:r.artAnz||'', va:r.va||'',
                 za:'',
+                kDat:r.kDat||'', tpKommiDatum:r.tpKommiDatum||'',
                 vDat:r.vDat||'', vAnliefer:r.vAnliefer||'',
                 jtlZZ:r.jtlZZ||'7', jtlAppointmentStatus:'erfuellbar',
                 pal:r.pal||'',
@@ -2226,7 +2280,8 @@ function applyPipelineImport(){
                 komm:[], genTodos:[false,false,false,false,false,false,false,false,false],
                 jtlAbgleich:{ mengen:false, versandart:false, zz:false },
                 endChecklist:{ teams:false, pipeline:false, sharepoint:false },
-                startedAt:new Date().toISOString(),
+                // startedAt aus Pipeline (Anmeldedatum) bevorzugen, sonst jetzt
+                startedAt:r.startedAt||new Date().toISOString(),
             };
             added++;
             return;
