@@ -619,15 +619,22 @@ body {
     color: #fff;
     font-size: 15px;
 }
-.dock-btn .ico.amm { background: var(--accent); }
-.dock-btn .ico.plan { background: var(--info); }
+.dock-btn .ico.amm   { background: var(--accent); }
+.dock-btn .ico.plan  { background: var(--info); }
 .dock-btn .ico.share { background: var(--success); }
-.dock-btn .ico.esc { background: var(--error); }
+.dock-btn .ico.zoll  { background: #5ac8fa; }
+.dock-btn .ico.esc   { background: var(--error); }
 .dock-btn .meta { display: flex; flex-direction: column; min-width: 0; }
 .dock-btn .lbl { font-size: 13px; font-weight: 600; color: var(--label); line-height: 1.2; }
 .dock-btn .sub { font-size: 11px; color: var(--label-3); margin-top: 2px; line-height: 1.2; }
-@media (max-width: 700px) { .dock { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 420px) { .dock { grid-template-columns: 1fr; } }
+.dock.dock-5 { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.dock.dock-5 .dock-btn { padding: 10px; gap: 8px; }
+.dock.dock-5 .dock-btn .ico { width: 28px; height: 28px; font-size: 13px; }
+.dock.dock-5 .dock-btn .lbl { font-size: 12px; }
+.dock.dock-5 .dock-btn .sub { font-size: 10px; }
+@media (max-width: 760px) { .dock.dock-5 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px) { .dock, .dock.dock-5 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 420px) { .dock, .dock.dock-5 { grid-template-columns: 1fr; } }
 
 /* ─── ESKALATIONS-PAD (Sidebar) — D2 ─── */
 .esc-btn {
@@ -1564,6 +1571,20 @@ function openSharePoint(){
     const url=au ? base+'/'+encodeURIComponent(au) : base;
     window.open(url, '_blank');
     lg('SharePoint geöffnet', au||'Auftragsbearbeitung-Wurzel');
+    render();
+}
+
+// D3e — Zoll-Anmeldung an Zollagent (Phase 5.2.1)
+function zollMail(){
+    const to=S.config.zoll.email;
+    if(!to){ alert('Zollagent-Email ist leer — bitte Sidebar → ⚙ Adressen → Zollagent ausfüllen.'); return; }
+    const au=S.au||'(AU)', kunde=S.kunde||'(Kunde)';
+    const firstName=(S.config.zoll.name||'').trim().split(/\s+/)[0];
+    const greet=firstName ? `Hallo ${firstName},` : 'Hallo,';
+    const subject=`Zoll-Anmeldung: ${au} — ${kunde}`;
+    const body=`${greet}\n\nbitte folgende Sendung zur Zollabwicklung vorbereiten:\n\n  Auftragsnummer:  ${au}\n  Kunde:           ${kunde}\n  Zielland:        ${S.zielland||'[bitte ergänzen]'}\n  Rechnungsnummer: ${S.reZoll||S.re||'[bitte ergänzen]'}\n  Anzahl Paletten: ${S.pal||'[bitte ergänzen]'}\n  Versandtag:      ${S.vDat||'[bitte ergänzen]'}\n  Warenwert:       [bitte ergänzen]\n${S.isLoose?'  Loose Beladung:  ja '+(S.looseInfo?'('+S.looseInfo+')':'')+'\n':''}\nDie Rechnung als PDF folgt — bitte vor dem Senden anhängen (mailto kann keine Anhänge tragen).\n\nDanke,\nJanna\nelvinci.de GmbH`;
+    window.open(buildMailto(to, subject, body));
+    lg('Zoll-Mail erzeugt', au+' → '+to);
     render();
 }
 
@@ -2685,8 +2706,10 @@ function rDaily(){
 }
 
 // D2 — Action Dock (Bridges nach D3): mailto + Planner-Tab + SharePoint + Eskalation
+// D3e — Zollagent-Knopf erscheint nur bei Zoll-Aufträgen (isZoll())
 function rActionDock(){
-    return `<div class="dock no-print">
+    const showZoll=isZoll();
+    return `<div class="dock no-print${showZoll?' dock-5':''}">
         <button onclick="ammMail()" class="dock-btn" title="Sendung bei AMM anmelden — Email an Stefan + Björn mit prefilled Daten">
             <div class="ico amm">📧</div>
             <div class="meta"><div class="lbl">AMM-Mail</div><div class="sub">Stefan + Björn</div></div>
@@ -2699,6 +2722,10 @@ function rActionDock(){
             <div class="ico share">📂</div>
             <div class="meta"><div class="lbl">SharePoint</div><div class="sub">${S.au||'Wurzel-Ordner'}</div></div>
         </button>
+        ${showZoll?`<button onclick="zollMail()" class="dock-btn" title="Zoll-Anmeldung an ${esc(S.config.zoll.name||'Zollagent')} (Phase 5.2.1)">
+            <div class="ico zoll">🌍</div>
+            <div class="meta"><div class="lbl">Zollagent</div><div class="sub">${esc(S.config.zoll.name||'Email senden')}</div></div>
+        </button>`:''}
         <button onclick="openEscPad()" class="dock-btn" title="Eskalations-Pad in der Sidebar öffnen">
             <div class="ico esc">⚠</div>
             <div class="meta"><div class="lbl">Eskalation</div><div class="sub">an Dustin / Siyad</div></div>
