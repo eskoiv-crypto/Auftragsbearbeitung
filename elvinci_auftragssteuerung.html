@@ -1356,6 +1356,8 @@ const S={
     dailyChecks: { date:'', tasks:{} },
     // D3a — Browser-Notification-Tracking, reset täglich
     notifyFired: { date:'', slots:{} },
+    // D3b — Wochenreport-Inhalte (manuell editiert, persistent)
+    weeklyReport: { notes:'', engpaesse:'', klaerfaelle:'' },
 };
 
 // ═══════════════════════════════════════════════════════
@@ -1591,6 +1593,135 @@ function notifyStart(){
     if(_notifyTimer) clearInterval(_notifyTimer);
     notifyCheck();
     _notifyTimer=setInterval(notifyCheck, 60*1000);
+}
+
+// ═══════════════════════════════════════════════════════
+// D3b — WOCHENREPORT (D7 DECISIONS): PDF via jsPDF + Email-Bridge
+// ═══════════════════════════════════════════════════════
+const REPORT_TO='dustin@elvinci.de'; // Platzhalter, später aus Config
+
+function _kw(date){
+    // ISO 8601 Kalenderwoche
+    const d=new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum=d.getUTCDay()||7;
+    d.setUTCDate(d.getUTCDate()+4-dayNum);
+    const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil(((d-yearStart)/86400000+1)/7);
+}
+
+function _weekStart(){
+    const now=new Date();
+    const ws=new Date(now);
+    const dow=now.getDay()||7; // Sonntag=0 → 7
+    ws.setDate(now.getDate()-dow+1);
+    ws.setHours(0,0,0,0);
+    return ws;
+}
+
+function _weekFilter(entries){
+    const ws=_weekStart();
+    return (entries||[]).filter(e=>{
+        const m=e.ts.match(/^(\d{2})\.(\d{2})\.(\d{4}),\s*(\d{2}):(\d{2})$/);
+        if(!m) return false;
+        const d=new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5]);
+        return d>=ws;
+    });
+}
+
+function generateWeeklyReport(){
+    const now=new Date();
+    const weekAudit=_weekFilter(S.audit);
+    const escalations=weekAudit.filter(e=>e.a==='Eskalation');
+    const bucketChanges=weekAudit.filter(e=>e.a==='Stufe abgeschlossen');
+    const reminders=weekAudit.filter(e=>e.a==='Erinnerung gesendet');
+    const dailyDone=Object.values(getDailyChecks()).filter(v=>v).length;
+    return { kw:_kw(now), now, weekAudit, escalations, bucketChanges, reminders, dailyDone };
+}
+
+function reportWeeklyPdf(){
+    if(!window.jspdf){ alert('jsPDF nicht geladen — keine PDF-Erzeugung möglich.'); return; }
+    const r=generateWeeklyReport();
+    const { jsPDF }=window.jspdf;
+    const doc=new jsPDF({ unit:'mm', format:'a4' });
+    const M=20, W=170;
+    let y=20;
+    // Header
+    doc.setFontSize(20); doc.setFont('helvetica','bold');
+    doc.text(`Wochenreport KW ${r.kw}`, M, y); y+=8;
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(100);
+    doc.text(`Stand: ${r.now.toLocaleString('de-DE')} · Janna · elvinci.de Backoffice & Fulfillment`, M, y); y+=12;
+    doc.setTextColor(0);
+
+    // Kennzahlen-Block
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text('Kennzahlen', M, y); y+=6;
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    const stats=[
+        ['Audit-Einträge gesamt diese Woche', r.weekAudit.length],
+        ['Stufen abgeschlossen',              r.bucketChanges.length],
+        ['Eskalationen ausgelöst',            r.escalations.length],
+        ['Sync-Erinnerungen empfangen',       r.reminders.length],
+        ['Tagespflichten heute erledigt',     r.dailyDone],
+    ];
+    stats.forEach(([l,v])=>{ doc.text(`${l}:`, M, y); doc.text(String(v), M+W-15, y, { align:'right' }); y+=5; });
+    y+=4;
+
+    // Aktueller Auftrag
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text('Aktiver Auftrag', M, y); y+=6;
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    doc.text(`AU:     ${S.au||'—'}`, M, y); y+=5;
+    doc.text(`Kunde:  ${S.kunde||'—'}`, M, y); y+=5;
+    doc.text(`Bucket: ${BUCKETS[activeBucket()]?.l||'—'} (Bucket ${activeBucket()+1} von 7)`, M, y); y+=5;
+    if(tgs().length){ doc.text(`Tags:   ${tgs().map(t=>t.x).join(', ')}`, M, y); y+=5; }
+    y+=4;
+
+    // Engpässe / Klärfälle / Notizen
+    const wr=S.weeklyReport||{};
+    [['Engpässe',wr.engpaesse], ['Klärfälle',wr.klaerfaelle], ['Notizen',wr.notes]].forEach(([h,t])=>{
+        if(!t) return;
+        if(y>250){ doc.addPage(); y=20; }
+        doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.text(h, M, y); y+=6;
+        doc.setFontSize(10); doc.setFont('helvetica','normal');
+        const lines=doc.splitTextToSize(t, W);
+        lines.forEach(l=>{ if(y>280){ doc.addPage(); y=20; } doc.text(l, M, y); y+=5; });
+        y+=4;
+    });
+
+    // Audit-Trail dieser Woche
+    if(r.weekAudit.length){
+        if(y>240){ doc.addPage(); y=20; }
+        doc.setFontSize(13); doc.setFont('helvetica','bold');
+        doc.text(`Audit-Trail (${r.weekAudit.length})`, M, y); y+=6;
+        doc.setFontSize(8); doc.setFont('helvetica','normal');
+        r.weekAudit.forEach(e=>{
+            if(y>285){ doc.addPage(); y=20; doc.setFontSize(8); }
+            const line=`${e.ts}  [${(e.st||'—').padEnd(10)}]  ${e.a}${e.d?' — '+e.d:''}`;
+            const wrapped=doc.splitTextToSize(line, W);
+            wrapped.forEach(l=>{ if(y>285){ doc.addPage(); y=20; } doc.text(l, M, y); y+=3.8; });
+        });
+    }
+
+    const fn=`Wochenreport_KW${String(r.kw).padStart(2,'0')}_${r.now.toISOString().slice(0,10)}.pdf`;
+    doc.save(fn);
+    lg('Wochenreport-PDF erzeugt', fn);
+    render();
+}
+
+function reportWeeklyMail(){
+    const r=generateWeeklyReport();
+    const wr=S.weeklyReport||{};
+    const subject=`Wochenreport KW ${r.kw} — elvinci Auftragsbearbeitung`;
+    let body=`Hallo Dustin,\n\nWochenreport KW ${r.kw}, Stand ${r.now.toLocaleString('de-DE')}.\n\nKENNZAHLEN\n  Audit-Einträge:    ${r.weekAudit.length}\n  Stufen abgeschlossen: ${r.bucketChanges.length}\n  Eskalationen:      ${r.escalations.length}\n  Sync-Erinnerungen: ${r.reminders.length}\n  Tagespflichten heute: ${r.dailyDone}\n\nAKTIVER AUFTRAG\n  AU:     ${S.au||'—'}\n  Kunde:  ${S.kunde||'—'}\n  Bucket: ${BUCKETS[activeBucket()]?.l||'—'}\n`;
+    if(tgs().length) body+=`  Tags:   ${tgs().map(t=>t.x).join(', ')}\n`;
+    body+='\n';
+    if(wr.engpaesse)    body+=`ENGPÄSSE\n${wr.engpaesse}\n\n`;
+    if(wr.klaerfaelle)  body+=`KLÄRFÄLLE\n${wr.klaerfaelle}\n\n`;
+    if(wr.notes)        body+=`NOTIZEN\n${wr.notes}\n\n`;
+    body+='Das vollständige PDF mit Audit-Trail liegt im Download-Ordner — bitte vor dem Senden anhängen (mailto kann keine Anhänge tragen).\n\nDanke,\nJanna';
+    window.open(buildMailto(REPORT_TO, subject, body));
+    lg('Wochenreport-Email erzeugt', `KW ${r.kw} → ${REPORT_TO}`);
+    render();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3036,6 +3167,17 @@ function rSB(){
         ${S.au?`<p style="font-size:10px;color:var(--label-3);margin-top:8px;text-align:center">Aktive AU: <span class="mono" style="color:var(--label-2)">${esc(S.au)}</span></p>`:'<p style="font-size:10px;color:var(--warning);margin-top:8px;text-align:center">⚠ Keine AU erfasst — Email-Body unvollständig</p>'}
 
         <div class="dv"></div>
+        <p style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">📨 Wochenreport (KW ${_kw(new Date())})</p>
+        <p style="font-size:11px;color:var(--label-3);margin-bottom:10px;line-height:1.4">PDF + Email an Dustin. Aggregiert Audit-Log dieser Woche + freie Notizen unten.</p>
+        <div class="f"><label>Engpässe</label><textarea oninput="S.weeklyReport.engpaesse=this.value;sfR()" placeholder="Wo lief's diese Woche knapp?" style="min-height:50px">${esc(S.weeklyReport?.engpaesse||'')}</textarea></div>
+        <div class="f"><label>Klärfälle</label><textarea oninput="S.weeklyReport.klaerfaelle=this.value;sfR()" placeholder="Welche Klärfälle stehen offen?" style="min-height:50px">${esc(S.weeklyReport?.klaerfaelle||'')}</textarea></div>
+        <div class="f" style="margin-bottom:10px"><label>Notizen</label><textarea oninput="S.weeklyReport.notes=this.value;sfR()" placeholder="Highlights, Lowlights, Ausblick" style="min-height:50px">${esc(S.weeklyReport?.notes||'')}</textarea></div>
+        <div style="display:flex;gap:6px;margin-bottom:14px">
+            <button onclick="reportWeeklyPdf()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px">📄 PDF speichern</button>
+            <button onclick="reportWeeklyMail()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px">📨 Email an Dustin</button>
+        </div>
+
+        <div class="dv"></div>
         <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:8px">Datensicherung</p>
         <div style="display:flex;gap:6px;margin-bottom:6px">
             <button onclick="exportBackup()" class="btn btn-o" style="flex:1;font-size:10px;padding:6px 8px">💾 Backup speichern</button>
@@ -3413,6 +3555,10 @@ function cpTick(){
 
 // INIT
 const _restoredAt=loadDraft();
+// Schema-Migration: nachträglich hinzugefügte Felder ergänzen, falls aus älterem localStorage geladen
+if(!S.dailyChecks)  S.dailyChecks  = { date:'', tasks:{} };
+if(!S.notifyFired)  S.notifyFired  = { date:'', slots:{} };
+if(!S.weeklyReport) S.weeklyReport = { notes:'', engpaesse:'', klaerfaelle:'' };
 if(_restoredAt){
     lg('Stand wiederhergestellt', new Date(_restoredAt).toLocaleString('de-DE'));
 }else{
