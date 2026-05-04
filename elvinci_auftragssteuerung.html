@@ -766,14 +766,81 @@ body {
 .pipe-row .badge.sync { background: rgba(0,200,150,0.10); color: var(--success); }
 .pipe-row .drifts {
     font-size: 11px;
-    color: var(--warning);
     line-height: 1.4;
+    display: grid;
+    gap: 6px;
 }
-.pipe-row .drifts .d { display: block; }
+.pipe-row .drifts > span { color: var(--label-3); }
+.drift-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 6px;
+    align-items: stretch;
+}
+.drift-field {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--label-2);
+    align-self: center;
+}
+.drift-choice {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 6px 10px;
+    background: var(--bg-primary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-input);
+    cursor: pointer;
+    transition: all 0.15s var(--ease-out);
+    overflow: hidden;
+}
+.drift-choice input[type=radio] { display: none; }
+.drift-choice .src {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--label-3);
+}
+.drift-choice .val {
+    font-size: 12px;
+    color: var(--label);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.drift-choice:hover { border-color: var(--separator-strong); }
+.drift-choice.sel {
+    border-color: var(--accent);
+    background: rgba(0, 113, 227, 0.06);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.10);
+}
+.drift-choice.sel .src { color: var(--accent); }
+.drift-choice.sel .val { font-weight: 600; }
+.drift-bulk {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-primary);
+    border-radius: var(--r-input);
+    margin-bottom: 12px;
+}
+.drift-bulk .bulk-label {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--label-2);
+}
 .pipe-actions {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+}
+@media (max-width: 700px) {
+    .drift-row { grid-template-columns: 1fr; }
+    .drift-field { font-size: 12px; margin-bottom: 2px; }
 }
 
 /* ─── KUNDEN-BRIDGE (Phase 3) — immer sichtbar ─── */
@@ -2045,19 +2112,37 @@ function _parsePipelineRow(arr){
     };
 }
 
-// Vergleicht Pipeline-Zeile mit existierendem Tool-Auftrag (anhand AU-Match)
+// Vergleicht Pipeline-Zeile mit existierendem Tool-Auftrag (anhand AU-Match).
+// Liefert pro Drift den S-Schlüssel + typisierten Wert + Default-Resolution 'tool'.
 function _detectDrift(row){
     if(!row.au) return { match:'none', drifts:[], matchId:null };
     const entry=Object.entries(_ORDERS).find(([id,o])=>o.au===row.au);
     if(!entry) return { match:'new', drifts:[], matchId:null };
     const [matchId, o]=entry;
     const drifts=[];
-    if(row.kunde && row.kunde!==o.kunde) drifts.push({ field:'Kunde', tool:o.kunde||'(leer)', pipeline:row.kunde });
-    if(row.va && row.va!==o.va) drifts.push({ field:'Versandart', tool:o.va||'(leer)', pipeline:row.va });
-    if(typeof row.bezahlt==='boolean' && row.bezahlt!==!!o.bezahlt) drifts.push({ field:'Bezahlt?', tool:o.bezahlt?'ja':'nein', pipeline:row.bezahlt?'ja':'nein' });
-    if(typeof row.ticketOk==='boolean' && row.ticketOk!==!!o.ticketOk) drifts.push({ field:'Erledigt', tool:o.ticketOk?'ja':'nein', pipeline:row.ticketOk?'ja':'nein' });
-    if(row.pal && row.pal!==o.pal) drifts.push({ field:'Paletten', tool:o.pal||'(leer)', pipeline:row.pal });
+    const push=(key, field, toolVal, pipelineVal, toolDisp, pipelineDisp)=>{
+        drifts.push({ key, field, tool:toolDisp, pipeline:pipelineDisp, toolVal, pipelineVal, resolution:'tool' });
+    };
+    if(row.kunde && row.kunde!==o.kunde) push('kunde','Kunde', o.kunde||'', row.kunde, o.kunde||'(leer)', row.kunde);
+    if(row.va && row.va!==o.va)         push('va','Versandart', o.va||'', row.va, o.va||'(leer)', row.va);
+    if(typeof row.bezahlt==='boolean' && row.bezahlt!==!!o.bezahlt) push('bezahlt','Bezahlt?', !!o.bezahlt, !!row.bezahlt, o.bezahlt?'ja':'nein', row.bezahlt?'ja':'nein');
+    if(typeof row.ticketOk==='boolean' && row.ticketOk!==!!o.ticketOk) push('ticketOk','Erledigt', !!o.ticketOk, !!row.ticketOk, o.ticketOk?'ja':'nein', row.ticketOk?'ja':'nein');
+    if(row.pal && row.pal!==o.pal)      push('pal','Paletten', o.pal||'', row.pal, o.pal||'(leer)', row.pal);
     return { match:'existing', drifts, matchId };
+}
+
+// Drift-Resolution — pro Feld setzen und Bulk-Aktionen
+function setDriftResolution(rowIdx, fieldIdx, val){
+    const r=S.pipeImportRows?.[rowIdx];
+    if(!r?.drift?.drifts?.[fieldIdx]) return;
+    r.drift.drifts[fieldIdx].resolution=val;
+    render();
+}
+function bulkSetDriftResolution(val){
+    (S.pipeImportRows||[]).forEach(r=>{
+        if(r.drift?.drifts) r.drift.drifts.forEach(d=>d.resolution=val);
+    });
+    render();
 }
 
 function pipeImportFromFile(file){
@@ -2110,45 +2195,83 @@ function triggerPipelineImport(){
     inp.click();
 }
 
-// Übernimmt alle "neuen" Aufträge aus dem Import (existierende werden nicht überschrieben)
+// Übernimmt Pipeline-Import:
+// - 'new' Zeilen → neue Aufträge anlegen
+// - 'existing' Zeilen mit drift.resolution='pipeline' → existierende Aufträge mergen
+// - 'existing' Zeilen mit allen 'tool'-Resolutions → übersprungen (Drift bewusst ignoriert)
 function applyPipelineImport(){
     const rows=S.pipeImportRows||[];
-    let added=0, skipped=0;
+    save(); // aktuellen Stand sichern, bevor _ORDERS mutiert wird
+    let added=0, mergedOrders=0, mergedFields=0, skipped=0;
+    const tsNow=()=>new Date().toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
     rows.forEach(r=>{
         if(!r.au){ skipped++; return; }
-        if(r.drift?.match==='existing'){ skipped++; return; }
-        save(); // Aktuellen Stand sichern, bevor wir _ORDERS mutieren
-        const id=uuid();
-        _ORDERS[id]={
-            stage:0, sub:0, done:[],
-            au:r.au, kunde:r.kunde||'',
-            artAnz:r.artAnz||'', va:r.va||'',
-            za:'', // unbekannt aus Pipeline
-            vDat:r.vDat||'', vAnliefer:r.vAnliefer||'',
-            jtlZZ:r.jtlZZ||'7', jtlAppointmentStatus:'erfuellbar',
-            pal:r.pal||'',
-            bezahlt:!!r.bezahlt,
-            ammAngemeldet:!!r.ammAngemeldet,
-            ticketOk:!!r.ticketOk,
-            isZoll:!!r.isZoll,
-            besonderes:r.besonderes||'',
-            audit:[{
-                ts:new Date().toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}),
-                st:'erfassung', a:'Aus Pipeline-Import', d:'Zeile '+r.au+' übernommen',
-            }],
-            komm:[],
-            genTodos:[false,false,false,false,false,false,false,false,false],
-            jtlAbgleich:{ mengen:false, versandart:false, zz:false },
-            endChecklist:{ teams:false, pipeline:false, sharepoint:false },
-            startedAt:new Date().toISOString(),
-        };
-        added++;
+        const m=r.drift?.match;
+
+        if(m==='new'){
+            const id=uuid();
+            _ORDERS[id]={
+                stage:0, sub:0, done:[],
+                au:r.au, kunde:r.kunde||'',
+                artAnz:r.artAnz||'', va:r.va||'',
+                za:'',
+                vDat:r.vDat||'', vAnliefer:r.vAnliefer||'',
+                jtlZZ:r.jtlZZ||'7', jtlAppointmentStatus:'erfuellbar',
+                pal:r.pal||'',
+                bezahlt:!!r.bezahlt, ammAngemeldet:!!r.ammAngemeldet,
+                ticketOk:!!r.ticketOk, isZoll:!!r.isZoll,
+                besonderes:r.besonderes||'',
+                audit:[{ ts:tsNow(), st:'erfassung', a:'Aus Pipeline-Import', d:'Zeile '+r.au+' übernommen' }],
+                komm:[], genTodos:[false,false,false,false,false,false,false,false,false],
+                jtlAbgleich:{ mengen:false, versandart:false, zz:false },
+                endChecklist:{ teams:false, pipeline:false, sharepoint:false },
+                startedAt:new Date().toISOString(),
+            };
+            added++;
+            return;
+        }
+
+        if(m==='existing'){
+            const id=r.drift.matchId;
+            const o=_ORDERS[id];
+            if(!o){ skipped++; return; }
+            const changedFields=[];
+            r.drift.drifts.forEach(d=>{
+                if(d.resolution==='pipeline' && o[d.key]!==d.pipelineVal){
+                    o[d.key]=d.pipelineVal;
+                    changedFields.push(`${d.field}: → „${d.pipeline}"`);
+                    mergedFields++;
+                }
+            });
+            if(changedFields.length){
+                mergedOrders++;
+                o.audit=o.audit||[];
+                o.audit.push({ ts:tsNow(), st:'pipe', a:'Pipeline-Drift übernommen', d:changedFields.join(' · ') });
+                // Falls aktiver Auftrag betroffen: Per-Order-Felder zurück in S spiegeln
+                if(id===S.id){
+                    Object.entries(o).forEach(([k,v])=>{
+                        if(!_GLOBAL_KEYS.has(k) && !_UI_KEYS.has(k)) S[k]=v;
+                    });
+                }
+            } else {
+                skipped++;
+            }
+            return;
+        }
+
+        skipped++;
     });
+
     save();
     S.pipeImportOpen=false;
     S.pipeImportRows=[];
-    alert(`${added} Aufträge importiert · ${skipped} übersprungen (bereits vorhanden oder ohne AU)`);
-    lg('Pipeline-Import abgeschlossen', `${added} neue · ${skipped} übersprungen`);
+    const lines=[];
+    if(added)         lines.push(`${added} neue Aufträge importiert`);
+    if(mergedOrders)  lines.push(`${mergedOrders} Aufträge mit ${mergedFields} Pipeline-Werten aktualisiert`);
+    if(skipped)       lines.push(`${skipped} übersprungen (Drifts auf Tool-Wert belassen oder ungültig)`);
+    alert(lines.length?lines.join('\n'):'Nichts zu tun.');
+    lg('Pipeline-Import abgeschlossen', `+${added} neu · ${mergedOrders}/${mergedFields} merged · ${skipped} übersprungen`);
     render();
 }
 
@@ -3800,31 +3923,41 @@ function sw(title,owner,body){
         </button>
     </div>`}
 
-// Tier 4.3 — Pipeline-Import-Modal
+// Tier 4.3 — Pipeline-Import-Modal mit Drift-Resolution
 function rPipelineModal(){
     if(!S.pipeImportOpen) return '';
     const rows=S.pipeImportRows||[];
     const newCount=rows.filter(r=>r.drift?.match==='new').length;
     const driftCount=rows.filter(r=>r.drift?.match==='existing' && r.drift.drifts.length>0).length;
     const syncCount=rows.filter(r=>r.drift?.match==='existing' && r.drift.drifts.length===0).length;
+    // Aktive Pipeline-Auflösungen zählen
+    let pipelineResolutions=0;
+    rows.forEach(r=>{ (r.drift?.drifts||[]).forEach(d=>{ if(d.resolution==='pipeline') pipelineResolutions++; }); });
+    const totalDriftFields=rows.reduce((acc,r)=>acc+(r.drift?.drifts?.length||0), 0);
+
     return `<div class="pipe-overlay show no-print">
         <div class="pipe-modal">
             <h2>📊 Pipeline-Import</h2>
-            <p class="sub">${rows.length} Auftragszeilen aus Pipeline-Datei. Bestehende Aufträge werden NICHT überschrieben — nur neue (linke Spalte: <span style="color:var(--accent);font-weight:600">+ Neu</span>) werden importiert. Drifts (<span style="color:var(--warning);font-weight:600">⚠ Drift</span>) zeigen nur Diskrepanzen — manuelle Klärung später.</p>
+            <p class="sub">${rows.length} Auftragszeilen geladen. <strong>+ Neu</strong> (<span style="color:var(--accent)">${newCount}</span>) wird als neue Aufträge angelegt. <strong>⚠ Drift</strong> (<span style="color:var(--warning)">${driftCount}</span>) zeigt Diskrepanzen — pro Feld entscheidest Du, welche Quelle gewinnt.</p>
             <div class="pipe-stats">
                 <div class="pipe-stat new"><div class="lbl">Neue Aufträge</div><div class="val">${newCount}</div></div>
-                <div class="pipe-stat drift"><div class="lbl">Drifts (existieren bereits)</div><div class="val">${driftCount}</div></div>
+                <div class="pipe-stat drift"><div class="lbl">Drifts</div><div class="val">${driftCount}</div></div>
                 <div class="pipe-stat sync"><div class="lbl">Synchron</div><div class="val">${syncCount}</div></div>
             </div>
+            ${totalDriftFields>0?`<div class="drift-bulk">
+                <span class="bulk-label">${pipelineResolutions} / ${totalDriftFields} Pipeline-Werte gewählt</span>
+                <button onclick="bulkSetDriftResolution('tool')" class="btn btn-o" style="font-size:11px;padding:5px 12px">Alle auf Tool</button>
+                <button onclick="bulkSetDriftResolution('pipeline')" class="btn btn-o" style="font-size:11px;padding:5px 12px">Alle auf Pipeline</button>
+            </div>`:''}
             <div class="pipe-table">
                 <div class="pipe-row head">
                     <div>Status</div>
                     <div>Kunde</div>
                     <div>Auftragsnr.</div>
                     <div>Versandart</div>
-                    <div>Diskrepanzen</div>
+                    <div>Diskrepanzen / Auflösung</div>
                 </div>
-                ${rows.map(r=>{
+                ${rows.map((r,rowIdx)=>{
                     const m=r.drift?.match||'none';
                     const ds=r.drift?.drifts||[];
                     const badge=m==='new'?'<span class="badge new">+ Neu</span>'
@@ -3836,13 +3969,35 @@ function rPipelineModal(){
                         <div>${esc(r.kunde||'—')}</div>
                         <div class="au">${esc(r.au||'—')}</div>
                         <div>${esc(r.va==='lieferung'?'Spedition':r.va==='abholung'?'Abholung':'—')}</div>
-                        <div class="drifts">${ds.length===0?'<span style="color:var(--label-3)">—</span>':ds.map(d=>`<span class="d"><strong>${esc(d.field)}:</strong> Tool „${esc(d.tool)}" ↔ Pipeline „${esc(d.pipeline)}"</span>`).join('')}</div>
+                        <div class="drifts">${ds.length===0?'<span style="color:var(--label-3)">—</span>':ds.map((d,fIdx)=>{
+                            const nm='drift-'+rowIdx+'-'+fIdx;
+                            return `<div class="drift-row">
+                                <div class="drift-field">${esc(d.field)}</div>
+                                <label class="drift-choice ${d.resolution==='tool'?'sel':''}">
+                                    <input type="radio" name="${nm}" ${d.resolution==='tool'?'checked':''} onchange="setDriftResolution(${rowIdx},${fIdx},'tool')">
+                                    <span class="src">Tool</span>
+                                    <span class="val">„${esc(d.tool)}"</span>
+                                </label>
+                                <label class="drift-choice ${d.resolution==='pipeline'?'sel':''}">
+                                    <input type="radio" name="${nm}" ${d.resolution==='pipeline'?'checked':''} onchange="setDriftResolution(${rowIdx},${fIdx},'pipeline')">
+                                    <span class="src">Pipeline</span>
+                                    <span class="val">„${esc(d.pipeline)}"</span>
+                                </label>
+                            </div>`;
+                        }).join('')}</div>
                     </div>`;
                 }).join('')}
             </div>
             <div class="pipe-actions">
                 <button onclick="closePipelineImport()" class="btn btn-o">Abbrechen</button>
-                <button onclick="applyPipelineImport()" class="btn btn-p" ${newCount===0?'disabled':''} title="${newCount===0?'Keine neuen Aufträge zum Importieren':'Erstellt '+newCount+' neue Aufträge in der lokalen Liste'}">${newCount} neue Aufträge importieren</button>
+                ${(()=>{
+                    const willChange=newCount+pipelineResolutions;
+                    const parts=[];
+                    if(newCount) parts.push(newCount+' neu');
+                    if(pipelineResolutions) parts.push(pipelineResolutions+' Drift-Felder mergen');
+                    const lbl=parts.length?'Übernehmen ('+parts.join(' · ')+')':'Übernehmen';
+                    return `<button onclick="applyPipelineImport()" class="btn btn-p" ${willChange===0?'disabled':''} title="${willChange===0?'Nichts zu übernehmen — alle Drifts auf Tool-Wert und keine neuen Aufträge':'Importiert neue + merged Pipeline-Werte für angekreuzte Drifts'}">${lbl}</button>`;
+                })()}
             </div>
         </div>
     </div>`;
