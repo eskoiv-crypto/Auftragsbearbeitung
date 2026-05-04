@@ -2631,10 +2631,26 @@ function isSkip(i){
     return false;
 }
 function rst(){
-    if(!confirm('Workflow komplett zurücksetzen? (Backup-Datei vorher speichern empfohlen.)'))return;
-    for(const k in S){if(k==='audit'||k==='komm'){S[k]=[];continue}if(k==='done'){S[k]=[];continue}if(k==='stage'||k==='sub'){S[k]=0;continue}if(typeof S[k]==='boolean')S[k]=false;else if(typeof S[k]==='string')S[k]=''}
-    clearDraft();
-    render();window.scrollTo({top:0,behavior:'smooth'});
+    if(!confirm('Workflow komplett zurücksetzen?\n\nAdressen, Wochenreport-Notizen und Tagespflichten bleiben erhalten — nur Auftragsdaten + Audit + Kommentare werden gelöscht.\n\n(Backup-Datei vorher speichern empfohlen.)'))return;
+    // D3d — Preserve-Set: was darf NICHT gelöscht werden, weil's nicht auftrags-spezifisch ist
+    const PRESERVE=new Set(['config','weeklyReport','dailyChecks','notifyFired']);
+    for(const k in S){
+        if(PRESERVE.has(k)) continue;
+        if(k==='audit'||k==='komm'||k==='done'){ S[k]=[]; continue; }
+        if(k==='stage'||k==='sub'){ S[k]=0; continue; }
+        if(Array.isArray(S[k])){
+            S[k]=S[k].map(v=>typeof v==='boolean'?false:typeof v==='string'?'':v);
+            continue;
+        }
+        if(typeof S[k]==='boolean'){ S[k]=false; continue; }
+        if(typeof S[k]==='string'){ S[k]=''; continue; }
+        if(S[k]&&typeof S[k]==='object'){ S[k]=null; continue; }
+    }
+    lg('Workflow zurückgesetzt', 'Adressen + Wochenreport + Tagespflichten bleiben');
+    // KEIN clearDraft() — render() ruft save() am Ende und schreibt den teil-gereseten State zurück.
+    // Sonst würden Config/WeeklyReport beim nächsten F5 auf Defaults zurückfallen.
+    render();
+    window.scrollTo({top:0,behavior:'smooth'});
 }
 
 // ═══════════════════════════════════════════════════════
