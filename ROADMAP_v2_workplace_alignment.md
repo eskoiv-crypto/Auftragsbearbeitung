@@ -20,6 +20,8 @@
 | 6 — Nachverfolgung & Dokumentation (Reporting, SharePoint) | Audit-Log nur In-Memory, kein Wochenreport | ~15 % |
 | Kapitel 7 — Tägl./wöchentl. Pflichten (2× Sync mit Dima, Wochenreport, SharePoint-Aufräumen) | nicht abgebildet | **0 %** |
 | Kapitel 8 — Eskalationspfade | nicht abgebildet | **0 %** |
+| Planner-Buckets (7 Stationen) | Tool hat 4 Stages — keine 1:1-Abbildung | **~30 %** |
+| Planner-Labels (16 Tags) | Tool hat 6 Tags | **~37 %** |
 
 **Aggregat: ~20 % der Stellenbeschreibung im Tool. 80 % fehlt.**
 
@@ -35,8 +37,10 @@ Die Roadmap setzt diese Voraussetzungen voraus. Bevor wir Tier 1 starten, **muss
 | L2 | Persistenz via `localStorage` (kein Backend, kein OAuth) | ja | ja — wenn SharePoint-Live-Sync gewünscht, ist Backend Pflicht |
 | L3 | Externe Systeme via `mailto:`/`tel:`/`whatsapp://`/SharePoint-URL — kein API-Call | ja | ja |
 | L4 | Phase-Anzahl im Tool: **6** (statt aktuell 4) | ja | ja — sonst bleibt Phase 2/3/6 unsichtbar |
-| L5 | Owner Phase 4 (Rechnung) = **Janna** (laut Stellenbeschreibung), NICHT Mirko (laut Handover) | ja | ja — Diskrepanz im Handover, muss aufgelöst werden |
+| L5 | Owner Phase 4 (Rechnung) = **Janna**. Mirko gibt es nicht mehr bei elvinci. Dustin = alleiniger Vorgesetzter. | ✅ bestätigt 2026-05-04 | ✅ |
 | L6 | Tool ist Single-User pro Browser/Tablet (Janna), keine Multi-User-Konkurrenz | ja | ja |
+| L7 | Tool richtet sich an den **7 Planner-Buckets** aus (nicht an den abstrakten 6 Phasen). Buckets: `verkauf → rechnung → kommi → versand/abholung → angemeldet → beendet`. AU-Nummer = JOIN-Key zwischen Tool / Planner / Pipeline. | ja | ja — bestätigen, dann Tier 2 starten |
+| L8 | Tag-System wird von **6 → 16 Labels** erweitert, Namen 1:1 wie im Planner. | ja | ja |
 
 ---
 
@@ -89,18 +93,33 @@ Die Roadmap setzt diese Voraussetzungen voraus. Bevor wir Tier 1 starten, **muss
 
 ---
 
-## Tier 2 — Phase-Coverage 1:1 zur Stellenbeschreibung (3 Sessions)
+## Tier 2 — Phase-/Bucket-Coverage (3 Sessions)
 
-**Ziel:** Tool hat **6 Phasen** (statt aktuell 4), 1:1 zur Stellenbeschreibung benannt.
+**Ziel:** Tool spiegelt die **7 Planner-Buckets** (= reale Workflow-Stationen) und die **16 Labels** des Planners. Stellenbeschreibungs-Phasen 1–6 sind **logische Klammer**, Buckets sind die **operative** Einheit.
 
-### 2.1 Phase-Schema umbauen
-Sidebar-Stages neu:
-1. **Saleskärtchen & Auftragseingang** (war: Erfassung)
-2. **Fulfilment Pipeline** (NEU)
-3. **Kundenkommunikation** (NEU)
-4. **Rechnungsstellung** (war: Rechnung)
-5. **Anmeldung Spedition / Zoll** (war: AMM-Übergabe)
-6. **Nachverfolgung & Dokumentation** (NEU als first-class)
+### 2.1 Bucket-Schema umbauen (statt 4-Stage → 7-Bucket-Sidebar)
+Sidebar-Buckets neu (Owner in Klammern):
+1. **bereit für Rechnung** (Verkauf → Janna übernimmt) — Phase 1
+2. **Offene Rechnungen** (Janna) — Phase 4
+3. **Kommissionierungsplanung** (Dustin) — Phase 4-Übergabe
+4. **Versandplanung** (Janna) — Phase 5 (Lieferung)
+5. **Abholpl. / Kommunikation** (Janna) — Phase 3 + Abholungen
+6. **Angemeldet** (Janna) — Phase 5 (AMM/Zoll angemeldet)
+7. **Beendet (Versendet/Abgeholt)** — Phase 6
+
+Sidebar zeigt zusätzlich Phase-Klammer (1–6) als Hinweis-Layer.
+
+### 2.1.1 Tag-System auf 16 Planner-Labels erweitern
+Aktuell im Tool: 6 Tags (`isKombi, isSonder, isKlein, isLoose, isZoll, Fixtermin`). Erweitern auf:
+- **Versandart:** `ABHOLUNG`
+- **Kundentyp:** `Privatkunde`
+- **Auftrag-Flags:** `KOMBI-AUFTRAG, SONDERFALL, Kleingeräte, Loose Beladung!, Fixtermin, Zoll, UIT-Code`
+- **Status:** `STORNIERT`
+- **Zahlung-Flags:** `Vorkasse (FLEX), Barzahlung (PRIO), ZZ (PRIO)`
+- **Zahlung-Status:** `Warte auf Zahlung, Bezahlt`
+- **Kommunikation:** `Kontaktiert`
+
+Schema bereits dekodiert in `data/planner_schema.json`. Akzeptanz: jedes Planner-Label hat 1:1 ein Tool-Tag mit gleichem Namen.
 
 ### 2.2 Phase 1 — Saleskärtchen-Vollständigkeitscheck
 - Pflichtfelder als Checklist: Kundendaten, Mengen, Preise, Versandart, Zahlungsziel.
@@ -142,8 +161,10 @@ Single-File ohne Backend → wir bauen **Bridges** statt Integrationen. Das Tool
 - `https://wa.me/{kundenNummer}`-Link für WhatsApp-Web.
 - Logging: jeder Klick auf Bridge erzeugt Eintrag im Audit-Log + Pflichtfeld „Was war das Ergebnis?".
 
-### 3.3 SharePoint-Pfad-Generator
-- Tool baut Vorschlags-URL nach Schema (sobald 0.2 geklärt): z. B. `…/Auftragsbearbeitung/{AU}/`. Click-to-Open.
+### 3.3 SharePoint- und Planner-Bridges
+- **Planner-Tab-Bridge:** Button öffnet den Planner-Tab (Tab-URL aus `data/planner_schema.json`).
+- **Single-Card-Deeplink** (sobald Format geklärt — siehe OPEN_QUESTIONS 0.2 Folge-Frage): Direkter Sprung zur richtigen Karte über AU-Nummer.
+- **SharePoint-Pfad-Generator:** Vorschlags-URL `…/Auftragsbearbeitung/{AU}/` (sobald URL-Schema geklärt). Click-to-Open.
 - "Ablage prüfen"-Button öffnet den Ordner im Browser.
 
 **Aufwand:** 2 Sessions.
@@ -159,8 +180,14 @@ Phase 2 ist heute eine **fremde Excel-Datei**. Tool muss sie nicht ersetzen, abe
 - Tool-State spiegelt die Excel-Realität.
 
 ### 4.2 Excel-Export für Copy-Paste
-- "Pipeline-Zeile kopieren"-Button → erzeugt eine Tab-getrennte Zeile in Spalten-Reihenfolge der SharePoint-Excel. Janna paste'd direkt in die Excel.
+- "Pipeline-Zeile kopieren"-Button → erzeugt eine **Semikolon**-getrennte Zeile in Excel-Spalten-Reihenfolge A–AA (Schema in `data/pipeline_schema.json`).
+- Encoding: UTF-8 zum Paste, aber Bewusstsein dass die Quell-Excel als CP1252 exportiert.
 - Alternativ: Download als 1-Zeilen-CSV.
+
+### 4.3 Reverse: CSV-Import zur Synchronisation
+- "Pipeline-Export hier reinziehen"-Drop-Zone (CSV oder XLSX). Tool parsed mit SheetJS (CDN), zeigt pro Auftrag aus der Pipeline einen „Import"-Button.
+- Importierte Aufträge füllen `S` und können dann in den richtigen Bucket geschoben werden.
+- Akzeptanz: aktueller Pipeline-Export (`docs/pipeline_export_2026-05-04.csv`) lädt fehlerfrei, alle Spalten landen im richtigen Tool-Feld.
 
 ### 4.3 Optional Tier 4-Stretch — bidirektionaler Sync
 - Falls L2 fällt (Backend erlaubt) → MS-Graph-API Live-Sync. **Kein Default**, weil Riesen-Aufwand und Auth-Komplexität.

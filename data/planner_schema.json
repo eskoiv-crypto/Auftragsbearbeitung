@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$comment": "MS Teams Planner Schema für Saleskärtchen / Teamskärtchen. Quelle: docs/planner_export_2026-05-04.xlsx (Stand 2026-05-04).",
+  "version": "2026-05-04",
+  "system": "Microsoft Teams Planner",
+  "tab_url": "https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/_djb2_msteams_prefix_1232415732?context=%7B%22channelId%22%3A%2219%3A664f0fbb39ce4048b6e3c464fa0fc617%40thread.tacv2%22%7D&tenantId=3660667e-7bd7-4e05-978c-2f9861b45376",
+  "tenant_id": "3660667e-7bd7-4e05-978c-2f9861b45376",
+  "channel_id": "19:664f0fbb39ce4048b6e3c464fa0fc617@thread.tacv2",
+
+  "buckets": [
+    { "id": "verkauf",      "label": "bereit für Rechnung (VERKAUF)",   "owner": "Verkauf",        "phase": 1,  "purpose": "Saleskärtchen-Eingang. Verkauf hat Karte erstellt + Pflichtdaten gefüllt." },
+    { "id": "rechnung",     "label": "Offene Rechnungen",                "owner": "Janna",          "phase": 4,  "purpose": "Rechnung steht aus. Owner = Janna (vorher: Mirko, nicht mehr bei elvinci)." },
+    { "id": "kommi",        "label": "Kommissionierungsplanung (DUSTIN)","owner": "Dustin",         "phase": 4,  "purpose": "Dustin plant Kommissionierungs-Termin." },
+    { "id": "versand",      "label": "Versandplanung JANNA",             "owner": "Janna",          "phase": 5,  "purpose": "Versand-Termin und Spedition planen." },
+    { "id": "abholung",     "label": "Abholplan. / Kommunikation (JANNA)","owner": "Janna",          "phase": 3,  "purpose": "Abholtermine + laufende Kunden-Kommunikation. Phase 3 lebt hier." },
+    { "id": "angemeldet",   "label": "Angemeldet (JANNA)",               "owner": "Janna",          "phase": 5,  "purpose": "AMM/Spedition/Zoll angemeldet, wartet auf Versand." },
+    { "id": "beendet",      "label": "Beendet (Versendet/Abgeholt)",     "owner": null,             "phase": 6,  "purpose": "Auftrag abgeschlossen, Doku-Klammer." }
+  ],
+
+  "labels": [
+    { "label": "ABHOLUNG",          "category": "versandart",       "tool_field": "S.versandart=='selbstabholung'" },
+    { "label": "Privatkunde",       "category": "kundentyp",        "tool_field": "(neu)" },
+    { "label": "KOMBI-AUFTRAG",     "category": "auftrag-flag",     "tool_field": "S.isKombi" },
+    { "label": "SONDERFALL",        "category": "auftrag-flag",     "tool_field": "S.isSonder" },
+    { "label": "Kleingeräte",       "category": "auftrag-flag",     "tool_field": "S.isKlein" },
+    { "label": "Loose Beladung!",   "category": "auftrag-flag",     "tool_field": "S.isLoose" },
+    { "label": "Fixtermin",         "category": "auftrag-flag",     "tool_field": "S.fixDatum (set)" },
+    { "label": "Zoll",              "category": "auftrag-flag",     "tool_field": "S.isZoll" },
+    { "label": "UIT-Code",          "category": "auftrag-flag",     "tool_field": "(neu)" },
+    { "label": "STORNIERT",         "category": "status",           "tool_field": "(neu)" },
+    { "label": "Vorkasse (FLEX)",   "category": "zahlung-flag",     "tool_field": "(neu — flexibler Vorkasse-Sonderstatus)" },
+    { "label": "Barzahlung (PRIO)", "category": "zahlung-flag",     "tool_field": "(neu)" },
+    { "label": "ZZ (PRIO)",         "category": "zahlung-flag",     "tool_field": "(neu)" },
+    { "label": "Warte auf Zahlung", "category": "zahlung-status",   "tool_field": "(neu)" },
+    { "label": "Bezahlt",           "category": "zahlung-status",   "tool_field": "(neu)" },
+    { "label": "Kontaktiert",       "category": "kommunikation",    "tool_field": "(neu)" }
+  ],
+
+  "card_export_fields": {
+    "A": "Vorgangsnummer (Planner Card-ID — base64-ähnlich, eindeutig)",
+    "B": "Aufgabenname (Schema beobachtet: 'Kunde AUxxx // RExxx')",
+    "C": "Bucket-Name (= Phase im Workflow)",
+    "D": "Status (In Bearbeitung / Abgeschlossen)",
+    "E": "Priorität",
+    "F": "Zugewiesen an",
+    "G": "Erstellt von",
+    "H": "Erstellungsdatum",
+    "I": "Startdatum",
+    "J": "Fälligkeitsdatum",
+    "K": "Ist wiederkehrend",
+    "L": "Verspätet",
+    "M": "Abgeschlossen am",
+    "N": "Abgeschlossen von",
+    "O": "Abgeschlossene Checklistenpunkte (z.B. '0/7')",
+    "P": "Checklistenpunkte (semicolon-getrennte Liste — strukturierter Karten-Inhalt)",
+    "Q": "Bezeichnungen (Labels — semicolon-getrennt)",
+    "R": "Beschreibung (Freitext)"
+  },
+
+  "checklist_template_observed": [
+    "Besondere Vereinbarungen",
+    "Zahlungsziel: {n} Tage",
+    "Auftragsnummer: {AU}",
+    "Anzahl Paletten: {n}",
+    "Abholung / Lieferung",
+    "Anzahl Artikel: {n}",
+    "Terminwünsche - Bitte mit Kunden abstimmen sobald Vollständig bezahlt ist"
+  ],
+
+  "tool_alignment_gap": {
+    "current_tool_tags_covered": ["KOMBI-AUFTRAG", "SONDERFALL", "Kleingeräte", "Loose Beladung!", "Zoll", "Fixtermin"],
+    "current_tool_tags_missing": ["Privatkunde", "UIT-Code", "STORNIERT", "Vorkasse (FLEX)", "Barzahlung (PRIO)", "ZZ (PRIO)", "Warte auf Zahlung", "Bezahlt", "Kontaktiert"],
+    "coverage": "6 von 16 Labels (37 %)",
+    "current_tool_phases": 4,
+    "planner_buckets": 7,
+    "phase_alignment": "Tool hat 4 Stages, Planner hat 7 Buckets. Tool-Stage 'Erfassung' deckt 3 Buckets ab (verkauf, rechnung), Tool-Stage 'AMM-Übergabe' deckt versand+angemeldet+beendet."
+  }
+}

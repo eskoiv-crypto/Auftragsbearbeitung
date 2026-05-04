@@ -38,14 +38,11 @@ Diese Antworten sind **blockierend** für die Roadmap (siehe `ROADMAP_v2_workpla
 
 ---
 
-## L5 — Owner Phase 4
+## ~~L5 — Owner Phase 4~~ ✅ BEANTWORTET (2026-05-04)
 
 **Frage:** Stellenbeschreibung sagt **Janna** macht Rechnung. Handover sagt **Mirko**. Was stimmt?
-- Variante A: Janna macht alles, Mirko-Beschriftung im Code wird zu Janna geändert.
-- Variante B: Mirko macht weiterhin Rechnung, Stellenbeschreibung ist veraltet.
-- Variante C: beide, abhängig von Auftragsart — bitte Regel angeben.
 
-**Antwort:**
+**Antwort:** Mirko gibt es nicht mehr bei elvinci. **Janna** ist alleinige Stelleninhaberin Auftragsbearbeitung. **Dustin** ist alleiniger Vorgesetzter. Tool-Code muss alle „Mirko"-Beschriftungen zu „Janna" ändern.
 
 ---
 
@@ -57,42 +54,34 @@ Diese Antworten sind **blockierend** für die Roadmap (siehe `ROADMAP_v2_workpla
 
 ---
 
-## 0.2 — Sales-/Teamskärtchen-System
+## ~~0.2 — Sales-/Teamskärtchen-System~~ ✅ BEANTWORTET (2026-05-04)
 
 **Frage:** Was ist das Saleskärtchen / Teamskärtchen technisch?
-- Microsoft Planner?
-- Trello?
-- SharePoint-Liste?
-- Eigenes JTL-Modul?
-- Anderes?
 
-Plus: URL-Schema für einen einzelnen Karten-Eintrag — Beispiel-URL bitte.
+**Antwort:** **Microsoft Teams Planner**. Tab-URL geliefert (siehe `data/planner_schema.json` → `tab_url`). 7 Buckets (verkauf → rechnung → kommi → versand/abholung → angemeldet → beendet). 16 Labels.
 
-**Antwort:**
+**Folge-Frage offen:** Single-Card-Deeplink-Format. Die Tab-URL öffnet das gesamte Planner-Board. Für Deeplink zu **einer** Karte brauche ich entweder:
+- (a) das Format `https://tasks.office.com/<tenant>/Home/Task/<task-id>` — kannst du eine Beispiel-URL aus dem Planner kopieren? (Karte öffnen → Browser-Adresszeile)
+- (b) die Antwort: „Tab-URL reicht, Janna sucht selbst die Karte" — dann bauen wir nur Tab-Bridge, keinen Card-Deeplink.
 
 ---
 
-## 0.3 — Fulfilment Pipeline Spalten
+## ~~0.3 — Fulfilment Pipeline Spalten~~ ✅ BEANTWORTET (2026-05-04)
 
-**Frage:** Die Pipeline-Excel hat Spalten B/C/D/G/L/M/N/E/H/I/N/Q (mit Wiederholungen). Was steht **exakt** in jeder Spalte? Bitte:
+**Frage:** Die Pipeline-Excel hat Spalten B/C/D/G/L/M/N/E/H/I/N/Q. Was steht exakt drin?
 
-| Spalte | Header | Beispielwert |
+**Antwort:** Datei geliefert (`docs/pipeline_export_2026-05-04.csv`). Schema dekodiert in `data/pipeline_schema.json`. Mapping:
+
+| Phase-Schritt | Spalten | Bedeutung |
 |---|---|---|
-| B | … | … |
-| C | … | … |
-| D | … | … |
-| E | … | … |
-| G | … | … |
-| H | … | … |
-| I | … | … |
-| L | … | … |
-| M | … | … |
-| N | … | … |
-| Q | … | … |
+| 2.1 (Start) | B + C + D | Kunde, Auftragsnr., Artikel-Stückzahl |
+| 2.2 (Kommi-Tag) | G + L + M + N | Kommissioniertag, Zahlungsziel, Versandart, Bezahlt? |
+| 2.3 (Notizen + Versand) | E + H + I | NOTIZEN AMM, Versand-/Abholdatum, Versandanmeldung |
+| 2.4 (Abwicklung) | N + Q | Bezahlt? (final), erledigt-Marker |
 
-Plus: Direktlink zur Pipeline-Excel in SharePoint?
+Pipeline hat zusätzlich Spalten S–AA (Zollpapiere, Paletten, Reste, Rechnungskorrektur, Kundeninfos K/L, Auftrag erledigt) — sind in der Stellenbeschreibung **nicht** als Pflichtspalten genannt. Annahme: Tool füllt Pflichtspalten + bietet diese als Optional-Block.
 
-**Antwort:**
+**Folge-Frage offen:** SharePoint-Direktlink zur Pipeline-Excel — bitte URL angeben.
 
 ---
 

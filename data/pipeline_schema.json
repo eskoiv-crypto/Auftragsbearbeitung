@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$comment": "Schema der SharePoint-Excel 'Fulfilment Pipeline'. Spalten-Buchstaben sind Excel-Spalten (A-AA). Quelle: docs/pipeline_export_2026-05-04.csv (Stand 2026-05-04).",
+  "version": "2026-05-04",
+  "columns": {
+    "A": { "header": "ID", "phase_step": null, "purpose": "fortlaufende Nummer in der Liste, kein Auftrags-ID" },
+    "B": { "header": "Kunde", "phase_step": "2.1", "purpose": "Kundenname" },
+    "C": { "header": "Auftragsnr.", "phase_step": "2.1", "purpose": "AU-Nummer = einzige eindeutige ID (Phase 4.1)" },
+    "D": { "header": "Artikel", "phase_step": "2.1", "purpose": "Stückzahl Artikel" },
+    "E": { "header": "NOTIZEN (AMM)", "phase_step": "2.3", "purpose": "Notizen für AMM-Spedition" },
+    "F": { "header": "Anmeldedatum", "phase_step": null, "purpose": "Datum der Auftrags-Annahme" },
+    "G": { "header": "Kommissioniertag", "phase_step": "2.2", "purpose": "geplanter Kommi-Tag" },
+    "H": { "header": "Versanddatum/Abholdatum", "phase_step": "2.3", "purpose": "Versand- bzw. Abholtermin" },
+    "I": { "header": "Versandanmeldung/Abholanmeldung", "phase_step": "2.3", "purpose": "angemeldet ja/nein/Status" },
+    "J": { "header": "Anlieferdatum", "phase_step": null, "purpose": "tatsächliches Anlieferdatum beim Kunden" },
+    "K": { "header": "Rechnungsdatum", "phase_step": null, "purpose": "Datum Rechnungsstellung" },
+    "L": { "header": "Zahlungsziel", "phase_step": "2.2", "purpose": "ZZ in Tagen, 0 = sofort/Vorkasse, 'zz' = unklar" },
+    "M": { "header": "Versandart", "phase_step": "2.2", "purpose": "Abholung / Spedition" },
+    "N": { "header": "Bezahlt?", "phase_step": "2.2 + 2.4", "purpose": "ja/nein — kommt sowohl in 2.2 (initial) als auch 2.4 (Abschluss) vor" },
+    "O": { "header": "Notizen (ELVINCI)", "phase_step": null, "purpose": "interne Notizen" },
+    "P": { "header": "Fällig am", "phase_step": null, "purpose": "Fälligkeitsdatum Zahlung" },
+    "Q": { "header": "erledigt", "phase_step": "2.4", "purpose": "Abschluss-Marker (X / leer)" },
+    "R": { "header": "(leer)", "phase_step": null, "purpose": "Spalte R im Export leer — möglicherweise Trennspalte" },
+    "S": { "header": "Zollpapiere", "phase_step": null, "purpose": "Zollpapier-Status" },
+    "T": { "header": "Anzahl Paletten", "phase_step": null, "purpose": "Palettenanzahl für AMM/Zoll" },
+    "U": { "header": "Reste nach Komissionierung vorhanden?", "phase_step": null, "purpose": "Restmengen-Flag" },
+    "V": { "header": "Rechnungskorrektur", "phase_step": null, "purpose": "Rechnungs-Korrektur-Status" },
+    "W": { "header": "Kundeninfo Komissionierung / Korrektur", "phase_step": null, "purpose": "Info-Status Kunde Kommi/Korrektur" },
+    "X": { "header": "Kundenabholung: Terminvereinb.", "phase_step": null, "purpose": "Terminvereinbarung bei Abholung" },
+    "Y": { "header": "Lieferung: Versandauftrag", "phase_step": null, "purpose": "Versandauftrag bei Lieferung" },
+    "Z": { "header": "Kundeninfo Lieferung", "phase_step": null, "purpose": "Info-Status Kunde Lieferung" },
+    "AA": { "header": "Auftrag erledigt", "phase_step": null, "purpose": "Final-Marker — Pendant zu Q" }
+  },
+  "phase_step_groups": {
+    "2.1": ["B", "C", "D"],
+    "2.2": ["G", "L", "M", "N"],
+    "2.3": ["E", "H", "I"],
+    "2.4": ["N", "Q"]
+  },
+  "delimiter": ";",
+  "encoding_export": "windows-1252",
+  "encoding_target": "utf-8",
+  "key_field": "C",
+  "notes": [
+    "Header-Zeile umfasst mehrere CSV-Zeilen (multi-line cells in Quote).",
+    "Spalten S–AA sind in der Stellenbeschreibung NICHT als Pflichtspalten genannt — möglicherweise erweiterter Tracking-Block.",
+    "Spalte N erscheint im Stellenbeschreibungs-Schema in 2.2 UND 2.4 — wahrscheinlich initial füllen, am Ende prüfen."
+  ]
+}

@@ -1,0 +1,272 @@
+ID;Kunde;Auftragsnr.;Artikel;NOTIZEN (AMM);Anmeldedatum;Kommissioniertag;Versanddatum/Abholdatum;Versandanmeldung/Abholanmeldung;Anlieferdatum;Rechnungsdatum;Zahlungsziel;Versandart;Bezahlt?;Notizen (ELVINCI);Fällig am;erledigt;;Zollpapiere;"Anzahl
+Paletten";Reste nach Komissionierung vorhanden?;Rechnungskorrektur;"Kundeninfo
+Komissionierung / Korrektur";"Kundenabholung:
+Terminvereinb.";"Lieferung:
+Versandauftrag";"Kundeninfo
+Lieferung";"Auftrag
+erledigt";;;;;;
+2;Outlet Simex D.O.O;AU2026010813260;180;;12.01.2026;12.01.2026;16.01.2026;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;JA;;;;;;
+1;SIOKOS DIM.GEORGIOS;AU2026010813259;100;;09.01.2026;12.01.2026;13.01.2026;angemeldet;;09.01.2026;14;Abholung;ja;;13.01.2026;X;;;;;;;;;;JA;;;;;;
+4;Simex D.O.O;AU2026010813261;222;;12.01.2026;13.01.2026;20.01.2026;angemeldet;;;0;Abholung;ja;;;X;;LKW Beladen, danach Papiere für tatsächliche Beladung erzeugen. ;;;;"Kundeninfo erstellen + 
+Auf fehlende Zahlung hinweisen MIRKO + JANNA";JANNA;;;JA;;;;;;
+5;Simex D.O.O;AU2026010913263;10;;12.01.2026;13.01.2026;20.01.2026;angemeldet;;;0;Abholung;ja;zusammengefasst mit AU2026010913261;;X;;LKW Beladen, danach Papiere für tatsächliche Beladung erzeugen. ;;;;"siehe oben
+(Konsolidierte Aufträge)";JANNA;;;JA;;;;;;
+3;Kaldi Prime Kft;AU2026010913264;54;;08.01.2026;13.01.2026;14.01.2026;angemeldet;KW4;;0;Spedition;ja;"(QU)AU2026010713258(40STK)
+VERSAND ORGANISIEREN (MIRKO+ JANNA)";;X;;;;;;;;;;JA;;;;;;
+8;EcoHaus;AU2026010513253;14;;14.01.2026, 11:11;14.01.2026;STORNO @Mirko;;;;0;Spedition;nein;Storno;;;;;;;;;;;;;;;;;;
+6;UAB STEVIJA;AU2026010713257;103;;12.01.2026, 16:41;14.01.2026;27.01.2026;angemeldet;;;0;Abholung;ja;zusammengefasst mit AU2026011213271. Die erste AU ist bereits in der komissionsplanung eingeplant und sollte vermutlich gemeinsam komissioniert werden. ;;X;;;;DUSTIN?;TBD;"Zahlung am 14.1.
+Kundeninfo erstellen + versenden
+MIRKO + JANNA";JANNA;;;;;;;;;
+16;UAB STEVIJA;AU2026011213271;41;;;14.01.2026;27.01.2026;angemeldet;;;0;Abholung;ja;zusammengefasst mit AU2026011213257. Die erste AU ist bereits in der komissionsplanung eingeplant und sollte vermutlich gemeinsam komissioniert werden. ;;X;;;;DUSTIN?;TBD;"siehe oben
+(Konsolidierte Aufträge)";JANNA;;;;;;;;;
+11;AMY Witgoed;AU2026010913267;110;;12.01.2026, 20:50;14.01.2026;23.01.2026;angemeldet;;;0;Spedition;ja;"Kunden zahlt die Rechnung in BAR am 23.01.
+Lieferung";;X;;;;;;;;;;;;;;;;
+7;Sky Global Trade B.V;AU2026010913265;29;;14.01.2026, 14:50;15.01.2026; 20.01.2026 ;angemeldet;21.01.2026 / AU2025123013249;;0;Spedition;nein;"(QU)AU2025123013249(45STK) IST BEZAHLT
+Rechnungstext nicht vollständig / ggf. noch mal nachhaken, ob er alles richtig gemacht hat. 
+UPDATE 10.03.26: Auftrag wurde von uns storniert - bitte ware wieder zurückführen";;x;;;;;;;;;;;;;;;;
+14;Oli Outlet Kft.;AU2026011213269;152;;14.01.2026, 13:20;15.01.2026;21.01.2026;angemeldet;22.01 - 23.01;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+13;OUTLET ELETTRODOMESTICI MERO;AU2026011213268;40;;;15.01.2026;16.01.2026;angemeldet;20. Jan;;0;Spedition;ja;Lieferung Zugestellt;;X;;;;;;;;;;JA;;;;;;
+;Egzoni Sh.P.K ;"AU2026010713255
+(+ AU2026011413278)";107;;15.01.2026, 11:00;16.01.2026;04. Feb;angemeldet;;;zz;Abholung;Ja;AU2026010713255 + AU2026011413278 will in 3 Tagen zahlen;;X;;Zollabfertigung für beide Lieferscheine übermittelt.;;;;;JANNA;;;;;;;;;
+20;                                   NAS ELECTROMENAGER;"AU2026011413279
+(+ AU2026011413284)";31;;15.01.2026, 12:01;16.01.2026;23.01.2026;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+17;IG international trading GmbH;AU2026011313272;182;;13.01.2026, 16:41;16.01.2026;20.01.2026;angemeldet;21.01.2026 00:00;;zz;Spedition;ja;AU2026010513251 + AU2026010913266;;X;;;;;;;;;;;;;;;;
+10;Alinklizi Almuntaser Billah;AU2026011313273;136;;16.01.2026, 10:49;19.01.2026;"
+21.01.2026";angemeldet;;;0;Abholung;ja;Kunde bekommt von Dustin am 20.01.2026 die endgültigen Lademeter gesagt;;X;;;;;;;"Lieferung vs. Abholung
+SIYAD";;;JA;;;;;;
+22;Hanseatic Georgia LLC;AU2026011513285;164;;16.01.2026, 16:15;19.01.2026;21.01.2026;angemeldet;;;zz;Abholung;ja;;;X;;;;4 x SBS;;;;;;;;;;;;
+12;Alinklizi Almuntaser Billah;AU2026011313273;217;;16.01.2026, 10:49;20.01.2026;"
+22.01.2026 ";angemeldet;;;0;Abholung;ja;;;X;;;;;;;"Lieferung vs. Abholung
+SIYAD";;;;;;;;;
+21;                                      Online Shopping Trade;AU2026011413281;16;;15.01.2026, 13:50;20.01.2026;21.01.2026;angemeldet;;;0;Spedition;ja;Kunde Wünscht Lieferung, Kein Fixtermin, 6pal, 2,2 Lademeter;;X;;;;;;;;;;;;;;;;
+23;Enno Kundendienst;AU2026011413277;23;;15.01.2026, 16:50;20.01.2026;21.01.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+NEU;Othman Hasan;AU2026011413282;46;;16.01.2026;20.01.2026;20.01.2026;angemeldet;;;zz;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+18;Warriors Cascade Lda;AU2026011313274;174;;16.01.2026, 16:13;21.01.2026;22.01.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+NEU;Nikokira Outlet;AU2026011313275;115;;16.01.2026;21.01.2026;21.01.2026;angemeldet;;;zz;Abholung;Ja;"Fehler im Rechungstext: 21.01. als frühesten Abholtag angegeben. 
+Wenn nicht möglich bitte melden. Dann Kundenkommunikation";;X;;;;;;;;;;;;;;;;
+15;Fixon Trade Kft.;AU2026011213270;140;;16.01.2026, 13:40;22.01.2026;23.01.2026;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+25;AMY Witgoed;AU2026011613304;18;;19.01.2026, 09:30;22.01.2026;23.01.2026;angemeldet;;;0;Abholung;ja;Barzahlung bei Abholung am 23.01.;;X;;;;;;;;;;;;;;;;
+27;SKS-Schutzkraft Sicherheitsdienst e.K.;AU2026011413276;98;;16.01.2026, 13:41;22.01.2026;;angemeldet;27. Jan;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+32;IG international trading GmbH;AU2026011913308;159;;21.01.2026, 11:20;23.01.2026;27.01.2026;angemeldet;28.01.2026;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;UAB STEVIJA;AU2026012113314;59;;22.01.2026;23.01.2026;27.01.2026;angemeldet;;;0;Abholung;ja;AU2026011213271+AU2026010713257;;X;;;;;;;;;;;;;;;;
+NEU;Hermans Trading;AU2026011513293;163;;19.01.2026;26.01.2026;;angemeldet;;;zz;Abholung;ja;AU2026011513293 + AU2026011613303;;X;;;;;;;;;;;;;;;;
+NEU;RU Recyclinig & Umweltdienst GmbH;AU2026011913309;162;;21.01.2026;26.01.2026;;angemeldet;30. Jan;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+NEU;Karakitsos Stock Haus ;AU2026012313317 ;161;;23.01.2026;27.01.2026;03.02.2026;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC;AU2026011613305;182;;22.01.2026;27.01.2026;28.01.2026;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+31;Elektro Outlet Sinzig GmbH I.G.;AU2026011513292;185;;15.01.2026;29.01.2026;05.02.2026;angemeldet;06. Feb;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+28;HOSTELCOL SUECA S.L.U;AU2026011513286;53;;16.01.2026, 14:00;29.01.2026;03.02.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+29;HOSTELCOL SUECA S.L.U;AU2026011613302;10;;19.01.2026, 13:00;29.01.2026;03.02.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+30;HOSTELCOL SUECA S.L.U;AU2026012013310;11;;20.01.2026, 14:10;29.01.2026;03.02.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+NEU;Ado’s Witgoed;AU2026012313319;49;;;29.01.2026;02.02.2026;angemeldet;;;0;Lieferung;ja;;;X;;;;;;;;;;;;;;;;
+;Home Discount S.R.L.;AU2026012013313 ;110;;20.01.2026;29.01.2026;30.01.2026;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Egzoni Sh.P.K ;AU2026011613300;36;;;30.01.2026;05.02. ;angemeldet;;;zz;Abholung;ja;"mit den beiden AU2026010713255
++ AU2026011413278 kombieniert verladen";;X;;;;;;;;;;;;;;;;
+;V&A Tehimpex SRL;AU2026011613301;71;;;30.01.2026;05.02.;angemeldet;;;0;Abholung;ja;7 Geräte wegen Platzmangel geblieben !!!!;;X;;;;;;;;;;;;;;;;
+;Soutis Electrics ;AU2026012813327;78;;;30.01.2026;03.02.2026;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Almost New LTD;AU2026012813334;20;;28.01.2026, 17:40;02.02.2026;13.02.2026;angemeldet;;;0;Abholung;ja;Anzahl Paletten - 8 Mix Paletten ;;X;;;;;;;;;;;;;;;;
+;Deland Ltd EOOD;AU2026012713326;174;;;02.02.2026;06.02.2026;angemeldet;;;0;Abholung;ja;Abholung wurde auf 06.02 verschoben aus Wetterbedingter Lage;;X;;;;;;;;;;;;;;;;
+;IG international trading GmbH;AU2026012313320;172;;23.01.2026;02.02.2026;05.02.2026;angemeldet;;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;TECHNO ELECTRONICS 5 Ltd;AU2026012613324;153;;28.01.2026;03.02.2026;04.02.2026;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Marketvibe Srl ;AU2026012813328;84;;28.01.2026;03.02.2026;04.02.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;PUKO Sp z.o.o.;AU2026012813335;20;;28.01.2026;03.02.2026;03.02.2026;angemeldet;;;0;Spedition;ja;Anzahl Artikel - 6 Mix Paletten, 40 Staubsauger ;;X;;;;;;;;;;;;;;;;
+;Outlet Mebeli Ltd ;AU2026013013347;149;Wurde am 12.02.2026 Abgeholt;03.02.2026, 07:00;04.02.2026;11.02.2026;angemeldet;;;zz;Abholung;ja;AU2026013013350 + AU2026013013347;;X;;;;;;;;;;;;;;;;
+33;Hermans Trading;AU2026012313316;26;;19.01.2026, 09:00;04.02.2026;06.02.2026;angemeldet;;;zz;Abholung;ja;bitte mit LKW Nr. 2 von AU2026011513293 kombinieren/ 5 Geräte wegen Platz Mangel geblieben ;;X;;;;;;;;;;;;;;;;
+;Online Shopping Trade S.R.O. Számlázási;AU2026012813336;19;;28.01.2026;04.02.2026;04.02.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+34;Hermans Trading;AU2026011513293;164;;19.01.2026;04.02.2026;29.01.2026;angemeldet;;;zz;Abholung;ja;AU2026011513293 + AU2026011613303;;X;;;;;;;;;;;;;;;;
+;Deland Ltd EOOD;AU2026012713325 ;152;14 Stk / 2 Paletten stehen geblieben Platzmangel / Am12.02.26 Abgeholt !;28.01.2026, 12:20;05.02.2026;11.02.2026;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;IDEA EOOD;AU2026012313318;159;;28.01.2026;05.02.2026;06.02.2026;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;IDEA EOOD;AU2026012813333;15;;28.01.2026;05.02.2026;06.02.2026;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Noureddin Alasas;AU2026021713398;165;;17.02.2026, 16:27;05.02.2026;;;;;0;;ja;;;X;;;;;;;;;;;;;;;;
+;Enterijer D.O.O.;AU2026012813339 ;210;;28.01.2026;06.02.2026;09.02.2026;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;GLOBAL LIQUIDACIONES SL ;AU2026020213352;62;;02.02.2026;06.02.2026;09.02.2026;angemeldet;;;0;Spedition;ja;61 Geräte + 1 MixPalette  ( 7 Geräte Fehlen );;X;;;;;;;;;;;;;;;;
+;Buy24 ;AU2026013013351;184;Am 12.02.2026 Verladen;02.02.2026, 08:41;09.02.2026;13.02.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Buy4less GmbH;AU2026012913343;203;;03.02.2026, 06:59;09.02.2026;10.02.2026;angemeldet;;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Outlet Mebeli Ltd;AU2026021013380;2;Anmeldung erledigt;;10.02.2026;12.02.2026;angemeldet;;;;;ja;;;X;;;;;;;;;;;;;;;;
+;Nagy Szabolcs Bela;AU2026020213355 + AU2026020513366;141;;05.02.2026, 13:30;10.02.2026;11.02.2026;angemeldet;;;0;Abholung;ja;133+8;;X;;;;;;;;;;;;;;;;
+;IG international trading GmbH;AU2026020313357;136;;06.02.2026, 10:51;10.02.2026;11.02.2026;angemeldet;FIXTermin am 12.02.2026;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;New Returns;AU2026012913346;6;;06.02.2026, 10:10;10.02.2026;10.02.2026;angemeldet;;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Hanseatic LKW 2 von 2;AU2026020213354;129;;06.02.2026, 14:22;11.02.2026;12.02.2026 - 13.02;angemeldet;;;zz;Abholung;;;;;;;;;;;;;;;;;;;;
+;Hanseatic LKW 1 von 2;AU2026012813337;4; ;09.02.2026, 15:21;11.02.2026;12.02.2026 - 13.02;angemeldet;;;;;ja;;;X;;;;;;;;;;;;;;;;
+;UAB Portana;AU2026020413361;131;;04.02.2026, 16:10;11.02.2026;13.02.2026;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Green Loop GmbH;AU2026021013379;20;20 Colli  da die Staubsauber abgeschlichtet werden müssen ;11.02.2026, 11:51;11.02.2026;13.02.2026;angemeldet;;;0;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;CADS Engineering GmbH;AU2026020913378;4;5 Mix Paletten;10.02.2026;11.02.2026;12.02.2026;angemeldet;;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Enno Kundendienst;AU2026020513365 ;35;;06.02.2026, 11:10;11.02.2026;11.02.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Hanseatic LKW 1 von 2;AU2026020213353;62;;06.02.2026, 14:21;11.02.2026;;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;OVIT Shop;AU2026020513372 ;177;;06.02.2026, 14:24;12.02.2026;17.02.2026;angemeldet;;;zz;Abholung;JA;;;X;;;;;;;;;;;;;;;;
+;Sparhaus GbR;AU2025122313237;103;;06.02.2026, 08:10;12.02.2026;13.02.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Outlet Simex D.O.O;AU2026020513367;191;2 Paletten 80x80 geblieben mit 2 KS ;06.02.2026, 14:22;13.02.2026;19.02.2026;angemeldet;;;zz;Abholung;ja;900224725, 900224659 aus Platzmangel stehengeblieben.;;X;;;;;;;;;;;;;;;;
+;Online Shopping Trade S.R.O. Számlázási ;AU2026021113381;27;;11.02.2026, 11:51;13.02.2026;18.02.2026;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Sefik Saracevic;AU2026020313360;51;lose Beladung!;04.02.2026, 15:40;13.02.2026;13.02.2026;angemeldet;;;0;Abholung;Ja;barzahlung bei Abholung ;;X;;;;;;;;;;;;;;;;
+;FSMM HAUSGERÄTE ;AU2026020413363;20;;10.02.2026;13.02.2026;13.02.2026;angemeldet;;;0;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;Pfarrer von Konstantinos ;AU2026020613374  ;2;;;13.02.2026;13.02.2026;;;;;;ja;;;X;;;;;;;;;;;;;;;;
+;IG International ;AU2026020613375;139;;09.02.2026, 16:10;16.02.2026; 18.02;angemeldet;;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Nikos Koutlianos;AU2026020513371;310;1.LKW am 16.02. / 2. LKW am 17.02. kommissionieren;06.02.2026, 15:10;16.02.2026;17.02.2026;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Nikos Koutlianos;AU2026020413362;88;;06.02.2026, 15:20;17.02.2026;26. Feb;angemeldet;;;zz;Abholung;ja;AU2026020413362+AU2026020513371 frühester Abholtermin 18.02.2026;;X;;;;;;;;;;;;;;;;
+;NORMA24 Online Shop GmbH & Co. KG;AU2026020913376;10;20 Staubsauger ;11.02.2026, 15:31;17.02.2026;19.02.2026;angemeldet;;;;;JA;;;;;;;;;;;;;;;;;;;
+;RU Recycling und Umweltdienst GmbH;AU2026021213384 ;107;am 20.02.2026 Verladen;16.02.2026, 13:40;18.02.2026;24.02.;;;;0;Spedition;ja;;;x;;;;;;;;;;;;;;;;
+;ELECTRO BALKAN ;AU2026021613388;149;am 20.02.2026 Verladen;16.02.2026, 13:50;18.02.2026;20.02.;angemeldet;;;0;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Hermans Trading BV;AU2026012913341;154;8 oder 12 Stück von der AU2026021613391 zusätzlich !!!;17.02.2026, 14:50;19.02.2026;27. Feb;angemeldet;;;;;Ja;;;X;;;;;;;;;;;;;;;;
+;KAJTEK Patrycja Minkina ;AU2026021713397;166;;17.02.2026, 16:11;19.02.2026;24. Feb;angemeldet;;;0;Abholung;JA;;;X;;;;;;;;;;;;;;;;
+;Kaldi Prime Kft;AU2026021713393;61;;17.02.2026, 12:10;19.02.2026;20. Feb;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Hermans Trading BV;AU2026021613391;116;;17.02.2026, 11:12;20.02.2026;12. Mrz;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Techno Vision Group Ltd.;AU2026021713392;139;am 03.03.2026 abgeholt;17.02.2026, 12:20;20.02.2026;02. Mrz;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Techno Vision Group Ltd.;AU2026021913405 ;15;am 03.03.2026 abgeholt;19.02.2026, 11:21;20.02.2026;02. Mrz;angemeldet;;;0;Abholung;ja;Abholung  (der Abholung der Ware erfolgt zusammen mit dem Auftrag AU2026021713392 );;X;;;;;;;;;;;;;;;;
+;Karakitsos Stock House IKE;AU2026021113383;134;zusammen mit AU2026030513452 verladen;17.02.2026, 14:23;23.02.2026;13. Mrz;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Oli Outlet Kft.;AU2026021813402;135;;19.02.2026, 13:40;23.02.2026;26. Feb;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Outlet Loket;AU2026021913407;51;;19.02.2026, 16:00;23.02.2026;24.02.2026;angemeldet;;;0;Spedition;JA;;;X;;;;;;;;;;;;;;;;
+;Simex D.O.O;AU2026020513369 ;262;;19.02.2026, 11:50;24.02.2026;25. Feb;angemeldet;;;0;Abholung ;ja;;;X;;;;;;;;;;;;;;;;
+;Online Shopping Trade S.R.O. Számlázási ;AU2026021813399;34;;19.02.2026, 15:00;24.02.2026;24.02.2026;angemeldet;;;0;Spedition;JA;;;X;;;;;;;;;;;;;;;;
+;KAJTEK Patrycja Minkina ;AU2026021913404;7;;20.02.2026, 13:50;24.02.2026;24. Feb;angemeldet;;;0;Abholung;ja;ggf. zusammen mit AU2026021713397 verladen;;X;;;;;;;;;;;;;;;;
+;GGY Trade s.r.o.;AU2026022013411;90;;20.02.2026, 15:30;25.02.2026;  27.02;angemeldet;;;0;Abholung;JA;will Bar zahlen bei Abholung ;;X;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC (1);AU2026020213353;169;holt erst kommende Woche ab (Termin folgt);20.02.2026, 14:01;25.02.2026;  02.03;angemeldet;;;zz;Abholung ;Ja;zusammen mit den 62 Geräten von AU2026020213353 verladen;;X;;;;;;;;;;;;;;;;
+;Techno Vision Group Ltd. ;AU2026022013415;40;am 03.03.2026 abgeholt;23.02.2026, 09:00;25.02.2026;02. Mrz;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;AGILA GmbH;AU2026022013412;150;Geräte anzahl 612 (Staubsauger + Klima) FTL;20.02.2026, 15:01;26.02.2026;03. Mrz;angemeldet;;;0;Spediton;JA;Zugestellt;;X;;;;;;;;;;;;;;;;
+;Bastounis ;AU2026022013410;124;;23.02.2026, 10:30;26.02.2026;27. Feb;angemeldet;;;zz;Abholung;Ja;zusammen mit AU2026022013413;;X;;;;;;;;;;;;;;;;
+;IFIXIT Mateusz Gawronski;AU2026022013414;10;Palettiert bitte;23.02.2026, 08:51;26.02.2026;27. Feb;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Soutis Electrics ;AU2026022013409;12;zusammen mit AU2026022013410 (Bastounis) verladen;23.02.2026, 10:40;26.02.2026;27. Feb;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;BUY24 ;AU2026022413421;190;Vollständig bezahlt. Am 10.03.2026 Verladen;24.02.2026, 15:01;27.02.2026;10. Mrz;angemeldet;;;0;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;IG International ;AU2026021613390;125;Anliefertermin 04.03.2026 / 09:00 Uhr;25.02.2026 07:50;27.02.2026;04. Mrz;angemeldet;;;zz;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;GeoHansi LLC;AU2026020213353 ;169;alter Hanseatic Georgien AU - auf neuen Firmennamen geändert (AU2026020213353(AU2026021313385) + AU2026021313386);;01.03.2026;02.03.2026;angemeldet;;;zz;Abholung;Ja;LKW kam erst am 03.03.2026;;X;;;;;;;;;;;;;;;;
+;Noureddin Alasas;AU2026021713398 ;165;Kunde hat vollständig bezahlt / 1.LKW Abholung 10.03.2026 (Verladen)LKW 2 am 12.03.26 Verladen;17.02.2026, 16:27;02.03.2026;10.03.2026;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Keeyword ApS.;AU2026022413420;51;Am 03.03.2026 verladen;25.02.2026, 13:40;02.03.2026;03.03.2026;angemeldet;;;0;Spedition ;ja;;;X;;;;;;;;;;;;;;;;
+;AMY Witgoed ;AU2026022313417;124;Vollständig bezahlt!!!;25.02.2026, 16:29;03.03.2026;16. Apr;angemeldet;;;0;Spedition;Ja;;;;;;;;;;;;;;;;;;;
+;AMY Witgoed ;AU2026022513427;10;;25.02.2026, 16:00;03.03.2026;16. Mrz;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;UAB Portana;AU2026022413419;234;;27.02.2026, 08:30;03.03.2026;04. Mrz;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;TECHNO ELECTRONICS 5 Ltd;AU2026022713429;240;1 FTL + X (Kunde schickt 2 LKW)/LKW 2 am 11.03.2026 Verladen;02.03.2026, 11:31;04.03.2026;05. Mrz;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;NORMA24 Online Shop GmbH & Co. KG ;AU2026021913408;10;(40 Staubsauger)   ;02.03.2026, 11:31;04.03.2026;04.03.2026;angemeldet;;;zz;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;Nikos Koutlianos;AU2026030313442;21;zusammen mit AU2026020413362 verladen;03.03.2026, 12:15;04.03.2026;04. Mrz;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Enno Kundendienst;AU2026030313441;37;Am 11.03.2026 Verladen;03.03.2026, 12:10;05.03.2026;12. Mrz;angemeldet;;;0;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;BOSAK Sp z o.o.;AU2026022713430;131;Neukunde (30 Paletten);27.02.2026, 10:41;05.03.2026;10. Mrz;angemeldet;;;0;Abholung;JA;;;X;;;;;;;;;;;;;;;;
+;INVENTUR;INVENTUR;9999;INVENTUR;INVENTUR;06.03.2026;INVENTUR;INVENTUR;INVENTUR;INVENTUR;INVENTUR;;;;;X;;;;;;;;;;;;;;;;
+;IG;AU2026022713432;153;;02.03.2026, 16:30;09.03.2026;Fixtermin 11.03;angemeldet;;;zz;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;Enterijer D.O.O.;AU2026022513425;202;9 Geräte geblieben !;04.03.2026, 11:13;09.03.2026;10. Mrz;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC (3);AU2026021313387 ;176;Kennzeichen -  61 DG 530-61 AJG 672 (ACHTUNG UPDATE - DATUM);20.02.2026, 14:01;10.03.2026;20.03.2026;angemeldet;;;zz;Abholung ;Ja;;;;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC (2);AU2026021313385 ;148;noch nicht sicher @Dima /Info folgt am23.02. EOB;20.02.2026, 14:01;10.03.2026;11. Mrz;angemeldet;;;zz;Abholung ;Ja;;;X;;;;;;;;;;;;;;;;
+;M&J TRADE D.O.O.;AU2026022613428;43;;02.03.2026, 11:40;11.03.2026;26.03.;angemeldet;;;0;Abholung;JA;nachmittags, KZ: KR STR-003/KR 016 STR;;X;;;;;;;;;;;;;;;;
+;UAB STEVIJA;AU2026022713431;60;zusammen mit AU2026031213477 verladen;06.03.2026, 14:31;11.03.2026;20. Mrz;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Matthias Hardt;AU2026030413444;4;Autrag immer noch nicht im System/Auftrag bitte für den 20.03.2026 zur Abholung bereitstellen (10:00 Uhr);;11.03.2026;20. Mrz;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Fixon Trade Kft.;AU2026030613454;40;;06.03.2026, 14:23;11.03.2026;18. Mrz;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Emporia antalaktikon;AU2026030913460;125;Vollständig gezahlt;10.03.2026, 15:04;11.03.2026;18.03.2026;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;UAB Buitikas;AU2026031013469;20;Kennzeichen für die Abholung am 18.03.2026 (zwischen 13 u 14 Uhr) - MUV444 OU777 (UAB Atamano);10.03.2026, 15:39;11.03.2026;18. Mrz;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Karakitsos Stock House IKE;AU2026030513452;28;zusammen mit AU2026021113383 (bereits kommissioniert) verladen;06.03.2026, 12:40;11.03.2026;13. Mrz;angemeldet;;;zz;Abholung;JA;;;X;;;;;;;;;;;;;;;;
+;SADI;AU2026031013468;53;;10.03.2026, 15:43;12.03.2026;24.03.2026;angemeldet;;;0;Abholung;JA;;;X;;;;;;;;;;;;;;;;
+;Buy4less GmbH;AU2026031013463;261;;10.03.2026, 10:40;12.03.2026;13. Mrz;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;SC Gellimpex S.R.L.;AU2026030413445;228;Vollständig bezahlt!!!!;10.03.2026, 10:42;13.03.2026;17. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Kaldi Prime KFT;AU2026031013464;36;Info Nikos: Ware muss auf 80x120 Paletten mit maximaler Höhe 220cm platziert werden;11.03.2026, 17:00;13.03.2026;20.03.2026;angemeldet;unbekannt/kein Fixtermin;;0;Spedition;ja;angemeldet von Inesa;;X;;;;;;;;;;;;;;;;
+;Marketvibe Srl ;AU2026031013471;80;"Info Nikos: Ware muss auf 80x120 Paletten mit maximaler Höhe 220cm platziert werden
+Wir mussten die Rechnung 1x stornieren und neu ausstellen. Es kann also sein, dass die#
+gleiche Auftragsnummer zwei Mal übermimttelt wurde. Alle Lagernummern sind gleich.
+Wir haben nur die Kosten für den Transport auf der Rechnung ergänzt. ";10.03.2026, 15:46;13.03.2026;17. Mrz;angemeldet;;;0;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;Karakitsos Stock House IKE;AU2026030913462;174;;10.03.2026, 15:17;16.03.2026;24.03.2026;angemeldet;;;zz;Abholung;Ja;angemeldet von Inesa;;X;;;;;;;;;;;;;;;;
+;IG International;AU2026030913456;165;;11.03.2026, 16:45;16.03.2026;17.03.2026;angemeldet;Fixtermin 18.03.2026;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;UAB STEVIJA;AU2026031213477;23;Der Transport der Waren soll zusammen mit dem Auftrag AU2026022713431  erfolgen (die Waren sind bereits zur Abholung bereit).Scania KBF191//HY867;12.03.2026, 14:39;17.03.2026;20. Mrz;angemeldet;;;0;Abholung;Ja;Der Transport der Waren soll zusammen mit dem Auftrag AU2026022713431  erfolgen (die Waren sind bereits zur Abholung bereit).;;X;;;;;;;;;;;;;;;;
+;RU Recycling und Umweltdienst GmbH;AU2026030513451;53;Am 19.03.2026 Verladen;;17.03.2026;18. Mrz;angemeldet;;;zz;Spedition;ja;;;X;;;;;;;;;;;;;;;;
+;Outlet Simex D.O.O;AU2026021813401;174;;12.03.2026, 14:30;17.03.2026;18. Mrz;angemeldet;;;zz;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Techno Planet LTD;AU2026031313481;62;Die Abholung soll zusammen mit Auftrag AU2026031013472 erfolgen;14.03.2026, 12:10;17.03.2026;18. Mrz;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Buy24;AU2026030513450;91;Info Nikos: Ware muss auf 80x120 Paletten mit maximaler Höhe 220cm platziert werden;10.03.2026, 16:14;18.03.2026;30.03. ;angemeldet;;;0;Spedition;Ja;angemeldet mit Hebebühne (Inesa);;X;;;;;;;;;;;;;;;;
+;Outlet Mebeli ;AU2026031213479;73;;12.03.2026, 15:18;18.03.2026;23.03.2026;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Techno Planet LTD;AU2026031013472;141;Vollständig bezahlt. Die Abholung soll zusammen mit Auftrag AU2026031313481 erfolgen;10.03.2026, 15:35;18.03.2026;18. Mrz;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Ados Witgoed;AU2026031213478;29;Info Nikos: Ware muss auf 80x120 Paletten mit maximaler Höhe 220cm platziert werden;12.03.2026, 14:56;18.03.2026;18.03.2026;angemeldet;;;0;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;Hermans Trading BV;AU2026022413422;139;;;19.03.2026;24.03.07:00;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;KOUTLIANOS NIKOS;AU2026031313485;80;bitte zusammen mit Soutis AU2026030313440 verladen;;19.03.2026;02.04.2026;angemeldet;;;0;Abholung;JA;angemeldet von Inesa;;X;;;;;;;;;;;;;;;;
+;IG international trading GmbH;AU2026031513486;124;117 Colli im AU ;18.03.2026, 16:00;19.03.2026;25.03.2026;angemeldet;;;zz;Spedition;Ja;Wunschtermin Anlieferung 25.03.2026;;X;;;;;;;;;;;;;;;;
+;Karakitsos Stock House IKE;AU2026031813492;1;1 Palette Kleingeräte / soll zusammen mit Auftrag AU2026030913462 (bereits kommissioniert) verladen werden;18.03.2026, 13:21;19.03.2026;24.03.2026;angemeldet;;;zz;Abholung;JA;;;X;;;;;;;;;;;;;;;;
+;Egzoni Sh.P.K ;AU2026031013467;76;;19.03.2026, 13:20;20.03.2026;14. Apr;angemeldet;;;zz;Abholung;ja;Wir warten auf noch eine weitere Bestellung (Inesa);;X;;;;;;;;;;;;;;;;
+;Soutis Electrics ;AU2026030313440;33;bitte zusammen mit Koutlianos AU2026031313485 verladen;18.03.2026, 16:11;20.03.2026;02. Apr;angemeldet;;;zz;Abholung;Ja;Die Bestellung von Soutis werden am selben Tag mit dem gleichen Fahrzeug von Nikokira abgeholt;;X;;;;;;;;;;;;;;;;
+;Sefik Saracevic;AU2026030613455;40;Lose Beladung / Übergabe ohne Paklette;18.03.2026, 16:18;20.03.2026;25.03.2026;angemeldet;;;zz;Abholung;ja;Ware wird in bar bei Abholung (Wunschtermin 25.03. bestätigt) bezahlt;;X;;;;;;;;;;;;;;;;
+;Nikokira Outlet;AU2026031813491;67;;18.03.2026, 16:37;20.03.2026;24.03.2026;angemeldet;;;0;Abholung;ja;angemeldet von Niko;;X;;;;;;;;;;;;;;;;
+;Ovit Shop V.O.F.;AU2026032013498;238;FYI: Gesamtvolumen ca. 1.5 LKW. Zweiter Auftrag mit weiterer Ware folgt, damit 2 volle LKWs an Menge entstehen. ;20.03.2026, 10:38;23.03.2026;26.03. + 27.03.;angemeldet;;;zz;Abholung;Ja;1.LKW - 26.03.,   2-LKW - 27.03. (angemeldet von Inesa). 17 Artikel sind geblieben!;;X;;;;;;;;;;;;;;;;
+;Buy24;AU2026032013501;172;Holt selbst am 07.04 seine Ware ab;20.03.2026, 16:57;24.03.2026;07. Apr;angemeldet;;;0;Abholung;ja;;;X;;;;;;;;;;;;;;;;
+;Hermans Trading;AU2026032413506;117;AEG Italy FTL / Versand bei GO von Hermann  bis dahin einlagern. (100 Geräte Rest);25.03.2026, 06:15;25.03.2026;Warte auf Rückmeldung ;;;;zz;Abholung;ja;Auftrag über JTL ausgeleitet. Rechnung noch nicht erstellt, weil ich mit Nikos noch einen Punkt zum Zahlungsziel klären muss. Auftrag ggf. nochmals manuell ausleiten wie besprochen;;X;;;;;;;;;;;;;;;;
+;Ovit Shop V.O.F.;AU2026032413502;86;"Auftrag beinhaltet 131 Stück. Davon sind 50 Stück neu verpackte Akkustaubsauger. 
+Anzahl Artikel in Spalte H = 131 - 50 + 5   (17 Stück geblieben wegen PM )";24.03.2026, 15:36;25.03.2026;27.03.2026;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Deland Ltd EOOD;AU2026032013500 ;194;VORKASSE - Vereinbarung mit Nikoloz erst in KW 15 Abholung durch Kunden;;26.03.2026;08. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;SABO 2018 LTD;AU2026032513510;188;;25.03.2026, 21:56;26.03.2026;01. Apr;angemeldet;;;0;Abholung;ja;die Abholung: DI oder MI. Der Kunde meldet sich am MO bei uns (Inesa);;X;;;;;;;;;;;;;;;;
+;Online Shopping Trade S.R.O. Számlázási;AU2026032513509;27;;25.03.2026, 10:22;26.03.2026;31.03.2026;angemeldet;;;0;Spedition;JA;;;X;;;;;;;;;;;;;;;;
+;L&L Electronics Kft;AU2026032513512;134;Info vom Kunden: Höhe der Paletten soll 250cm nicht überschreiten;25.03.2026, 22:01;27.03.2026;02. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;GGY Trade s.r.o. ;AU2026032613516;108;Vollständig bezahlt BARZAHLUNG @Nikoloz;27.03.2026, 14:15;30.03.2026;01. Apr;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;L&L Electronics Kft;AU2026033013521;47;Auftrag wird zusammen mit Auftrag AU2026032513512 (Zeile 156) abgeholt;31.03.2026, 10:20;31.03.2026;02. Apr;angemeldet;;;0;Abholung;ja;Kunde will die Ware zusammen mit Auftrag AU2026032513512 am Donnerstag, den 02.04. abholen;;X;;;;;;;;;;;;;;;;
+;IG International;AU2026032513508;137;FIXTERMIN/Am 07.04.2026 Verladen;31.03.2026, 10:09;01.04.2026;08. Apr;angemeldet;;;zz;Spedition;Ja;Wunschterminlieferung mit Ankunft Mittwoch 08.04.;;X;;;;;;;;;;;;;;;;
+;Nikokira Outlet;AU2026032513511;189;;31.03.2026, 10:43;01.04.2026;07. Apr;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;GGY Trade s.r.o.;AU2026040113527;1;Sonderfall von Nikoloz: bitte das eine Produkt dem heute abzuholenden Auftrag  AU2026032613516 hinzufügen;01.04.2026, 12:15;01.04.2026;01. Apr;angemeldet;;;zz;Abholung;Ja;"Rechnungskorrektur für AU2026032613516, weil Lagernummer 900228150 nicht mehr verfügbar war. 
+Neue Rechnung für Ersatzprodukt / Guthaben der alten Rechnung dieser neuen zuweisen. ";;X;;;;;;;;;;;;;;;;
+;Hermans Trading;AU2026032013499;119;Otto und Mix;25.03.2026, 14:08;02.04.2026;08. Apr;angemeldet;;;0;Abholung;ja;"Kunde wird ware erst in der Woche ab 07.04. oder 14.04. abholen.
+Bitte bei der Kommissionierungsplanung berücksichtigen.";;X;;;;;;;;;;;;;;;;
+;Stock House Nikaias;AU2026032013497;212;;31.03.2026, 09:56;02.04.2026;07. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;SADI;AU2026040113530;18;Vollständig gezahlt;01.04.2026, 15:38;02.04.2026;07. Apr;angemeldet;;;0;Abholung;Ja;Kunde zahlt bei Abholung;;X;;;;;;;;;;;;;;;;
+;Karfreitag;Karfreitag;0;Karfreitag;Karfreitag;03.04.2026;Karfreitag;Karfreitag;Karfreitag;;Karfreitag;Karfreitag;Karfreitag;;;X;;;;;;;;;;;;;;;;
+;Ostermontag;Ostermontag;0;Ostermontag;Ostermontag;06.04.2026;Ostermontag;Ostermontag;Ostermontag;;Ostermontag;Ostermontag;Ostermontag;;;X;;;;;;;;;;;;;;;;
+;Kaldi Prime Kft;AU2026032413504;64;Hinweis vom Kunden / Nikos: Bitte bis zu 4 Produkte pro Palette, Paletten sollen 80x120cm groß. ;01.04.2026, 15:40;07.04.2026;16. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC;AU2026033113526;214;100 der 214 Artikel sind Staubsauger / Auftrag kommissionieren. Dann Rückmeldung an elvinci (Nikos+Dustin), wie viel Paletten noch für einen FTL frei sind. Der Kunde bestellt dann noch weitere Artikel dazu. ;31.03.2026, 14:00;07.04.2026;15. Apr;angemeldet;;;zz;Abholung;nein;;;X;;;;;;;;;;;;;;;;
+;Egzoni Sh.P.K ;AU2026040213533;20;Kunde möchte die Ware zusammen mit AU2026031013467 am 13.04.2026 abholen - keine Ausgabe, wenn nicht vorher bezahlt wurde. ;07.04.2026, 15:38;08.04.2026;14. Apr;angemeldet;;;0;Abholung;Ja;Kunde möchte die Ware zusammen mit AU2026031013467 am 13.04.2026 abholen - keine Ausgabe, wenn nicht vorher bezahlt wurde. ;;X;;;;;;;;;;;;;;;;
+;Simex D.O.O;AU2026040113529 ;249;Vollständig bezahlt!;02.04.2026;08.04.2026;10. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;TECHNO ELECTRONICS 5 Ltd;AU2026033113525;182;Nicht Vollständig gezahlt.;31.03.2026, 13:57;09.04.2026;10. Apr;angemeldet;;;zz;Abholung;nein;;;X;;;;;;;;;;;;;;;;
+;Online Shopping Trade;AU2026040813534;20;;08.04.2026, 16:46;09.04.2026;10.04.2026;angemeldet;;;0;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;Luboš Ulman;AU2026040813535;107;Lieferung zugestellt!!!;08.04.2026, 16:46;09.04.2026;17. Apr;angemeldet;;;zz;Spedition;JA;;;X;;;;;;;;;;;;;;;;
+;Buy4less GmbH;AU2026040913538;185;"Nachdem die Pipeline heute noch komplett leer ist stelle ich den Auftrag für heute zur Kommissoinierung ein.
+Wenn das Probleme macht, dann bitte Bescheid geben und wir schieben auf Montag. Im Auftrag nur 184 Stück !
+
+Bitte Auftrag mit 184 Stück kommissionieren und mir eine Liste aller Lagernummern im Auftrag schicken, damit ich die fehlende Nummer identifzieren und auf unserer Rechnung korrigieren kann. Danke!";10.04.2026, 07:06;10.04.2026;14. Apr;angemeldet;;;zz;Abholung;nein;;;X;;;;;;;;;;;;;;;;
+;SUNELECTRO OÜ;AU2026041013539;116;Vollständig bezahlt.;10.04.2026, 11:40;13.04.2026;16.04 - 17.04;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;New Returns;AU2026041013542;12;"Es handelt sich um 15 Paletten mit Kleingeräten
+Tippfehler. 12 Paletten sind richtig. ";10.04.2026, 11:59;13.04.2026;14.04.2026;angemeldet;;;zz;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;GGY Trade s.r.o.;AU2026040913536 ;3;120 Staubsauger / 3 Paletten / bitte in der Früh schon zusammenstellen @Dima;;13.04.2026;13. Apr;angemeldet;;;0;Abholung;Ja;Soll bei Abholung Bar bezahlt werden.;;X;;;;;;;;;;;;;;;;
+;Euroda Transport & Handel;AU2026031113475;156;Ware wurde heute (10.04.) bezahlt. Kommissionierung am 14.04. ;31.03.2026, 09:45;14.04.2026;15. Apr;angemeldet;;;0;Abholung;ja;Vermutlich wird der Kunde abholen, weil er das mit seinen beiden anderen Firmen bisher auch so gemacht hat. Sollte sich der kunde anders entscheiden, bitte Rückmeldung an Mirko/Dustin;;X;;;;;;;;;;;;;;;;
+;Banat Electrocasnice S.R.L;AU2026041013546;68;UIT Code in der Anmeldung / Wird am 24 Verladen;13.04.2026, 11:31;14.04.2026;24. Apr;angemeldet;;;0;Spedition;JA;;;X;;;;;;;;;;;;;;;;
+;M&J TRADE D.O.O.;AU2026041013547;24;;13.04.2026, 11:34;14.04.2026;15. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Buy4less GmbH;AU2026041013544;65;Input vom Kunden: bitte 4 Geräte auf Palette 80x120 .Danke/ Soll eine Palette mit 5 STK Gepackt werden oder mit 1 Skt ??? ;13.04.2026, 11:55;14.04.2026;21.04.2026;angemeldet;;;zz;Spedition;nein;;;;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC;AU2026033113526;104;"Dieser Auftrag soll den Auftrag AU2026033113540 zu einer vollen LKW Ladung auffüllen. 
+Bitte vollständig kommissionieren und beide Aufträge soweit möglich zu einer LKW Ladung zusammenstellen.
+Restliche kommissionierte Ware wird dann mit dem nächsten AUftrag (folgt noch) verladen. ";10.04.2026, 12:02;14.04.2026;15. Apr;angemeldet;;;zz;Abholung;nein;;;X;;;;;;;;;;;;;;;;
+;GLOBAL LIQUIDACIONES SL ;AU2026041413551;208;198 Artikel + 10 Mixpaletten. Wunsch vom Kunden: 4-5 Mixpaletten lose umladen und Platz im LKW optimal zu nutzen. Lieferung mit Wächter!!! Zustellung erfolgt am Montag oder Dienstag;14.04.2026, 13:21;16.04.2026;23.04.2026;angemeldet;;;0;Spedition;Ja;;;;;;;;;;;;;;;;;;;
+;NAS ELECTROMENAGER;AU2026041413558;25;Bitte Lose vorbereiten da der Kunde selber mit eigenem Transporter abholt;14.04.2026, 17:46;16.04.2026;17. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;SUNELECTRO OÜ;AU2026041413552;81;;14.04.2026, 15:16;17.04.2026;27. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;IG International;AU2026041013541;184;mit Fixtermin zum 22.04;15.04.2026, 15:27;17.04.2026;21. Apr;angemeldet;;;zz;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;Simex Outlet;AU2026040113528  ;155;Abholwunschtermin vom 21.04. - 24.04.2026;;20.04.2026;22. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Marketvibe Srl;AU2026041413555;39; Wurde am 23.04.2026 Verladen;;20.04.2026;23. Apr;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Almost New LTD;AU2026041313549;67;Info: 2 Mixpaletten und 2 Paletten mit Staubsauger ;14.04.2026, 15:16;21.04.2026;Warte auf Rückmeldung ;;;;0;Abholung;Ja;"Info von Nikoloz: ""wird zusammen mit Technoplanet abgeholt ( Technoplanet wird voraussichtlich in der Woche ab 20.04. bestellen)""";;;;;;;;;;;;;;;;;;
+;Uab Stevija ;AU2026041413554;137;zusammen mit  AU2026042013574  verladen;;21.04.2026;06.05.2026;angemeldet;;;0;Abholung;JA;;;;;;;;;;;;;;;;;;;
+;Elektroshop Enny Dizdarevic Ernesa e.U.;AU2026042013572;51;Bei den Produkten handelt es sich allesamt um Kleingeräte;20.04.2026, 15:23;21.04.2026;;angemeldet;;;0;Spedition;JA;;;;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC;AU2026041313550;99;bitte Lademeter an @Nikoloz weitergeben;;22.04.2026;29. Apr;angemeldet;;;;Abholung;nein;;;X;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC;AU2026041013540#1;13;bitte Lademeter an @Nikoloz weitergeben;;22.04.2026;29. Apr;angemeldet;;;;Abholung;nein;;;X;;;;;;;;;;;;;;;;
+;ELECTRO BALKAN DI BOJANIC ZELJKO;AU2026041613565;149;AM 23.04.2026 Verladen;21.04.2026, 10:29;22.04.2026;28.04 - 30.04;angemeldet;;;zz;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;Schotte Sam;AU2026042113577;2;;;23.04.2026;23.04 - 24.04;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;UAB Stevija;AU2026042013574;20;Abholung erfolgt zusammen mit AU2026041413554;21.04.2026, 12:52;23.04.2026;06. Mai;angemeldet;;;0;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;GGY Trade s.r.o.;AU2026042113580;100;Bei den Produkten handelt es sich um 100 Staubsauger auf 3 Paletten. BAR Zahlung vor Ort.;22.04.2026, 18:00;23.04.2026;27. Apr;angemeldet;;;0;Abholung;nein;;;X;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC;AU2026042213581;110;"Auftrag soll mit AU2026041013540#1 und AU2026041313550 zusammen zu einem FTL kommissioniert werden. 
+Bitte Ware kommissionieren und zurückmelden an Nikoloz, Dustin und Mirko ob die drei Aufträge zusammen einen vollen LKW ergeben.";22.04.2026, 18:12;23.04.2026;Warte auf Rückmeldung ;;;;zz;Abholung;nein;;;;;;;;;;;;;;;;;;;
+;IG International ;AU2026042013573;131;FIXTERMIN AM 29.04.2026 ;23.04.2026, 09:41;24.04.2026;27.04.2026;angemeldet;;;zz;Spedition;Ja;;;;;;;;;;;;;;;;;;;
+;Online Shopping Trade S.R.O.;AU2026042213582;21;;22.04.2026, 18:00;24.04.2026;24.04.2026;angemeldet;;;0;Spedition;Ja;Zugestellt am 04.05;;X;;;;;;;;;;;;;;;;
+;UAB Portana;AU2026042113576;87;9 Paletten müssen zurück abgeladen werden aus Platzmangel. Rückmeldung folgt für Rest Abholung.;23.04.2026, 10:56;24.04.2026;28. Apr;angemeldet;;;zz;Abholung;nein;Terminwunsch für Abholung Dienstag, 28.04. ;;X;;;;;;;;;;;;;;;;
+;IG International;AU2026042313587;17;FIXTERMIN am 29.04.2026. Ware soll zusammen mit AU2026042013573 verladen werden. ;23.04.2026, 18:30;24.04.2026;27.04.2026;angemeldet;;;zz;Spedition;Ja;;;X;;;;;;;;;;;;;;;;
+;Sefik Saracevic;AU2026041413553;44;Die Ware wird lose und ohne Palette abgeholt. Der Kunde zahlt bei Abholung in bar;23.04.2026, 10:57;27.04.2026;28. Apr;angemeldet;;;zz;Abholung;Ja;Zahlt bar bei Abholung;;X;;;;;;;;;;;;;;;;
+;M&J TRADE D.O.O.;AU2026042313585;32;;23.04.2026, 13:42;27.04.2026;06. Mai;angemeldet;;;0;Abholung;JA;;;;;;;;;;;;;;;;;;;
+;Techno Planet LTD;AU2026042413592;175;Almost New LTD AU2026041313549 bitte mit verladen bei Abholung. Nicht Vollständig gezahlt.;;28.04.2026;warte auf Zahlung;;;;0;Abholung;Nein;;;;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC;AU2026042713595;41;Auftrag ist eine Erweiterung für AU2026042213581 und soll zusammen einen LKW ergeben. Bitte Rückmeldung an Nikoloz und Dustin, ob damit ein LKW voll ist.;27.04.2026, 15:15;28.04.2026;Warte auf Rückmeldung ;;;;zz;Abholung;nein;;;;;;;;;;;;;;;;;;;
+;Simex D.o.o;AU2026042713596;212;;27.04.2026, 14:35;29.04.2026;Warte auf Rückmeldung ;;;;0;Abholung;Ja;;;;;;;;;;;;;;;;;;;
+;TECHNO ELECTRONICS 5 Ltd;AU2026042313586;160;900164346  nicht im Bestand. Kunde wurde darüber informiert.;27.04.2026, 14:45;30.04.2026;Warte auf Rückmeldung ;;;;zz;Abholung;nein;;;;;;;;;;;;;;;;;;;
+;Herman Trading ;AU2026040913537 ;99;8x  AEG Kühlschränke wurden hier noch dazu beladen vom AU2026032413506;27.04.2026, 15:15;30.04.2026;04. Mai;angemeldet;;;zz;Abholung;Ja;;;X;;;;;;;;;;;;;;;;
+;Enterijer D.O.O.;AU2026042113579;158;;27.04.2026, 14:55;04.05.2026;05. Mai;angemeldet;;;zz;Abholung;nein;;;;;;;;;;;;;;;;;;;
+;Home Discount S.R.L.;AU2026042813601;1;1 Palette mit 50 Hoover Staubsaugern;29.04.2026, 11:00;04.05.2026;warte auf Zahlung;;;;0;Abholung;nein;;;;;;;;;;;;;;;;;;;
+;Hanseatic Georgia LLC;AU2026042813600;10;Auftrag ist die letzte Erweiterung für AU2026042213581 und AU2026042713595 und soll zusammen abgeholt werden. ;29.04.2026, 11:05;04.05.2026;;;;;zz;Abholung;nein;;;;;;;;;;;;;;;;;;;
+;Elektroshop Enny Dizdarevic Ernesa e.U.;AU2026042913604;21;Wird zusammen mit AU2026042013572 (bereits bezahlt und komissioniert) ausgeliefert werden.;29.04.2026, 17:32;04.05.2026;warte auf Zahlung;;;;0;Spedition;nein;;;;;;;;;;;;;;;;;;;
+;KOUTLIANOS NIKOS;AU2026042913603;71;;29.04.2026, 17:34;05.05.2026;warte auf Zahlung;;;;0;Abholung;nein;;;;;;;;;;;;;;;;;;;
+;Euroda Transport & Handel;AU2026042413593;238;ERST KOMMSISSIONIEREN WENN VOLLSTÄNDIG BEZAHLT WURDE!  ;;;Warte auf Rückmeldung ;;;;0;Abholung ;Ja;Zahlungseingang prüfen;;;;;;;;;;;;;;;;;;
+;Elektro Outlet Sinzig GmbH I.G.;AU2026043013606;147;;;;;;;;0;Abholung;nein;;;;;;;;;;;;;;;;;;;
+;Outlet Mebeli Ltd;AU2026042913605;53;hier wird noch ein weiterer Auftrag dazu kommen;;;;;;;0;Abholung ;nein;;;;;;;;;;;;;;;;;;;
+;KAJTEK Patrycja Minkina;AU2026043013607;156;;;;;;;;0;Abholung;nein;;;;;;;;;;;;;;;;;;;
+;Rati Marti;AU2026043013609;130;ERST NACH ZAHLUNG KOMMISSIONIEREN;;;;;;;0;Abholung;Nein;;;;;;;;;;;;;;;;;;;
+;AMY Witgoed;AU2026050413610;15;ERST NACH ZAHLUNG KOMMISSIONIEREN;;;;;;;0;???;Nein;;;;;;;;;;;;;;;;;;;
+;RU Recycling und Umweltdienst GmbH;AU2026050413611;136;;;05.05.2026;;;;;ZZ;Spedition;Nein;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
