@@ -135,11 +135,11 @@ const VS={
 };
 const ST=[
     {id:'erfassung',l:'Auftragserfassung',ow:'Verkauf'},
-    {id:'rechnung',l:'Rechnungsstellung',ow:'Mirko'},
+    {id:'rechnung',l:'Rechnungsstellung',ow:'Janna'},
     {id:'kommi',l:'Kommissionierungsplanung',ow:'Dustin'},
     {id:'amm',l:'AMM Anmeldung',ow:'Dustin'},
 ];
-const TM=['Mirko','Dustin','Janna','Igor'];
+const TM=['Janna','Dustin','Igor'];
 const ZOLL_LAENDER=['Schweiz','Großbritannien','Georgien','Kosovo','Nordmazedonien','Serbien','Türkei','Norwegen','Anderes Nicht-EU-Land'];
 
 // JTL INVOICE TEXT DATA (ENGLISH)
@@ -731,6 +731,73 @@ const S={
     // Generelle TODOs (für alle Aufträge)
     genTodos: [false, false, false, false, false, false, false, false, false],
 };
+
+// ═══════════════════════════════════════════════════════
+// PERSISTENCE — D2 (DECISIONS.md)
+// localStorage primär (single-user pro Browser), JSON-Export für Geräte-Wechsel.
+// ═══════════════════════════════════════════════════════
+const STORAGE_KEY='elvinci_S_v1';
+const STORAGE_VERSION=1;
+
+function save(){
+    try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({v:STORAGE_VERSION, ts:new Date().toISOString(), s:S}));
+    }catch(e){ console.warn('Auto-Save fehlgeschlagen:', e); }
+}
+
+function loadDraft(){
+    try{
+        const raw=localStorage.getItem(STORAGE_KEY);
+        if(!raw) return false;
+        const p=JSON.parse(raw);
+        if(p.v!==STORAGE_VERSION || !p.s) return false;
+        Object.assign(S, p.s);
+        return p.ts;
+    }catch(e){ console.warn('Draft-Load fehlgeschlagen:', e); return false; }
+}
+
+function clearDraft(){
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+}
+
+function exportBackup(){
+    const fn=`elvinci_backup_${(S.au||'Auftrag').replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.json`;
+    const payload={v:STORAGE_VERSION, ts:new Date().toISOString(), s:S};
+    const blob=new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=fn;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    lg('Backup exportiert', fn);
+    render();
+}
+
+function importBackup(file){
+    const r=new FileReader();
+    r.onload=(e)=>{
+        try{
+            const p=JSON.parse(e.target.result);
+            if(p.v!==STORAGE_VERSION){ alert('Inkompatible Backup-Version: '+p.v); return; }
+            if(!p.s){ alert('Backup-Datei ohne Daten.'); return; }
+            if(!confirm('Aktuellen Stand mit Backup vom '+new Date(p.ts).toLocaleString('de-DE')+' überschreiben?')) return;
+            for(const k in S){ delete S[k]; }
+            Object.assign(S, p.s);
+            lg('Backup importiert', file.name);
+            render();
+            window.scrollTo({top:0, behavior:'smooth'});
+        }catch(err){ alert('Backup-Datei konnte nicht gelesen werden: '+err.message); }
+    };
+    r.readAsText(file);
+}
+
+function triggerImport(){
+    const inp=document.createElement('input');
+    inp.type='file';
+    inp.accept='.json,application/json';
+    inp.onchange=(e)=>{ if(e.target.files[0]) importBackup(e.target.files[0]); };
+    inp.click();
+}
 
 // ═══════════════════════════════════════════════════════
 // HELPERS
@@ -1535,8 +1602,9 @@ function isSkip(i){
     return false;
 }
 function rst(){
-    if(!confirm('Workflow komplett zurücksetzen?'))return;
+    if(!confirm('Workflow komplett zurücksetzen? (Backup-Datei vorher speichern empfohlen.)'))return;
     for(const k in S){if(k==='audit'||k==='komm'){S[k]=[];continue}if(k==='done'){S[k]=[];continue}if(k==='stage'||k==='sub'){S[k]=0;continue}if(typeof S[k]==='boolean')S[k]=false;else if(typeof S[k]==='string')S[k]=''}
+    clearDraft();
     render();window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -1545,6 +1613,7 @@ function rst(){
 // ═══════════════════════════════════════════════════════
 function render(){
     document.getElementById('app').innerHTML=rHead()+rProg()+'<div id="cs">'+rStg()+'</div>'+rGenTodos()+(S.ticketOk?rTick():'')+rSB();
+    save();
 }
 
 function rHead(){
@@ -1806,7 +1875,6 @@ function sub5(){
                         <label style="color:var(--orange)">Freigegeben durch *</label>
                         <select onchange="S.fixOverrideVon=this.value;render()" style="border-color:var(--orange)">
                             <option value="">— Vorgesetzten auswählen —</option>
-                            <option ${S.fixOverrideVon==='Mirko'?'selected':''}>Mirko</option>
                             <option ${S.fixOverrideVon==='Dustin'?'selected':''}>Dustin</option>
                             <option ${S.fixOverrideVon==='Geschäftsführung'?'selected':''}>Geschäftsführung</option>
                         </select>
@@ -1899,7 +1967,7 @@ function rS1(){
     if(isSp() && !isFix()) {
         b += rTerminrechner();
     }
-    return sw('Rechnungsstellung','Mirko',b)}
+    return sw('Rechnungsstellung','Janna',b)}
 
 // ═══════════════════════════════════════════════════════
 // STAGE 2 — KOMMI
@@ -2056,6 +2124,13 @@ function rSB(){
         <div class="dv"></div>
         <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:8px">Audit (${S.audit.length})</p>
         <div style="max-height:200px;overflow-y:auto">${S.audit.slice().reverse().map(e=>`<div class="ar"><span class="mono" style="color:var(--txd)">${e.ts}</span><span style="color:var(--txd)">${e.st}</span><span style="color:var(--tx)">${e.a}${e.d?' — '+e.d:''}</span></div>`).join('')}</div>
+        <div class="dv"></div>
+        <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:8px">Datensicherung</p>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+            <button onclick="exportBackup()" class="btn btn-o" style="flex:1;font-size:10px;padding:6px 8px">💾 Backup speichern</button>
+            <button onclick="triggerImport()" class="btn btn-o" style="flex:1;font-size:10px;padding:6px 8px">📂 Backup laden</button>
+        </div>
+        <p style="font-size:9px;color:var(--txd);margin-bottom:14px">Auto-Save aktiv im Browser-Speicher. Backup-Datei in SharePoint ablegen für Geräte-Wechsel.</p>
         <div class="dv"></div>
         <p style="font-size:10px;font-weight:600;color:var(--txd);text-transform:uppercase;margin-bottom:6px">Regeln</p>
         <ol style="font-size:10px;color:var(--txd);padding-left:14px;line-height:1.7"><li>VOR Rechnung: Fracht klären</li><li>Vorkasse & Barzahler: Rechnung SOFORT</li><li>Prio 2 = Puffer</li><li>Freie Kapazität: Kommi auch VOR Zahlung</li><li>Vorkasse: Versand erst nach Zahlungseingang</li><li>Barzahler: Zahlung bei Abholung</li></ol>
@@ -2426,7 +2501,12 @@ function cpTick(){
 }
 
 // INIT
-lg('Workflow gestartet',new Date().toLocaleDateString('de-DE'));
+const _restoredAt=loadDraft();
+if(_restoredAt){
+    lg('Stand wiederhergestellt', new Date(_restoredAt).toLocaleString('de-DE'));
+}else{
+    lg('Workflow gestartet', new Date().toLocaleDateString('de-DE'));
+}
 render();
 </script>
 </body>
