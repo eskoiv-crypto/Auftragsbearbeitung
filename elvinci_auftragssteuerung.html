@@ -2181,6 +2181,16 @@ function _detectDrift(row){
     if(typeof row.bezahlt==='boolean' && row.bezahlt!==!!o.bezahlt) push('bezahlt','Bezahlt?', !!o.bezahlt, !!row.bezahlt, o.bezahlt?'ja':'nein', row.bezahlt?'ja':'nein');
     if(typeof row.ticketOk==='boolean' && row.ticketOk!==!!o.ticketOk) push('ticketOk','Erledigt', !!o.ticketOk, !!row.ticketOk, o.ticketOk?'ja':'nein', row.ticketOk?'ja':'nein');
     if(row.pal && row.pal!==o.pal)      push('pal','Paletten', o.pal||'', row.pal, o.pal||'(leer)', row.pal);
+    // Datum-Drifts (Mini-Welle nach Tier 4.3)
+    if(row.tpKommiDatum && row.tpKommiDatum!==o.tpKommiDatum)
+        push('tpKommiDatum','Kommi-Datum', o.tpKommiDatum||'', row.tpKommiDatum, _fmtDateDe(o.tpKommiDatum)||'(leer)', _fmtDateDe(row.tpKommiDatum));
+    if(row.vDat && row.vDat!==o.vDat)
+        push('vDat','Versanddatum', o.vDat||'', row.vDat, _fmtDateDe(o.vDat)||'(leer)', _fmtDateDe(row.vDat));
+    // Notizen-Drift — Anzeige auf 50 Zeichen begrenzt, Wert volle Länge
+    if(row.besonderes && row.besonderes!==(o.besonderes||'')){
+        const trunc=(s,n=50)=>s.length>n?s.slice(0,n)+'…':s;
+        push('besonderes','Notizen', o.besonderes||'', row.besonderes, trunc(o.besonderes||'(leer)'), trunc(row.besonderes));
+    }
     return { match:'existing', drifts, matchId };
 }
 
