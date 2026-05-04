@@ -1,0 +1,22 @@
+# Handover-Backup (Quell-Zip + entpackte Kopie)
+handover_extracted/
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Build/Dist (falls Modularisierung kommt)
+dist/
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
