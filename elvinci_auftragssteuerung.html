@@ -779,6 +779,89 @@ body {
     flex-shrink: 0;
 }
 
+/* ─── LIEFERUNGS-STATUS-TRACKER (Phase 5.6) ─── */
+.lstatus-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-card);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-1);
+    margin-bottom: 18px;
+}
+.lstatus-card.reklamation {
+    border-color: rgba(255, 59, 48, 0.45);
+    background: rgba(255, 59, 48, 0.04);
+}
+.lstatus-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 10px;
+}
+.lstatus-track {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.lstatus-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    padding: 10px 6px;
+    border: 1px solid var(--separator);
+    border-radius: var(--r-input);
+    background: var(--bg-primary);
+    transition: all 0.2s var(--ease-out);
+}
+.lstatus-step.done {
+    background: rgba(0, 200, 150, 0.06);
+    border-color: rgba(0, 200, 150, 0.30);
+}
+.lstatus-step.active {
+    background: rgba(0, 113, 227, 0.06);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.10);
+}
+.lstatus-node {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    color: var(--label-3);
+    display: grid; place-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    transition: all 0.2s var(--ease-out);
+}
+.lstatus-step.done .lstatus-node { background: var(--success); color: #fff; }
+.lstatus-step.active .lstatus-node { background: var(--accent); color: #fff; }
+.lstatus-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--label-2);
+    line-height: 1.2;
+}
+.lstatus-step.done .lstatus-label { color: var(--success); }
+.lstatus-step.active .lstatus-label { color: var(--accent); }
+.lstatus-ts {
+    font-size: 9px;
+    color: var(--label-3);
+    line-height: 1.2;
+}
+.lstatus-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+@media (max-width: 600px) {
+    .lstatus-track { grid-template-columns: 1fr 1fr; }
+    .lstatus-actions { flex-direction: column; }
+    .lstatus-actions .btn { width: 100%; }
+}
+
 /* ─── PLANNER-OUTPUT — pro-Sektion-Card mit Copy-Knopf ─── */
 .planner-out {
     background: var(--bg-secondary);
@@ -2259,8 +2342,12 @@ const S={
     rePdfAttached: false,             // Bucket 2 → 3 Pflicht
     rePdfAttachedAt: '',              // Timestamp wenn gesetzt
     warenwert: '',                    // Bucket 4 Pflicht (Versand) / 5.2.1 Zoll
+    hebebuehne: false,                // Phase 5.4 — Sondervereinbarung Hebebühne bei Lieferung
     ammMailSent: false,               // Bucket 4 Pflicht (Versand)
     zollMailSent: false,              // Bucket 4/5 Pflicht bei Zoll
+    // Phase 5.6 — Lieferungs-Status-Tracker (Nachverfolgung bis Anlieferung)
+    lieferStatus: 'pending',          // pending|angemeldet|unterwegs|angeliefert|reklamation
+    lieferStatusTs: { angemeldet:'', unterwegs:'', angeliefert:'', reklamation:'' },
     endChecklist: { teams:false, pipeline:false, sharepoint:false }, // Bucket 7 Abschluss-Pflicht
     // D2 — Tagescheckliste (Kapitel 7), reset täglich
     dailyChecks: { date:'', tasks:{} },
@@ -3236,7 +3323,7 @@ function ammMail(){
     const to=[S.config.amm.stefan, S.config.amm.bjoern].filter(Boolean).join(',');
     if(!to){ alert('AMM-Empfänger sind leer — bitte Sidebar → ⚙ Adressen → AMM ausfüllen.'); return; }
     const subject=`AMM-Anmeldung: ${au} — ${kunde}`;
-    const body=`Hallo Stefan, hallo Björn,\n\nbitte folgende Sendung bei AMM anmelden:\n\n  Auftragsnummer: ${au}\n  Kunde:         ${kunde}\n  Versandtag:    ${S.vDat||'[bitte ergänzen]'}\n  Anzahl Paletten: ${S.pal||'[bitte ergänzen]'}\n  Versandart:    ${VS[S.va]?.l||'[bitte ergänzen]'}\n${S.fixDatum?'  Fixtermin:     '+S.fixDatum+'\n':''}${S.isLoose?'  Loose Beladung: ja '+(S.looseInfo?'('+S.looseInfo+')':'')+'\n':''}${isZoll()?'  Zoll-Zielland: '+(S.zielland||'[bitte ergänzen]')+'\n':''}\nWeitere Notizen / Sondervereinbarungen:\n[ggf. ergänzen]\n\nDanke,\nJanna\nelvinci.de GmbH`;
+    const body=`Hallo Stefan, hallo Björn,\n\nbitte folgende Sendung bei AMM anmelden:\n\n  Auftragsnummer:  ${au}\n  Kunde:           ${kunde}\n  Versandtag:      ${S.vDat||'[bitte ergänzen]'}\n  Anzahl Paletten: ${S.pal||'[bitte ergänzen]'}\n  Warenwert:       ${S.warenwert||'[bitte ergänzen]'}\n  Versandart:      ${VS[S.va]?.l||'[bitte ergänzen]'}\n${isSp()?'  Hebebühne:       '+(S.hebebuehne?'JA':'nein')+'\n':''}${S.fixDatum?'  Fixtermin:       '+S.fixDatum+'\n':''}${S.isLoose?'  Loose Beladung:  ja '+(S.looseInfo?'('+S.looseInfo+')':'')+'\n':''}${isZoll()?'  Zoll-Zielland:   '+(S.zielland||'[bitte ergänzen]')+'\n':''}\nWeitere Notizen / Sondervereinbarungen:\n[ggf. ergänzen]\n\nDanke,\nJanna\nelvinci.de GmbH`;
     window.open(buildMailto(to, subject, body));
     S.ammMailSent=true; // Wenn-Dann-Marker für Stage-3-Gate
     lg('AMM-Mail erzeugt', au+' → '+to);
@@ -3373,6 +3460,81 @@ function _kommColor(){
     if(min<120) return 'var(--success)';   // <2h frisch
     if(min<24*60) return 'var(--warning)'; // <24h
     return 'var(--error)';                 // >24h überfällig
+}
+
+// Phase-5-Helper: liefert lesbare Liste fehlender Spedition/Zoll-Pflichten
+function _missingPhase5Fields(){
+    const m=[];
+    if(isSp()){
+        if(!S.vDat) m.push('Versanddatum');
+        if(!S.pal) m.push('Anzahl Paletten');
+        if(!S.warenwert) m.push('Warenwert');
+        if(!S.ammMailSent) m.push('AMM-Mail abgeschickt');
+    } else if(isAbh()){
+        if(!S.aTerm) m.push('Abholtermin abgestimmt');
+        if(!S.isKontaktiert) m.push('Kunde kontaktiert');
+    }
+    if(isZoll()){
+        if(!S.zollMailSent) m.push('Zollagent-Mail abgeschickt');
+        if(!S.warenwert) m.push('Warenwert (für Zollagent)');
+        if(!S.zielland) m.push('Zoll-Zielland');
+    }
+    return m;
+}
+
+function _phase5Complete(){
+    return _missingPhase5Fields().length===0 && S.stage>=3;
+}
+
+// Phase 5.6 — Lieferungs-Status-Tracker (Setter mit Audit + Timestamp)
+function setLieferStatus(status){
+    const labels={ pending:'Vorbereitung', angemeldet:'Angemeldet (AMM bestätigt)', unterwegs:'Unterwegs (LKW abgefahren / Kunde abgeholt)', angeliefert:'Angeliefert (beim Kunden)', reklamation:'Reklamation / Schaden' };
+    if(!labels[status]) return;
+    S.lieferStatus=status;
+    if(!S.lieferStatusTs) S.lieferStatusTs={};
+    if(status!=='pending'){
+        S.lieferStatusTs[status]=new Date().toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    }
+    if(status==='angemeldet') S.ammAngemeldet=true;
+    if(status==='angeliefert') S.bezahlt=S.bezahlt||S.za==='barzahler'; // Barzahler zahlt bei Anlieferung
+    lg('Lieferungs-Status', labels[status]);
+    render();
+}
+
+function rLieferStatus(){
+    if(S.stage<3) return ''; // erst ab AMM-Stage sichtbar
+    const status=S.lieferStatus||'pending';
+    const isReklam=status==='reklamation';
+    const stages=[
+        { id:'pending',     label:'Vorbereitung' },
+        { id:'angemeldet',  label:'Angemeldet' },
+        { id:'unterwegs',   label:'Unterwegs' },
+        { id:'angeliefert', label:'Angeliefert' },
+    ];
+    const idx=stages.findIndex(s=>s.id===status);
+    const ts=S.lieferStatusTs||{};
+    return `<div class="lstatus-card ${isReklam?'reklamation':''}">
+        <div class="lstatus-head">
+            <span style="font-size:13px;font-weight:600;color:var(--label)">📦 Lieferungs-Status (Phase 5.6 Nachverfolgung)</span>
+            ${isReklam?`<span class="tag" style="background:rgba(255,59,48,0.10);color:var(--error)">⚠ Reklamation</span>`:''}
+        </div>
+        <div class="lstatus-track">
+            ${stages.map((s,i)=>`<div class="lstatus-step ${i<idx||(i===idx&&!isReklam)?'done':''} ${i===idx&&!isReklam?'active':''}">
+                <div class="lstatus-node">${i+1}</div>
+                <div class="lstatus-label">${esc(s.label)}</div>
+                ${ts[s.id]?`<div class="lstatus-ts">${esc(ts[s.id].slice(0,10))}</div>`:''}
+            </div>`).join('')}
+        </div>
+        <div class="lstatus-actions">
+            ${status==='pending'?`<button onclick="setLieferStatus('angemeldet')" class="btn btn-p" style="font-size:12px">→ AMM-Anmeldung bestätigen</button>`:''}
+            ${status==='angemeldet'?`<button onclick="setLieferStatus('unterwegs')" class="btn btn-p" style="font-size:12px">→ ${isAbh()?'Kunde abgeholt':'LKW abgefahren'}</button>`:''}
+            ${status==='unterwegs'?`<button onclick="setLieferStatus('angeliefert')" class="btn btn-g" style="font-size:12px">✓ ${isAbh()?'Übergabe komplett':'Beim Kunden angeliefert'}</button>`:''}
+            ${status==='angeliefert'?`<span style="font-size:11px;color:var(--success);font-weight:500;align-self:center">✓ Lieferung abgeschlossen — Datum dokumentiert</span>`:''}
+            ${(status==='angemeldet'||status==='unterwegs'||status==='angeliefert')?`<button onclick="setLieferStatus('reklamation')" class="btn btn-d" style="font-size:12px">⚠ Reklamation / Schaden melden</button>`:''}
+            ${isReklam?`<button onclick="setLieferStatus('angeliefert')" class="btn btn-o" style="font-size:11px">↩ Reklamation aufgelöst</button>`:''}
+            ${status!=='pending'?`<button onclick="setLieferStatus('pending')" class="btn btn-o" style="font-size:11px;color:var(--label-3)">↺ zurücksetzen</button>`:''}
+        </div>
+    </div>`;
 }
 
 // Phase-1-Helper: liefert lesbare Liste fehlender Saleskärtchen-Pflichten
@@ -4600,7 +4762,14 @@ function rHero(){
     const lastKomm=_formatLastKomm();
     const bIdx=activeBucket();
     const b=BUCKETS[bIdx];
+    // Phase 5.6 Erreichbarkeits-Reminder — wenn Versandtag heute
+    const today=new Date().toISOString().slice(0,10);
+    const isShippingToday=S.vDat && S.vDat.slice(0,10)===today && S.lieferStatus!=='angeliefert' && S.lieferStatus!=='reklamation';
     return `<section class="hero-card no-print">
+        ${isShippingToday?`<div class="al aw" style="margin-bottom:14px"><div class="i">📦</div><div>
+            <strong>Heute Anlieferung — Erreichbarkeit gewährleisten!</strong>
+            <span style="font-size:12px;color:var(--label-2);display:block;margin-top:2px">${isAbh()?'Kunde holt heute ab.':'AMM liefert heute beim Kunden an.'} Stelle sicher, dass Du für Spedition + Kunde erreichbar bist (Stellenbeschreibung 5.6).</span>
+        </div></div>`:''}
         <div class="hero-meta">
             <span class="hero-bucket b-${b.id}"><span class="dot"></span>${esc(b.l)} · ${esc(b.ow)}</span>
             ${lastKomm
@@ -5113,6 +5282,20 @@ function sub4(){
         </div>`:''}
     </div>`;
 
+    // HEBEBÜHNE (Phase 5.4 — Sondervereinbarung) — nur bei Lieferung
+    if(isSp()){
+        b+=`<label class="ck ${S.hebebuehne?'on':''}">
+            <input type="checkbox" ${S.hebebuehne?'checked':''} onchange="S.hebebuehne=this.checked;if(S.hebebuehne)lg('Sondervereinbarung','Hebebühne erforderlich');render()">
+            <span style="display:flex;align-items:center;gap:10px;flex:1">
+                <span style="font-size:18px">🛗</span>
+                <span style="display:flex;flex-direction:column;gap:2px;flex:1">
+                    <span style="font-weight:600">Hebebühne erforderlich</span>
+                    <span style="font-size:11px;color:var(--label-3)">Wird in der AMM-Anmeldemail (Phase 5.4) explizit genannt — Aufpreis Spedition</span>
+                </span>
+            </span>
+        </label>`;
+    }
+
     // KLEIN
     b+=`<div class="ck ${S.isKlein?'on':''}" onclick="S.isKlein=!S.isKlein;render()">
         <input type="checkbox" ${S.isKlein?'checked':''} onclick="event.stopPropagation()">
@@ -5544,12 +5727,22 @@ function rS2(){
 function rS3(){
     let b='';
 
+    // Phase 5.6 — Lieferungs-Status-Tracker oben prominent
+    b+=rLieferStatus();
+
     // Wenn-Dann — Warenwert-Pflichtfeld (für AMM/Zoll-Anmeldung)
     if(isSp() || isZoll()){
         b+=`<div class="f"><label>Warenwert *</label>
             <input value="${esc(S.warenwert)}" oninput="S.warenwert=this.value" placeholder="z. B. 12.450,00 € (für Versicherung + Zoll)" inputmode="decimal">
             <div class="h">${isZoll()?'Pflicht für Zoll-Anmeldung':'Pflicht für AMM-Anmeldung (Versicherung)'}</div>
         </div>`;
+    }
+    // Phase 5.4 — Hebebühne-Anzeige bei Lieferung (Read-only — Erfassung in Sub 4)
+    if(isSp()){
+        b+=`<div class="al ${S.hebebuehne?'aw':'ai'}" style="margin-bottom:14px"><div class="i">🛗</div><div>
+            <strong>Hebebühne:</strong> ${S.hebebuehne?'<span style="color:var(--warning);font-weight:600">JA — wird in AMM-Mail explizit genannt</span>':'<span>nein</span>'}
+            <span style="font-size:11px;color:var(--label-3);display:block;margin-top:2px">Erfassung in Erfassung Sub 4 (Merkmale)</span>
+        </div></div>`;
     }
 
     // Vorkasse: Ticket wird mit Status "Warten auf Zahlung" erstellt
@@ -5600,6 +5793,19 @@ function rS3(){
             </label>
         </div>`;
 
+    // Phase-5-Komplett-Marker am Ende — analog zu Phase 1
+    const m5=_missingPhase5Fields();
+    if(m5.length===0 && S.stage>=3){
+        b+=`<div class="al ao" style="margin-top:18px"><div class="i">✓</div><div>
+            <strong>Phase 5 abgeschlossen — Spedition/Zoll-Anmeldung komplett.</strong><br>
+            <span style="font-size:12px;line-height:1.5">Output-Erinnerung: <strong>Pipeline aktualisieren</strong> (Sidebar → 📋 Zeile kopieren) und <strong>Lieferungs-Status</strong> bis zur Anlieferung pflegen (Tracker oben).</span>
+        </div></div>`;
+    } else if(m5.length>0){
+        b+=`<div class="al aw" style="margin-top:18px"><div class="i">⚠</div><div>
+            <strong>${m5.length} Pflicht(en) für Phase 5 offen.</strong><br>
+            <span style="font-size:12px;line-height:1.5">${m5.slice(0,3).map(x=>'• '+esc(x)).join(' · ')}${m5.length>3?` · und ${m5.length-3} weitere`:''}</span>
+        </div></div>`;
+    }
     return sw('AMM Anmeldung','Dustin',b)}
 
 // ═══════════════════════════════════════════════════════
@@ -6083,8 +6289,11 @@ if(!S.endChecklist) S.endChecklist = { teams:false, pipeline:false, sharepoint:f
 if(typeof S.rePdfAttached==='undefined') S.rePdfAttached=false;
 if(typeof S.rePdfAttachedAt==='undefined') S.rePdfAttachedAt='';
 if(typeof S.warenwert==='undefined') S.warenwert='';
+if(typeof S.hebebuehne==='undefined') S.hebebuehne=false;
 if(typeof S.ammMailSent==='undefined') S.ammMailSent=false;
 if(typeof S.zollMailSent==='undefined') S.zollMailSent=false;
+if(typeof S.lieferStatus==='undefined') S.lieferStatus='pending';
+if(!S.lieferStatusTs) S.lieferStatusTs={ angemeldet:'', unterwegs:'', angeliefert:'', reklamation:'' };
 // Phase 3 — Kundenkommunikation defensiv defaulten
 if(typeof S.kundenTel==='undefined') S.kundenTel='';
 if(typeof S.kundenWhatsApp==='undefined') S.kundenWhatsApp='';
