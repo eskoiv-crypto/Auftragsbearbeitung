@@ -779,6 +779,74 @@ body {
     flex-shrink: 0;
 }
 
+/* ─── HERO-CARD (Apple-Cockpit) — Identity + Status oben im Workspace ─── */
+.hero-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--separator);
+    border-radius: var(--r-card);
+    padding: 26px 28px;
+    box-shadow: var(--shadow-1);
+    margin-bottom: 24px;
+}
+.hero-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.hero-bucket {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px;
+    background: var(--bg-tertiary);
+    border-radius: var(--r-pill);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--label-2);
+}
+.hero-bucket .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.hero-bucket.b-verkauf .dot    { background: var(--b-verkauf); }
+.hero-bucket.b-rechnung .dot   { background: var(--b-rechnung); }
+.hero-bucket.b-kommi .dot      { background: var(--b-kommi); }
+.hero-bucket.b-versand .dot    { background: var(--b-versand); }
+.hero-bucket.b-abholung .dot   { background: var(--b-abholung); }
+.hero-bucket.b-angemeldet .dot { background: var(--b-angemeldet); }
+.hero-bucket.b-beendet .dot    { background: var(--b-beendet); }
+.hero-komm {
+    font-size: 12px;
+    font-weight: 500;
+}
+.hero-name {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--label);
+    margin-bottom: 6px;
+}
+.hero-ids {
+    font-size: 14px;
+    color: var(--label-2);
+    margin-bottom: 16px;
+}
+.hero-ids .mono { color: var(--label); font-weight: 500; }
+.hero-ids .sep { color: var(--label-3); margin: 0 6px; }
+.hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.hero-empty {
+    font-size: 16px;
+    color: var(--label-3);
+    text-align: center;
+    padding: 32px 12px;
+    font-weight: 500;
+}
+
 /* ─── STEP-CARDS (Stage 1 Restructure) — Apple-Style nummerierte Schritte ─── */
 .step-card {
     background: var(--bg-secondary);
@@ -4120,6 +4188,36 @@ function rActionDock(){
     </div>`;
 }
 
+// Apple-Cockpit — Hero-Card: Identity + Status des aktiven Auftrags
+function rHero(){
+    if(!S.au && !S.kunde){
+        return `<section class="hero-card no-print">
+            <p class="hero-empty">Neuer Auftrag — beginne in Stage 0 mit AU + Kunde.<br><span style="font-size:13px;color:var(--label-3);font-weight:400">Sobald die AU eingetragen ist, erscheint hier die Auftragsidentität.</span></p>
+        </section>`;
+    }
+    const tagList=tgs();
+    const lastKomm=_formatLastKomm();
+    const bIdx=activeBucket();
+    const b=BUCKETS[bIdx];
+    return `<section class="hero-card no-print">
+        <div class="hero-meta">
+            <span class="hero-bucket b-${b.id}"><span class="dot"></span>${esc(b.l)} · ${esc(b.ow)}</span>
+            ${lastKomm
+                ?`<span class="hero-komm" style="color:${_kommColor()}">📞 letzter Kunden-Kontakt: ${esc(lastKomm)}</span>`
+                :S.kundenTel||S.kundenEmail||S.kundenWhatsApp
+                    ?`<span class="hero-komm" style="color:var(--label-3)">📞 noch kein Kontakt</span>`
+                    :''}
+        </div>
+        <h1 class="hero-name">${esc(S.kunde||'— ohne Kunde —')}</h1>
+        <div class="hero-ids">
+            ${S.au?`<span class="mono">AU: ${esc(S.au)}</span>`:`<span style="color:var(--label-3)">AU noch nicht erfasst</span>`}
+            ${S.re?`<span class="sep">·</span><span class="mono">RE: ${esc(S.re)}</span>`:''}
+            ${S.verkaufer?`<span class="sep">·</span>Verkauf: <span style="color:var(--label)">${esc(S.verkaufer)}</span>`:''}
+        </div>
+        ${tagList.length?`<div class="hero-tags">${tagList.map(t=>`<span class="tag ${t.c}">${esc(t.x)}</span>`).join('')}</div>`:''}
+    </section>`;
+}
+
 // Apple-Cockpit — Sticky Top-Bar mit globalen Controls
 function _nextSyncSlot(){
     const tasks=getDailyChecks();
@@ -4212,9 +4310,10 @@ function render(){
         rOrderList()+rPipelineModal()+
         rTopbar()+rDailyStrip()+
         '<div class="wrap">'+
-            rKundenBridge()+
-            rProg()+
-            '<div id="cs">'+rStg()+'</div>'+
+            rHero()+              // Identity: Kunde, AU/RE, Tags, Bucket-Status
+            rProg()+              // Bucket-Stepper (7 Segmente)
+            rKundenBridge()+      // Phase 3 Bridges (📞 ✉ 💬)
+            '<div id="cs">'+rStg()+'</div>'+   // Aktive Stage mit Step-Cards + Action-Dock + Pflicht-Karte + Nav
             rGenTodos()+
             (S.ticketOk?rTick():'')+
         '</div>'+
@@ -4247,11 +4346,12 @@ function rStg(){return [rS0,rS1,rS2,rS3][S.stage]()}
 
 function sw(title,owner,body){
     const bIdx=activeBucket(), b=BUCKETS[bIdx];
-    return `<div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-        <div><p style="font-size:10px;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;font-weight:700">Bucket ${bIdx+1} von 7 · Phase ${b.ph}</p>
-        <h2 style="font-size:18px;font-weight:800;color:var(--txb);margin-top:2px">${title}</h2>
-        <p style="font-size:10px;color:var(--txd);margin-top:2px">Planner: <span style="color:var(--tx)">${b.l}</span> · ${b.hint}</p></div>
-        <span style="font-size:11px;color:var(--txd);background:var(--sf);padding:4px 10px;border-radius:6px;border:1px solid var(--bd)">↝ ${owner}</span>
+    return `<div style="margin-bottom:18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+            <p style="font-size:11px;color:var(--label-3);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Bucket ${bIdx+1} · Phase ${b.ph} · ${esc(b.hint)}</p>
+            <h2 style="font-size:22px;font-weight:700;letter-spacing:-0.01em;color:var(--label);margin-top:4px">${esc(title)}</h2>
+        </div>
+        <span style="font-size:11px;color:var(--label-2);background:var(--bg-tertiary);padding:5px 12px;border-radius:var(--r-pill);font-weight:500;flex-shrink:0;margin-top:18px">↝ ${esc(owner)}</span>
     </div>${body}
     ${rActionDock()}
     ${rGates()}
