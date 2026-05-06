@@ -741,6 +741,7 @@ body {
 .dock-btn .meta { display: flex; flex-direction: column; min-width: 0; }
 .dock-btn .lbl { font-size: 13px; font-weight: 600; color: var(--label); line-height: 1.2; }
 .dock-btn .sub { font-size: 11px; color: var(--label-3); margin-top: 2px; line-height: 1.2; }
+.dock.dock-3 { grid-template-columns: repeat(3, 1fr); }
 .dock.dock-5 { grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .dock.dock-5 .dock-btn { padding: 10px; gap: 8px; }
 .dock.dock-5 .dock-btn .ico { width: 28px; height: 28px; font-size: 13px; }
@@ -778,6 +779,16 @@ body {
     font-weight: 500;
     flex-shrink: 0;
 }
+
+/* ─── GENERELLE CHECKLISTE in Sidebar (compact override) ─── */
+.sb-gentodos { margin-bottom: 14px; }
+.sb-gentodos .block { background: transparent; border: none; box-shadow: none; margin-bottom: 0; }
+.sb-gentodos .bh { padding: 0 0 8px 0; border-bottom: 1px solid var(--separator); margin-bottom: 8px; }
+.sb-gentodos .bh .n { display: none; }
+.sb-gentodos .bh .t { font-size: 12px; }
+.sb-gentodos .bh .s { font-size: 10px; }
+.sb-gentodos .bb { padding: 0; }
+.sb-gentodos .ck { padding: 6px 8px; font-size: 11px; margin-bottom: 4px; }
 
 /* ─── LIEFERUNGS-STATUS-TRACKER (Phase 5.6) ─── */
 .lstatus-card {
@@ -4725,30 +4736,38 @@ function rDaily(){
 
 // D2 — Action Dock (Bridges nach D3): mailto + Planner-Tab + SharePoint + Eskalation
 // D3e — Zollagent-Knopf erscheint nur bei Zoll-Aufträgen (isZoll())
+// Action-Dock kontextabhängig: AMM-Mail nur ab Stage 3 bei Versand;
+// Zollagent nur ab Stage 3 bei Zoll-Auftrag; Planner/SharePoint/Eskalation immer.
 function rActionDock(){
-    const showZoll=isZoll();
-    return `<div class="dock no-print${showZoll?' dock-5':''}">
-        <button onclick="ammMail()" class="dock-btn" title="Sendung bei AMM anmelden — Email an Stefan + Björn mit prefilled Daten">
+    const showAmm=S.stage>=3 && isSp();
+    const showZoll=S.stage>=3 && isZoll();
+    const buttons=[];
+    if(showAmm){
+        buttons.push(`<button onclick="ammMail()" class="dock-btn" title="Sendung bei AMM anmelden — Email an Stefan + Björn mit prefilled Daten (Phase 5.4)">
             <div class="ico amm">📧</div>
             <div class="meta"><div class="lbl">AMM-Mail</div><div class="sub">Stefan + Björn</div></div>
-        </button>
-        <button onclick="openPlanner()" class="dock-btn" title="MS Teams Planner-Tab öffnen">
-            <div class="ico plan">📋</div>
-            <div class="meta"><div class="lbl">Planner</div><div class="sub">Teams öffnen</div></div>
-        </button>
-        <button onclick="openSharePoint()" class="dock-btn" title="SharePoint-Auftragsordner öffnen">
-            <div class="ico share">📂</div>
-            <div class="meta"><div class="lbl">SharePoint</div><div class="sub">${S.au||'Wurzel-Ordner'}</div></div>
-        </button>
-        ${showZoll?`<button onclick="zollMail()" class="dock-btn" title="Zoll-Anmeldung an ${esc(S.config.zoll.name||'Zollagent')} (Phase 5.2.1)">
+        </button>`);
+    }
+    buttons.push(`<button onclick="openPlanner()" class="dock-btn" title="MS Teams Planner-Tab öffnen">
+        <div class="ico plan">📋</div>
+        <div class="meta"><div class="lbl">Planner</div><div class="sub">Teams öffnen</div></div>
+    </button>`);
+    buttons.push(`<button onclick="openSharePoint()" class="dock-btn" title="SharePoint-Auftragsordner öffnen">
+        <div class="ico share">📂</div>
+        <div class="meta"><div class="lbl">SharePoint</div><div class="sub">${esc(S.au||'Wurzel-Ordner')}</div></div>
+    </button>`);
+    if(showZoll){
+        buttons.push(`<button onclick="zollMail()" class="dock-btn" title="Zoll-Anmeldung an ${esc(S.config.zoll.name||'Zollagent')} (Phase 5.2.1)">
             <div class="ico zoll">🌍</div>
             <div class="meta"><div class="lbl">Zollagent</div><div class="sub">${esc(S.config.zoll.name||'Email senden')}</div></div>
-        </button>`:''}
-        <button onclick="openEscPad()" class="dock-btn" title="Eskalations-Pad in der Sidebar öffnen">
-            <div class="ico esc">⚠</div>
-            <div class="meta"><div class="lbl">Eskalation</div><div class="sub">an Dustin / Siyad</div></div>
-        </button>
-    </div>`;
+        </button>`);
+    }
+    buttons.push(`<button onclick="openEscPad()" class="dock-btn" title="Eskalations-Pad in der Sidebar öffnen">
+        <div class="ico esc">⚠</div>
+        <div class="meta"><div class="lbl">Eskalation</div><div class="sub">an Dustin / Siyad</div></div>
+    </button>`);
+    const cls=buttons.length===5?'dock-5':buttons.length===4?'':'dock-3';
+    return `<div class="dock no-print ${cls}" data-count="${buttons.length}">${buttons.join('')}</div>`;
 }
 
 // Apple-Cockpit — Hero-Card: Identity + Status des aktiven Auftrags
@@ -4884,8 +4903,11 @@ function render(){
             rProg()+              // Bucket-Stepper (7 Segmente)
             rKundenBridge()+      // Phase 3 Bridges (📞 ✉ 💬)
             '<div id="cs">'+rStg()+'</div>'+   // Aktive Stage mit Step-Cards + Action-Dock + Pflicht-Karte + Nav
-            rGenTodos()+
             (S.ticketOk?rTick():'')+
+            // Generelle Checkliste wurde in Sidebar verschoben (rSB) — hier nur Pflicht-Hinweis bei Stage 3
+            (S.stage===3 && genTodosCount()<getActiveGenTodos().length?
+                `<div class="al ai" style="margin-top:18px"><div class="i">📋</div><div><strong>${getActiveGenTodos().length-genTodosCount()} generelle TODOs noch offen</strong> — Sidebar (☰) → „Generelle Checkliste". Pflicht für Bucket-Wechsel zu Beendet.</div></div>`
+                :'')+
         '</div>'+
         rSB();
     save();
@@ -5829,6 +5851,10 @@ function rSB(){
                 <span style="font-size:9px;color:var(--txd);background:var(--bg);padding:1px 5px;border-radius:3px">P${b.ph}</span>
                 <span style="font-size:10px;color:var(--txd);margin-left:auto">${b.ow}</span>
             </div>`}).join('')})()}
+        <div class="dv"></div>
+        <p style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">📋 Generelle Checkliste (${genTodosCount()} / ${getActiveGenTodos().length})</p>
+        <p style="font-size:11px;color:var(--label-3);margin-bottom:10px;line-height:1.4">Auftragsübergreifende Pflichten — Pflicht-Stand für Bucket-Wechsel zu „Beendet".</p>
+        <div class="sb-gentodos">${rGenTodos()}</div>
         <div class="dv"></div>
         ${rPlannerOutput()}
         <div class="dv"></div>
