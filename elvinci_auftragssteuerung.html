@@ -3375,6 +3375,27 @@ function _kommColor(){
     return 'var(--error)';                 // >24h überfällig
 }
 
+// Phase-1-Helper: liefert lesbare Liste fehlender Saleskärtchen-Pflichten
+function _missingPhase1Fields(){
+    const missing=[];
+    if(!S.au) missing.push('Auftragsnummer (AU)');
+    if(!S.kunde) missing.push('Kunde / Firma');
+    if(!S.va) missing.push('Versandart (Abholung oder Spedition)');
+    if(!S.za) missing.push('Zahlungsart (Zahlungsziel / Vorkasse / Barzahler / Fixtermin / Zoll)');
+    if(!S.artAnz) missing.push('Artikelanzahl');
+    if(!S.kundenTel && !S.kundenWhatsApp && !S.kundenEmail) missing.push('Mindestens 1 Kontaktdatum (Tel / WhatsApp / Email)');
+    if(isZoll() && !S.zielland) missing.push('Zoll-Zielland');
+    if(S.isSonder && S.sonderText.trim().length<=5) missing.push('Sonderfall-Begründung (>5 Zeichen)');
+    if(isFix() && !S.fixDatum) missing.push('Fixtermin-Datum');
+    if(S.isLoose && !S.looseInfo) missing.push('Loose-Beladungshinweis');
+    return missing;
+}
+
+// Phase-1-Helper: alle Phase-1-Pflichten erfüllt?
+function _phase1Complete(){
+    return _missingPhase1Fields().length===0 && !!S.au && !!S.kunde;
+}
+
 function escalate(escId){
     const e=getEscalations().find(x=>x.id===escId);
     if(!e) return;
@@ -3382,9 +3403,23 @@ function escalate(escId){
     const au=S.au||'(AU noch nicht erfasst)', kunde=S.kunde||'(Kunde nicht erfasst)';
     const bIdx=activeBucket(), bName=BUCKETS[bIdx]?.l||'—';
     const subject=e.subj.replace('{AU}', au);
-    const body=`Hallo,\n\nbitte um Rücksprache zum Auftrag:\n\n  AU:     ${au}\n  Kunde:  ${kunde}\n  Bucket: ${bName} (Bucket ${bIdx+1} von 7)\n\nSituation: ${e.situ}\n\nDetails:\n[bitte ergänzen]\n\nDanke,\nJanna`;
+    let body;
+
+    if(escId==='sales'){
+        // Phase-1-Eskalation mit konkreter Lücken-Liste statt generischem Body
+        const missing=_missingPhase1Fields();
+        body=`Hallo,\n\ndas Saleskärtchen für AU ${au} ist unvollständig — bitte Folgendes ergänzen:\n\n`;
+        if(missing.length===0){
+            body+='(Tool erkennt keine Pflichtlücke — bitte Sachverhalt manuell beschreiben.)\n';
+        } else {
+            body+=missing.map(m=>'  ❌  '+m).join('\n')+'\n';
+        }
+        body+=`\nAuftragsdaten bisher:\n  AU:    ${au}\n  Kunde: ${kunde}\n${S.verkaufer?'  Erstellt von: '+S.verkaufer+'\n':''}${S.va?'  Versandart: '+(S.va==='lieferung'?'Spedition':'Abholung')+'\n':''}${S.za?'  Zahlungsart: '+S.za+'\n':''}\nDetails / Rückfragen:\n[bitte ergänzen]\n\nDanke,\nJanna`;
+    } else {
+        body=`Hallo,\n\nbitte um Rücksprache zum Auftrag:\n\n  AU:     ${au}\n  Kunde:  ${kunde}\n  Bucket: ${bName} (Bucket ${bIdx+1} von 7)\n\nSituation: ${e.situ}\n\nDetails:\n[bitte ergänzen]\n\nDanke,\nJanna`;
+    }
     window.open(buildMailto(e.to, subject, body));
-    lg('Eskalation', e.situ+' → '+e.to);
+    lg('Eskalation', e.situ+(escId==='sales'?' ('+_missingPhase1Fields().length+' Lücken)':'')+' → '+e.to);
     render();
 }
 
@@ -4890,14 +4925,34 @@ function rGates(){
 // STAGE 0 — ERFASSUNG
 // ═══════════════════════════════════════════════════════
 function rS0(){
-    return sw('Auftragserfassung','Verkauf',
-        sub0()+
+    let body=sub0()+
         (S.sub>=1?sub1():subL(1,'Zahlungsart'))+
         (S.sub>=2?sub2():subL(2,'Versandart'))+
         (S.sub>=3?sub3():subL(3,'Artikeldetails'))+
         (S.sub>=4?sub4():subL(4,'Besondere Merkmale'))+
-        (S.sub>=5?sub5():subL(5,'Termin & Zusatz'))
-    )}
+        (S.sub>=5?sub5():subL(5,'Termin & Zusatz'));
+    // Phase-1-Komplett-Marker am Ende
+    const ok=_phase1Complete();
+    if(ok && S.sub>=6){
+        body+=`<div class="al ao" style="margin-top:18px"><div class="i">✓</div><div>
+            <strong>Phase 1 abgeschlossen — Saleskärtchen vollständig erfasst.</strong><br>
+            <span style="font-size:12px;line-height:1.5">Klicke „Weiter → Rechnungsstellung" unten. Output-Erinnerung: <strong>Planner-Karte aktualisieren</strong> (Sidebar → 📋 Planner-Karte) und <strong>Pipeline-Zeile übernehmen</strong> (Sidebar → 📋 Zeile kopieren).</span>
+        </div></div>`;
+    } else if(ok && S.sub<6){
+        body+=`<div class="al ai" style="margin-top:18px"><div class="i">📋</div><div>
+            <strong>Pflichten erfüllt — Sub-Stages noch nicht alle bestätigt.</strong><br>
+            <span style="font-size:12px">Klicke „Bestätigen" in den Sub-Stages durch, dann „Weiter → Rechnungsstellung".</span>
+        </div></div>`;
+    } else if(!ok && S.au){
+        const missing=_missingPhase1Fields();
+        body+=`<div class="al aw" style="margin-top:18px"><div class="i">⚠</div><div>
+            <strong>${missing.length} Pflicht(en) offen für Phase 1.</strong><br>
+            <span style="font-size:12px;line-height:1.5">${missing.slice(0,3).map(m=>'• '+esc(m)).join(' · ')}${missing.length>3?` · und ${missing.length-3} weitere`:''}</span><br>
+            <button onclick="escalate('sales')" class="btn btn-o" style="font-size:11px;padding:5px 10px;margin-top:6px">📧 Eskalation an Verkauf — alle Lücken auflisten</button>
+        </div></div>`;
+    }
+    return sw('Auftragserfassung','Verkauf', body);
+}
 
 function subL(i,l){return `<div class="block locked"><div class="bh"><div class="n np">${i+1}</div><div class="t">${l}</div></div></div>`}
 function subD(i,l,s,b){
@@ -4920,7 +4975,13 @@ const _VERKAUFER_DEFAULTS=['Nikoloz Artiukhov','Nikos Celaj'];
 function sub0(){
     const l='Auftrag & Kunde',s=S.au+' · '+S.kunde+(S.verkaufer?' · '+S.verkaufer:'');
     const startedDisplay=S.startedAt?new Date(S.startedAt).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-    const b=`<div class="rw r2">
+    // Phase-1-Welcome-Banner wenn Auftrag noch leer
+    const isEmpty=!S.au && !S.kunde;
+    const welcome=isEmpty?`<div class="al ai" style="margin-bottom:14px"><div class="i">👋</div><div>
+        <strong>Phase 1 — Saleskärtchen-Eingang.</strong><br>
+        <span style="font-size:12px;line-height:1.5">Verkauf hat dir eine Karte zugewiesen → Du hast Email-Ping bekommen → fängst hier an. Erfasse: <strong>AU</strong>, <strong>Kunde</strong>, <strong>Verkäufer</strong> (aus „Erstellt von"), <strong>Kontaktdaten</strong>. Sobald die AU eingetragen ist, wird der Auftrag aktiviert und im Audit-Log dokumentiert.</span>
+    </div></div>`:'';
+    const b=welcome+`<div class="rw r2">
         <div class="f"><label>Auftragsnummer(n) *</label><input id="i0" value="${esc(S.au)}" oninput="S.au=this.value;S.isKombi=this.value.includes(',')||this.value.includes('+');sfR()" placeholder="AU2026020513372"><div class="h">Mehrere mit Komma trennen → automatisch KOMBI-AUFTRAG</div></div>
         <div class="f"><label>Kunde / Firma *</label><input id="i0b" value="${esc(S.kunde)}" oninput="S.kunde=this.value;sfR()" placeholder="Ovit Shop V.O.F."></div>
     </div>
