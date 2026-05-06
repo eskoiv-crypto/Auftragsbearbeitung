@@ -2231,7 +2231,7 @@ const STORAGE_VERSION_V2=2;
 
 // Welche Felder sind GLOBAL (geteilt über alle Aufträge) und welche reine UI-State?
 const _GLOBAL_KEYS=new Set(['config','weeklyReport','dailyChecks','notifyFired']);
-const _UI_KEYS=new Set(['sbOpen','sbLeftOpen','pipeImportOpen','pipeImportRows','showKommResult','kommNote']); // werden nicht persistiert
+const _UI_KEYS=new Set(['sbOpen','sbLeftOpen','pipeImportOpen','pipeImportRows','pipeImportSource','showKommResult','kommNote']); // werden nicht persistiert
 
 let _ORDERS={};       // id → order-state
 let _ACTIVE_ID=null;  // aktuell editierter Auftrag
@@ -2399,6 +2399,120 @@ function copyPipelineRow(){
     }
 }
 
+// Planner-Schema (data/planner_schema.json) — Bucket-Name → Tool-Stage + Bucket-ID
+const _PLANNER_BUCKET_MAP={
+    'bereit für Rechnung (VERKAUF)':       { stage:0, bId:'verkauf' },
+    'Offene Rechnungen':                   { stage:1, bId:'rechnung' },
+    'Kommissionierungsplanung (DUSTIN)':   { stage:2, bId:'kommi' },
+    'Versandplanung JANNA':                { stage:3, bId:'versand' },
+    'Abholplan. / Kommunikation (JANNA)':  { stage:3, bId:'abholung' },
+    'Angemeldet (JANNA)':                  { stage:3, bId:'angemeldet' },
+    'Beendet (Versendet/Abgeholt)':        { stage:3, bId:'beendet' },
+};
+
+// Extrahiert AU + RE + Kunde aus Planner-Aufgabenname
+// Schema: 'Outlet Simex D.O.O AU2026010813260 // RE2026010813599'
+//      oder 'Kaldi Prime Kft (AU2026010913264, RE202604279630)'
+function _extractFromTitle(title){
+    const t=String(title||'');
+    const auM=t.match(/AU\d{8,}/);
+    const reM=t.match(/RE\d{8,}/);
+    let kunde=t;
+    if(auM) kunde=kunde.replace(new RegExp(auM[0]+'\\s*//?\\s*',''),'');
+    if(reM) kunde=kunde.replace(reM[0],'');
+    kunde=kunde.replace(/[(),//]+/g,' ').replace(/\s+/g,' ').trim();
+    return { au:auM?auM[0]:'', re:reM?reM[0]:'', kunde };
+}
+
+// Parser für Planner-Zeile (Array, 0-indexed = Spalte A)
+function _parsePlannerRow(arr){
+    const title=String(arr[1]||'').trim();        // B: Aufgabenname
+    const bucketName=String(arr[2]||'').trim();   // C: Bucket-Name
+    const status=String(arr[3]||'').trim();       // D: Status
+    const erstelltVon=String(arr[6]||'').trim();  // G: Erstellt von (= Verkäufer)
+    const erstellungsdatum=_parseExcelDate(arr[7]); // H
+    const labelsRaw=String(arr[16]||'');           // Q: Bezeichnungen (semikolon-getrennt)
+    const beschreibung=String(arr[17]||'').trim(); // R: Beschreibung
+    const t=_extractFromTitle(title);
+    const labels=labelsRaw.split(';').map(s=>s.trim()).filter(Boolean);
+    const bucketInfo=_PLANNER_BUCKET_MAP[bucketName]||null;
+
+    const row={
+        au:t.au, re:t.re, kunde:t.kunde,
+        verkaufer:erstelltVon,
+        startedAt:erstellungsdatum?erstellungsdatum+'T12:00:00.000Z':'',
+        besonderes:beschreibung,
+        stage:0, sub:0,
+        // Default-Flags
+        isKombi:false, isSonder:false, isKlein:false, isLoose:false,
+        isZoll:false, hasUit:false, isStorno:false, isPrivat:false,
+        isWarteZahlung:false, isKontaktiert:false, bezahlt:false,
+        za:'', va:'',
+        ticketOk:false, ammAngemeldet:false,
+    };
+
+    // Bucket → Stage + spezielle Flags
+    if(bucketInfo){
+        row.stage=bucketInfo.stage;
+        if(bucketInfo.bId==='beendet') row.ticketOk=true;
+        if(bucketInfo.bId==='abholung') row.va='abholung';
+        if(bucketInfo.bId==='versand') row.va='lieferung';
+        if(bucketInfo.bId==='angemeldet') row.ammAngemeldet=true;
+    }
+    if(status==='Abgeschlossen') row.ticketOk=true;
+
+    // Labels → Flags / ZA / VA (Mapping aus data/planner_schema.json)
+    labels.forEach(l=>{
+        switch(l){
+            case 'KOMBI-AUFTRAG':    row.isKombi=true; break;
+            case 'SONDERFALL':       row.isSonder=true; break;
+            case 'Kleingeräte':      row.isKlein=true; break;
+            case 'Loose Beladung!':  row.isLoose=true; break;
+            case 'Zoll':             row.isZoll=true; break;
+            case 'UIT-Code':         row.hasUit=true; break;
+            case 'STORNIERT':        row.isStorno=true; break;
+            case 'Privatkunde':      row.isPrivat=true; break;
+            case 'Warte auf Zahlung':row.isWarteZahlung=true; break;
+            case 'Bezahlt':          row.bezahlt=true; break;
+            case 'Kontaktiert':      row.isKontaktiert=true; break;
+            case 'Fixtermin':        row.za='fixtermin'; break;
+            case 'Vorkasse (FLEX)':  row.za='vorkasse'; break;
+            case 'Barzahlung (PRIO)':row.za='barzahler'; break;
+            case 'ZZ (PRIO)':        row.za='zahlungsziel'; break;
+            case 'ABHOLUNG':         row.va='abholung'; break;
+        }
+    });
+    return row;
+}
+
+// Konvertiert eine Import-Zeile (Pipeline oder Planner) zu einem vollständigen _ORDERS-Eintrag
+function _rowToOrder(r){
+    return {
+        au:r.au||'', re:r.re||'',
+        kunde:r.kunde||'', verkaufer:r.verkaufer||'',
+        stage:r.stage||0, sub:0, done:[],
+        ticketOk:!!r.ticketOk,
+        ammAngemeldet:!!r.ammAngemeldet,
+        va:r.va||'', za:r.za||'',
+        artAnz:r.artAnz||'',
+        vDat:r.vDat||'', vAnliefer:r.vAnliefer||'',
+        kDat:r.kDat||'', tpKommiDatum:r.tpKommiDatum||'',
+        jtlZZ:r.jtlZZ||'7', jtlAppointmentStatus:'erfuellbar',
+        pal:r.pal||'',
+        isKombi:!!r.isKombi, isSonder:!!r.isSonder, isKlein:!!r.isKlein,
+        isLoose:!!r.isLoose, isZoll:!!r.isZoll, hasUit:!!r.hasUit,
+        isStorno:!!r.isStorno, isPrivat:!!r.isPrivat, isSonderverein:false,
+        isWarteZahlung:!!r.isWarteZahlung, isKontaktiert:!!r.isKontaktiert,
+        bezahlt:!!r.bezahlt,
+        besonderes:r.besonderes||'',
+        startedAt:r.startedAt||new Date().toISOString(),
+        jtlAbgleich:{ mengen:false, versandart:false, zz:false },
+        endChecklist:{ teams:false, pipeline:false, sharepoint:false },
+        audit:[], komm:[],
+        genTodos:[false,false,false,false,false,false,false,false,false],
+    };
+}
+
 // Parser für eine Pipeline-Zeile aus dem Import (Array, 0-indexed = Spalte A)
 function _parsePipelineRow(arr){
     const va=String(arr[12]||'').toLowerCase();
@@ -2474,14 +2588,13 @@ function bulkSetDriftResolution(val){
 }
 
 function pipeImportFromFile(file){
-    if(typeof XLSX==='undefined'){ alert('SheetJS nicht geladen — Pipeline-Import braucht Internet beim ersten Laden des Tools.'); return; }
+    if(typeof XLSX==='undefined'){ alert('SheetJS nicht geladen — Import braucht Internet beim ersten Laden des Tools.'); return; }
     const reader=new FileReader();
     reader.onload=(e)=>{
         try{
             let wb;
             const ext=(file.name||'').toLowerCase().split('.').pop();
             if(ext==='csv'){
-                // CSV als Text lesen — SharePoint-Excel-Export ist meist Windows-1252
                 const dec=new TextDecoder('windows-1252');
                 const text=dec.decode(new Uint8Array(e.target.result));
                 wb=XLSX.read(text, {type:'string', codepage:1252, FS:';'});
@@ -2490,25 +2603,52 @@ function pipeImportFromFile(file){
             }
             const sheet=wb.Sheets[wb.SheetNames[0]];
             const json=XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:false});
-            // Datenzeilen finden: erste Zeile, in der Spalte C eine AU-Nummer (regex) steht
+
+            // Schema-Auto-Detection anhand des Header-Rows
+            const header=(json[0]||[]).map(s=>String(s||'').trim());
+            const isPlanner=/^Vorgangsnummer/i.test(header[0]||'');
+            const isPipeline=(header[0]==='ID' && /^Kunde/i.test(header[1]||''));
+            const source=isPlanner?'planner':(isPipeline?'pipeline':'pipeline');
+
             const rows=[];
-            for(let i=0;i<json.length;i++){
-                const r=json[i];
-                if(!r) continue;
-                const c=String(r[2]||'').trim();
-                if(/AU\d{8,}/.test(c)){
-                    const parsed=_parsePipelineRow(r);
+            if(isPlanner){
+                // Planner: Daten ab Zeile 2, AU steckt im Aufgabennamen (B)
+                for(let i=1;i<json.length;i++){
+                    const r=json[i];
+                    if(!r||!r[1]) continue;
+                    const parsed=_parsePlannerRow(r);
+                    if(!parsed.au) continue; // ohne AU im Titel überspringen
                     parsed.drift=_detectDrift(parsed);
+                    parsed._source='planner';
                     rows.push(parsed);
                 }
+            } else {
+                // Pipeline: AU in Spalte C (Auftragsnr.)
+                for(let i=0;i<json.length;i++){
+                    const r=json[i];
+                    if(!r) continue;
+                    const c=String(r[2]||'').trim();
+                    if(/AU\d{8,}/.test(c)){
+                        const parsed=_parsePipelineRow(r);
+                        parsed.drift=_detectDrift(parsed);
+                        parsed._source='pipeline';
+                        rows.push(parsed);
+                    }
+                }
             }
-            if(rows.length===0){ alert('Keine Auftragszeilen gefunden (Suche nach AU-Nummern in Spalte C).'); return; }
+            if(rows.length===0){
+                alert(isPlanner
+                    ?'Keine Aufträge gefunden — Aufgabennamen müssen eine AU-Nummer (z. B. AU2026010813260) im Titel enthalten.'
+                    :'Keine Auftragszeilen gefunden — Suche nach AU-Nummern in Spalte C.');
+                return;
+            }
             S.pipeImportRows=rows;
             S.pipeImportOpen=true;
-            lg('Pipeline-Import vorbereitet', `${rows.length} Aufträge aus ${file.name}`);
+            S.pipeImportSource=source;
+            lg(source==='planner'?'Planner-Import vorbereitet':'Pipeline-Import vorbereitet', `${rows.length} Aufträge aus ${file.name}`);
             render();
         }catch(err){
-            alert('Pipeline-Import fehlgeschlagen: '+err.message);
+            alert('Import fehlgeschlagen: '+err.message);
             console.error(err);
         }
     };
@@ -2539,25 +2679,11 @@ function applyPipelineImport(){
 
         if(m==='new'){
             const id=uuid();
-            _ORDERS[id]={
-                stage:0, sub:0, done:[],
-                au:r.au, kunde:r.kunde||'',
-                artAnz:r.artAnz||'', va:r.va||'',
-                za:'',
-                kDat:r.kDat||'', tpKommiDatum:r.tpKommiDatum||'',
-                vDat:r.vDat||'', vAnliefer:r.vAnliefer||'',
-                jtlZZ:r.jtlZZ||'7', jtlAppointmentStatus:'erfuellbar',
-                pal:r.pal||'',
-                bezahlt:!!r.bezahlt, ammAngemeldet:!!r.ammAngemeldet,
-                ticketOk:!!r.ticketOk, isZoll:!!r.isZoll,
-                besonderes:r.besonderes||'',
-                audit:[{ ts:tsNow(), st:'erfassung', a:'Aus Pipeline-Import', d:'Zeile '+r.au+' übernommen' }],
-                komm:[], genTodos:[false,false,false,false,false,false,false,false,false],
-                jtlAbgleich:{ mengen:false, versandart:false, zz:false },
-                endChecklist:{ teams:false, pipeline:false, sharepoint:false },
-                // startedAt aus Pipeline (Anmeldedatum) bevorzugen, sonst jetzt
-                startedAt:r.startedAt||new Date().toISOString(),
-            };
+            const order=_rowToOrder(r);
+            const sourceLabel=r._source==='planner'?'Aus Planner-Import':'Aus Pipeline-Import';
+            const detail='Zeile '+r.au+' übernommen'+(r.verkaufer?' · Verkauf: '+r.verkaufer:'')+(r._source==='planner'&&r.za?' · ZA: '+r.za:'');
+            order.audit=[{ ts:tsNow(), st:'erfassung', a:sourceLabel, d:detail }];
+            _ORDERS[id]=order;
             added++;
             return;
         }
@@ -4374,10 +4500,15 @@ function rPipelineModal(){
     rows.forEach(r=>{ (r.drift?.drifts||[]).forEach(d=>{ if(d.resolution==='pipeline') pipelineResolutions++; }); });
     const totalDriftFields=rows.reduce((acc,r)=>acc+(r.drift?.drifts?.length||0), 0);
 
+    const isPlanner=S.pipeImportSource==='planner';
+    const title=isPlanner?'📋 Planner-Import (MS Teams)':'📊 Pipeline-Import (SharePoint-Excel)';
+    const sourceHint=isPlanner
+        ?'Aus dem Planner-Export (18 Spalten A–R). AU + RE werden aus Aufgabennamen geparsed; Bucket-Position, Labels, Verkäufer und Beschreibung werden direkt übernommen.'
+        :'Aus dem Fulfilment-Pipeline-Excel (27 Spalten A–AA). Logistik-Daten: Versand-/Anlieferdatum, Frachtkosten, Bezahlt-Status.';
     return `<div class="pipe-overlay show no-print">
         <div class="pipe-modal">
-            <h2>📊 Pipeline-Import</h2>
-            <p class="sub">${rows.length} Auftragszeilen geladen. <strong>+ Neu</strong> (<span style="color:var(--accent)">${newCount}</span>) wird als neue Aufträge angelegt. <strong>⚠ Drift</strong> (<span style="color:var(--warning)">${driftCount}</span>) zeigt Diskrepanzen — pro Feld entscheidest Du, welche Quelle gewinnt.</p>
+            <h2>${title}</h2>
+            <p class="sub">${rows.length} Auftragszeilen geladen. ${esc(sourceHint)}<br><br><strong>+ Neu</strong> (<span style="color:var(--accent)">${newCount}</span>) wird als neue Aufträge angelegt. <strong>⚠ Drift</strong> (<span style="color:var(--warning)">${driftCount}</span>) zeigt Diskrepanzen — pro Feld entscheidest Du, welche Quelle gewinnt.</p>
             <div class="pipe-stats">
                 <div class="pipe-stat new"><div class="lbl">Neue Aufträge</div><div class="val">${newCount}</div></div>
                 <div class="pipe-stat drift"><div class="lbl">Drifts</div><div class="val">${driftCount}</div></div>
@@ -5223,13 +5354,13 @@ function rSB(){
         </div>
 
         <div class="dv"></div>
-        <p style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">📊 Fulfilment Pipeline (Phase 2)</p>
-        <p style="font-size:11px;color:var(--label-3);margin-bottom:10px;line-height:1.4">Bidi-Sync mit der SharePoint-Excel. Import liest neue Aufträge ein und zeigt Drifts. Zeile-kopieren paste'd den aktiven Auftrag als Excel-Zeile.</p>
+        <p style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">📥 Excel-Import (Planner + Pipeline)</p>
+        <p style="font-size:11px;color:var(--label-3);margin-bottom:10px;line-height:1.4">Tool erkennt automatisch ob Planner-Export (Phase 1, neue Saleskärtchen) oder Pipeline-Excel (Phase 2, Logistik-Status) — beide nutzen den gleichen Drift-Resolution-Workflow. Zeile-Kopieren exportiert aktiven Auftrag als Pipeline-Zeile.</p>
         <div style="display:flex;gap:6px;margin-bottom:8px">
-            <button onclick="triggerPipelineImport()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px" title="Pipeline-CSV oder XLSX hochladen — Tool zeigt Drift-Tabelle und importiert neue Aufträge">📥 Pipeline laden</button>
-            <button onclick="copyPipelineRow()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px" title="Aktiven Auftrag als Tab-getrennte Excel-Zeile (27 Spalten A-AA) in die Zwischenablage kopieren">📋 Zeile kopieren</button>
+            <button onclick="triggerPipelineImport()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px" title="Planner- oder Pipeline-Datei hochladen — Auto-Detection per Header. Existierende Aufträge werden nicht überschrieben.">📥 Datei laden</button>
+            <button onclick="copyPipelineRow()" class="btn btn-o" style="flex:1;font-size:11px;padding:8px 8px" title="Aktiven Auftrag als Tab-getrennte Pipeline-Zeile (27 Spalten A-AA) in die Zwischenablage">📋 Zeile kopieren</button>
         </div>
-        <p style="font-size:10px;color:var(--label-3);margin-bottom:14px;text-align:center;line-height:1.4">Format: CSV (Windows-1252) oder XLSX · 27 Spalten A–AA · existierende Aufträge werden nicht überschrieben</p>
+        <p style="font-size:10px;color:var(--label-3);margin-bottom:14px;text-align:center;line-height:1.4">Planner: 18 Spalten A–R · Pipeline: CSV (Windows-1252) oder XLSX, 27 Spalten A–AA</p>
 
         <div class="dv"></div>
         <p style="font-size:10px;font-weight:600;color:var(--label-2);text-transform:uppercase;margin-bottom:6px">⚙ Adressen / Bridges</p>
