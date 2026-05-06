@@ -1313,7 +1313,7 @@ const ZA={
         re:'Rechnung ERST NACH LKW-Beladung — korrigierte Mengen — Zollpapiere auf Basis finaler Rechnung',
         ko:'Sofort einplanen — höchste Priorität',pay:'zz'},
     vorkasse:{l:'Vorkasse',tag:'t-vk',p:2,icon:'💰',
-        re:'Rechnung SOFORT — 7 Tage Frist, dann Storno + Rücklagern',
+        re:'Rechnung SOFORT — 5 Tage Frist beim Kunden, im JTL: Zahlungsart „Rechnung" + 7 Tage Zahlungsziel. Nach 5 Tagen ohne Zahlung: Storno + Rücklagern.',
         ko:'Puffer — wird von Prio 1 verdrängt, bei freier Kapazität auch VOR Zahlung',pay:'vor'},
     barzahler:{l:'Barzahler',tag:'t-bar',p:2,icon:'💵',
         re:'Rechnung SOFORT — Zahlung bar bei Abholung/Übergabe',
@@ -2435,6 +2435,23 @@ function _ensureStartMeta(){
         S.startedAt=new Date().toISOString();
         lg('Auftrag aktiviert', new Date(S.startedAt).toLocaleString('de-DE')+(S.verkaufer?' · Verkauf: '+S.verkaufer:''));
     }
+}
+
+// Manuelle Korrektur des Aktivierungs-Datums via DE-Format-Eingabe
+function setStartedAtFromText(text){
+    const t=(text||'').trim();
+    if(!t){ S.startedAt=''; return true; }
+    // DE-Format: TT.MM.JJJJ optional gefolgt von ', HH:MM'
+    const m=t.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})(?:[,\s]+(\d{1,2}):(\d{2}))?$/);
+    if(!m) return false; // Janna tippt vielleicht noch — kein Reset
+    let year=m[3]; if(year.length===2) year=parseInt(year,10)>50?'19'+year:'20'+year;
+    const month=m[2].padStart(2,'0');
+    const day=m[1].padStart(2,'0');
+    const hour=(m[4]||'12').padStart(2,'0');
+    const minute=(m[5]||'00').padStart(2,'0');
+    if(parseInt(month)>12||parseInt(day)>31) return false;
+    S.startedAt=`${year}-${month}-${day}T${hour}:${minute}:00.000Z`;
+    return true;
 }
 
 function save(){
@@ -4198,7 +4215,8 @@ function rKundenBridge(){
     </div>`;
 }
 
-// Wenn-Dann — Live-Pflicht-Karte über den Nav-Buttons
+// Wenn-Dann — Live-Pflicht-Karte über den Nav-Buttons.
+// Auf Stage 1 nur kompakter Summary-Header (Step-Cards visualisieren jeden Status bereits)
 function rGates(){
     const g=getGates();
     if(g.total===0) return '';
@@ -4208,12 +4226,14 @@ function rGates(){
     const titleText=g.allOk
         ? `Alle ${g.total} Pflichten erfüllt — Bucket-Wechsel freigegeben`
         : `${g.doneCount} / ${g.total} Pflichten erfüllt · ${g.openCount} offen`;
+    // Stage 1 hat Step-Cards mit eigenem Status — kein Liste-Duplikat hier
+    const compact=(S.stage===1);
     return `<div class="gates-card no-print ${cls}">
         <div class="gates-head">
             <span class="gates-title">${icon} ${titleText}</span>
-            <span class="gates-meta">${isLast?'vor Abschluss & Ticket':'vor Bucket-Wechsel'}</span>
+            <span class="gates-meta">${isLast?'vor Abschluss & Ticket':compact?'siehe Step-Karten oben':'vor Bucket-Wechsel'}</span>
         </div>
-        <div class="gates-list">
+        ${compact?'':`<div class="gates-list">
             ${g.gates.map(gate=>`<div class="gate-row ${gate.ok?'ok':'open'}">
                 <span class="mark">${gate.ok?'✓':'○'}</span>
                 <div>
@@ -4221,7 +4241,7 @@ function rGates(){
                     ${gate.hint && !gate.ok?`<div class="gate-hint">${esc(gate.hint)}</div>`:''}
                 </div>
             </div>`).join('')}
-        </div>
+        </div>`}
     </div>`;
 }
 
@@ -4247,8 +4267,12 @@ function subD(i,l,s,b){
             ${!o?`<div class="s">${s}</div>`:''}
         </div>${o?`<div class="bb">${b}<div style="margin-top:12px;text-align:right"><button onclick="confirmSub(${i})" class="btn btn-p" ${subOk(i)?'':'disabled'}>Bestätigen</button></div></div>`:''}</div>`}
 function subA(i,l,b){
+    const canBack=S.sub>0;
     return `<div class="block active"><div class="bh"><div class="n na">${i+1}</div><div class="t">${l}</div></div>
-        <div class="bb">${b}<div style="margin-top:14px;text-align:right"><button onclick="confirmSub(${i})" class="btn btn-p" ${subOk(i)?'':'disabled'}>Bestätigen</button></div></div></div>`}
+        <div class="bb">${b}<div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+            ${canBack?`<button onclick="S.sub--;lg('Sub-Stage zurück','von '+(${i}+1)+' nach '+${i});render()" class="btn btn-o" style="font-size:11px">← Zurück</button>`:'<div></div>'}
+            <button onclick="confirmSub(${i})" class="btn btn-p" ${subOk(i)?'':'disabled'}>Bestätigen →</button>
+        </div></div></div>`}
 
 // 0: AU + Kunde + Verkäufer + Kontakt-Daten (Phase 3 Bridges)
 const _VERKAUFER_DEFAULTS=['Nikoloz Artiukhov','Nikos Celaj'];
@@ -4267,8 +4291,8 @@ function sub0(){
             <div class="h">Rückverfolgbarkeit: wer den Auftrag eröffnet hat</div>
         </div>
         <div class="f"><label>Auftrag aktiviert am</label>
-            <input value="${esc(startedDisplay||'wird automatisch gesetzt')}" readonly style="${startedDisplay?'':'color:var(--label-3);font-style:italic'}">
-            <div class="h">Wird gesetzt sobald AU eingetragen ist</div>
+            <input value="${esc(startedDisplay)}" oninput="setStartedAtFromText(this.value);sfR()" onblur="if(this.value && !setStartedAtFromText(this.value)){alert('Datum nicht erkannt. Format: TT.MM.JJJJ oder TT.MM.JJJJ, HH:MM');this.value='${esc(startedDisplay)}';}else{render();}" placeholder="04.05.2026, 23:08" class="mono">
+            <div class="h">Wird automatisch gesetzt sobald AU eingetragen — hier manuell überschreibbar (TT.MM.JJJJ oder TT.MM.JJJJ, HH:MM)</div>
         </div>
     </div>
     <p style="font-size:11px;color:var(--label-3);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Kontakt-Daten — aktiviert die Bridges oben (Phase 3)</p>
@@ -4554,10 +4578,10 @@ function rS1(){
             body:`<div style="background:var(--bg-primary);border:1px solid var(--separator);border-radius:var(--r-input);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
                 <div><div style="font-size:10px;color:var(--label-3);text-transform:uppercase;letter-spacing:.06em;font-weight:600">aus Auftragserfassung</div><div style="font-size:15px;font-weight:700;color:var(--label);margin-top:2px">${esc(fk)}</div></div>
             </div>
-            <div class="ck ${S.frachtOk?'on':''}" onclick="S.frachtOk=!S.frachtOk;if(S.frachtOk)lg('Frachtkosten',S.frachtkosten+' im AU ergänzt');render()" style="margin-bottom:0">
-                <input type="checkbox" ${S.frachtOk?'checked':''} onclick="event.stopPropagation()">
+            <label class="ck ${S.frachtOk?'on':''}" style="margin-bottom:0">
+                <input type="checkbox" ${S.frachtOk?'checked':''} onchange="S.frachtOk=this.checked;if(S.frachtOk)lg('Frachtkosten',S.frachtkosten+' im AU ergänzt');render()">
                 <span>Frachtkosten im JTL-Auftrag eingetragen</span>
-            </div>`,
+            </label>`,
         });
     } else if(isAbh()){
         steps.push({
@@ -4582,18 +4606,18 @@ function rS1(){
         title:'JTL-Abgleich',
         subtitle:'Phase 4.2 — Saleskärtchen ↔ JTL Position für Position prüfen. Bei Diskrepanz vor Rechnungsstellung klären, niemals „eine Variante" raten.',
         ok:abgleichOk,
-        body:`<div class="ck ${S.jtlAbgleich?.mengen?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.mengen=!S.jtlAbgleich.mengen;if(S.jtlAbgleich.mengen)lg('JTL-Abgleich','Mengen');render()">
-            <input type="checkbox" ${S.jtlAbgleich?.mengen?'checked':''} onclick="event.stopPropagation()">
+        body:`<label class="ck ${S.jtlAbgleich?.mengen?'on':''}">
+            <input type="checkbox" ${S.jtlAbgleich?.mengen?'checked':''} onchange="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.mengen=this.checked;if(this.checked)lg('JTL-Abgleich','Mengen');render()">
             <span>Mengen / Stückzahl stimmt mit Saleskärtchen überein</span>
-        </div>
-        <div class="ck ${S.jtlAbgleich?.versandart?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.versandart=!S.jtlAbgleich.versandart;if(S.jtlAbgleich.versandart)lg('JTL-Abgleich','Versandart');render()">
-            <input type="checkbox" ${S.jtlAbgleich?.versandart?'checked':''} onclick="event.stopPropagation()">
+        </label>
+        <label class="ck ${S.jtlAbgleich?.versandart?'on':''}">
+            <input type="checkbox" ${S.jtlAbgleich?.versandart?'checked':''} onchange="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.versandart=this.checked;if(this.checked)lg('JTL-Abgleich','Versandart');render()">
             <span>Versandart (Abholung / Spedition) stimmt überein</span>
-        </div>
-        <div class="ck ${S.jtlAbgleich?.zz?'on':''}" onclick="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.zz=!S.jtlAbgleich.zz;if(S.jtlAbgleich.zz)lg('JTL-Abgleich','Zahlungsziel');render()" style="margin-bottom:0">
-            <input type="checkbox" ${S.jtlAbgleich?.zz?'checked':''} onclick="event.stopPropagation()">
+        </label>
+        <label class="ck ${S.jtlAbgleich?.zz?'on':''}" style="margin-bottom:0">
+            <input type="checkbox" ${S.jtlAbgleich?.zz?'checked':''} onchange="if(!S.jtlAbgleich)S.jtlAbgleich={mengen:false,versandart:false,zz:false};S.jtlAbgleich.zz=this.checked;if(this.checked)lg('JTL-Abgleich','Zahlungsziel');render()">
             <span>Zahlungsziel (Vorkasse / ZZ X Tage / Barzahler) stimmt überein</span>
-        </div>`,
+        </label>`,
     });
 
     if(isZoll()){
@@ -4634,10 +4658,10 @@ function rS1(){
                         </code><br>
                         <span style="font-size:11px;color:var(--label-3);margin-top:8px;display:block">→ Diesen Wert (<strong>${effZz}</strong>) im JTL als Zahlungsziel eintragen.</span></div>
                     </div>
-                    <div class="ck ${S.zzOk?'on':''}" onclick="S.zzOk=!S.zzOk;if(S.zzOk)lg('Vorfakturierung','ZZ '+${stdZz}+'+'+${tageDiff}+'='+${effZz}+' Tage in JTL gesetzt');render()" style="margin-bottom:0">
-                        <input type="checkbox" ${S.zzOk?'checked':''} onclick="event.stopPropagation()">
+                    <label class="ck ${S.zzOk?'on':''}" style="margin-bottom:0">
+                        <input type="checkbox" ${S.zzOk?'checked':''} onchange="S.zzOk=this.checked;if(this.checked)lg('Vorfakturierung','ZZ '+${stdZz}+'+'+${tageDiff}+'='+${effZz}+' Tage in JTL gesetzt');render()">
                         <span>Zahlungsziel im JTL auf <strong>${effZz} Tage</strong> gesetzt</span>
-                    </div>`;
+                    </label>`;
                 } else {
                     zeitBody+=`<div class="al ad" style="margin-bottom:0"><div class="i">⚠</div><div>
                         <strong>Kommi-Datum fehlt — Vorfakturierung blockiert.</strong><br>
@@ -4667,10 +4691,10 @@ function rS1(){
             title:'Rechnung erstellen + Nummer übernehmen',
             subtitle:'Phase 4.4 — Im JTL „Speichern und Rechnung erstellen", danach RE-Nummer hier eintragen',
             ok:recOk,
-            body:`<div class="ck ${S.reOk?'on':''}" onclick="S.reOk=!S.reOk;if(S.reOk)lg('Rechnung','Erstellt und versendet');render()">
-                <input type="checkbox" ${S.reOk?'checked':''} onclick="event.stopPropagation()">
+            body:`<label class="ck ${S.reOk?'on':''}">
+                <input type="checkbox" ${S.reOk?'checked':''} onchange="S.reOk=this.checked;if(S.reOk)lg('Rechnung','Erstellt und versendet');render()">
                 <span>Rechnung erstellt und an Kunden versendet</span>
-            </div>
+            </label>
             ${S.reOk?`<div class="f" style="margin-top:12px;margin-bottom:0"><label>Rechnungsnummer</label>
                 <input value="${esc(S.re)}" oninput="S.re=this.value" placeholder="RE202602069487" class="mono">
                 <div class="h">Wird im Audit + Wochenreport dokumentiert</div>
@@ -4850,28 +4874,28 @@ function rS3(){
     }
 
     // Wenn-Dann — Bezahlt-Status (Phase 5/6 Pflicht)
-    b+=`<div class="ck ${S.bezahlt?'on':''}" style="margin-top:10px" onclick="S.bezahlt=!S.bezahlt;if(S.bezahlt)lg('Bezahlt-Status','bestätigt');render()">
-        <input type="checkbox" ${S.bezahlt?'checked':''} onclick="event.stopPropagation()">
+    b+=`<label class="ck ${S.bezahlt?'on':''}" style="margin-top:10px">
+        <input type="checkbox" ${S.bezahlt?'checked':''} onchange="S.bezahlt=this.checked;if(this.checked)lg('Bezahlt-Status','bestätigt');render()">
         <span>Bezahlt-Status bestätigt</span>
-    </div>`;
+    </label>`;
 
     // Wenn-Dann — End-of-Order-Checklist (Kapitel 6 + 6.6)
     b+=`<div class="dv"></div>
         <div style="background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-card);padding:14px 18px;box-shadow:var(--shadow-1);margin-bottom:14px">
             <p style="font-size:13px;font-weight:600;color:var(--label);margin-bottom:4px">Vor Abschluss prüfen (Phase 6)</p>
             <p style="font-size:11px;color:var(--label-3);margin-bottom:12px;line-height:1.4">Pflicht-Häkchen vor Ticket-Erstellung. „Aufträge von A bis Z begleiten — keine Übergabe ohne sauberen Wissensstand."</p>
-            <div class="ck ${S.endChecklist?.teams?'on':''}" onclick="if(!S.endChecklist)S.endChecklist={teams:false,pipeline:false,sharepoint:false};S.endChecklist.teams=!S.endChecklist.teams;if(S.endChecklist.teams)lg('End-Check','Teamskärtchen geschlossen');render()">
-                <input type="checkbox" ${S.endChecklist?.teams?'checked':''} onclick="event.stopPropagation()">
+            <label class="ck ${S.endChecklist?.teams?'on':''}">
+                <input type="checkbox" ${S.endChecklist?.teams?'checked':''} onchange="if(!S.endChecklist)S.endChecklist={teams:false,pipeline:false,sharepoint:false};S.endChecklist.teams=this.checked;if(this.checked)lg('End-Check','Teamskärtchen geschlossen');render()">
                 <span>Teamskärtchen im Planner geschlossen / auf „Beendet"</span>
-            </div>
-            <div class="ck ${S.endChecklist?.pipeline?'on':''}" onclick="if(!S.endChecklist)S.endChecklist={teams:false,pipeline:false,sharepoint:false};S.endChecklist.pipeline=!S.endChecklist.pipeline;if(S.endChecklist.pipeline)lg('End-Check','Pipeline auf erledigt');render()">
-                <input type="checkbox" ${S.endChecklist?.pipeline?'checked':''} onclick="event.stopPropagation()">
+            </label>
+            <label class="ck ${S.endChecklist?.pipeline?'on':''}">
+                <input type="checkbox" ${S.endChecklist?.pipeline?'checked':''} onchange="if(!S.endChecklist)S.endChecklist={teams:false,pipeline:false,sharepoint:false};S.endChecklist.pipeline=this.checked;if(this.checked)lg('End-Check','Pipeline auf erledigt');render()">
                 <span>Pipeline-Excel auf „erledigt" (Spalten N + Q)</span>
-            </div>
-            <div class="ck ${S.endChecklist?.sharepoint?'on':''}" onclick="if(!S.endChecklist)S.endChecklist={teams:false,pipeline:false,sharepoint:false};S.endChecklist.sharepoint=!S.endChecklist.sharepoint;if(S.endChecklist.sharepoint)lg('End-Check','SharePoint-Ablage komplett');render()" style="margin-bottom:0">
-                <input type="checkbox" ${S.endChecklist?.sharepoint?'checked':''} onclick="event.stopPropagation()">
+            </label>
+            <label class="ck ${S.endChecklist?.sharepoint?'on':''}" style="margin-bottom:0">
+                <input type="checkbox" ${S.endChecklist?.sharepoint?'checked':''} onchange="if(!S.endChecklist)S.endChecklist={teams:false,pipeline:false,sharepoint:false};S.endChecklist.sharepoint=this.checked;if(this.checked)lg('End-Check','SharePoint-Ablage komplett');render()">
                 <span>SharePoint-Ablage komplett (Rechnung, Lieferschein, Mailverkehr)</span>
-            </div>
+            </label>
         </div>`;
 
     return sw('AMM Anmeldung','Dustin',b)}
