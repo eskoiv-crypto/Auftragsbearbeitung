@@ -115,7 +115,7 @@ footer{text-align:center;font-size:11px;color:var(--label-3);margin-top:28px}
 <header class="topbar"><div class="topbar-in">
     <div class="brand-mark">D</div>
     <h1>Durchlaufzeit-Ranking</h1>
-    <span class="sub">elvinci.de · v3 · Stand 19.08.2026 · echte Exit-Daten</span>
+    <span class="sub">elvinci.de · v4 · Stand 19.08.2026 · 14 Monate Historie</span>
 </div></header>
 
 <div class="wrap">
@@ -129,19 +129,19 @@ footer{text-align:center;font-size:11px;color:var(--label-3);margin-top:28px}
             <div class="phase-arrow">→</div>
             <div class="phase"><span class="p1">Phase 2 · Lager</span><span class="p2">Median 7 T</span><span class="p3">Kommissionierung + Warten auf Abholung/Versand</span></div>
             <div class="phase-arrow">=</div>
-            <div class="phase total"><span class="p1">📦 GESAMT</span><span class="p2">Median 11 T</span><span class="p3">Auftrag → Ware verlässt Lager</span></div>
+            <div class="phase total"><span class="p1">📦 GESAMT</span><span class="p2">Median 5 T</span><span class="p3">Auftrag → Ware verlässt Lager (14 Monate)</span></div>
         </div>
     </div>
 
     <div class="kpis">
-        <div class="kpi hero"><div class="l">Median gesamt</div><div class="v">11 <span class="unit">Tage</span></div><div class="h">Auftrag → Lager verlassen · echte Daten</div></div>
-        <div class="kpi"><div class="l">Ø gesamt</div><div class="v">12,1 <span class="unit">Tage</span></div><div class="h">N=247 · Dez 25 – Aug 26</div></div>
-        <div class="kpi"><div class="l">Abholung</div><div class="v">12 <span class="unit">Med</span></div><div class="h">N=160 · Abholer warten länger</div></div>
-        <div class="kpi"><div class="l">Spedition</div><div class="v">8 <span class="unit">Med</span></div><div class="h">N=82 · AMM liefert planbar</div></div>
+        <div class="kpi hero"><div class="l">Median gesamt</div><div class="v">5 <span class="unit">Tage</span></div><div class="h">1.122 Aufträge · Jun 25 – Aug 26</div></div>
+        <div class="kpi"><div class="l">Ø gesamt</div><div class="v">7,6 <span class="unit">Tage</span></div><div class="h">Auftrag → Ware verlässt Lager</div></div>
+        <div class="kpi"><div class="l">2025 (Jun–Dez)</div><div class="v">4 <span class="unit">Med</span></div><div class="h">N=875 · AMM-WA-Buchungen</div></div>
+        <div class="kpi"><div class="l">2026 (Jan–Aug)</div><div class="v">11 <span class="unit">Med</span></div><div class="h">N=247 · deutlich langsamer geworden!</div></div>
     </div>
 
     <div class="section-head">
-        <h2>Kunden-Ranking <span style="font-size:12px;font-weight:500;color:var(--label-3)">nach Median gesamt · N ≥ 2 · 57 Kunden</span></h2>
+        <h2>Kunden-Ranking <span style="font-size:12px;font-weight:500;color:var(--label-3)">nach Median gesamt · N ≥ 3 · 83 Kunden · Schreibweisen zusammengeführt</span></h2>
         <div class="controls">
             <input class="search" id="q" placeholder="Kunde suchen…" oninput="renderList()">
             <div class="seg">
@@ -159,80 +159,106 @@ footer{text-align:center;font-size:11px;color:var(--label-3);margin-top:28px}
     </div>
 
     <div class="note">
-        <h3>Methodik &amp; Lesart — v3 (echte Exit-Daten)</h3>
+        <h3>Methodik &amp; Lesart — v4 (14 Monate, zwei Quellen)</h3>
         <ul>
-            <li><strong>Quelle: NH5_Pipeline_MAX-STATUS.xlsx</strong> (WA-Pipeline + WA-Archiv, 431 Aufträge Dez 25 – Aug 26). Endpunkt = Spalte „Auftrag abgeschlossen (Ware hat das Lager verlassen)" — von AMM dokumentiertes <strong>echtes Datum</strong>, keine Schätzung mehr.</li>
-            <li><strong>Startpunkt = Auftragsdatum aus der AU-Nummer</strong> (AU2026<em>0622</em>… = 22.06.2026); bei Odoo-S-Nummern das Anmeldedatum als Fallback.</li>
-            <li><strong>247 Aufträge auswertbar</strong> (Start + Exit vorhanden, 0–180 Tage) · 57 Kunden mit N ≥ 2 im Ranking (202 Aufträge).</li>
-            <li><strong>Balken = Phasen-Zerlegung:</strong> Lila = Vorlauf (Auftrag → AMM-Anmeldung, Median 1 T) · Blau = Lager (Anmeldung → Ware verlässt Lager, Median 7 T). Viel Blau = Ware liegt fertig und wartet — typisch Abholer.</li>
-            <li><strong>Abholung (Median 12 T) vs. Spedition (Median 8 T):</strong> Abholer sind strukturell 4 Tage langsamer — eigene LKW-Touren + Zahlungswartezeit.</li>
-            <li><strong>Ranking nach Median</strong> — robust gegen einzelne Ausreißer. ⚠-Flag = Ø mehr als doppelt so hoch wie Median (einzelner Langläufer verzerrt).</li>
-            <li>Interner Auftrag „Elvinci.de GmbH" ausgeschlossen. Kundennamen case-insensitiv zusammengeführt. Tempo-Terzile: grün/gelb/rot.</li>
+            <li><strong>Quelle A — AMM-Warenausgangs-Buchungen (Jun–Dez 2025, N=875):</strong> 223 tägliche WA-Dateien; Exit = letzte WA-Buchung des Auftrags. Aufträge mit Exit nach 31.12.2025 hier ausgeschlossen (Trunkierungs-Schutz), ab Januar übernimmt Quelle B.</li>
+            <li><strong>Quelle B — NH5-Pipeline (Jan–Aug 2026, N=247):</strong> Spalte „Auftrag abgeschlossen (Ware hat das Lager verlassen)" — deckt sich im Archiv exakt mit dem Versand-/Abholdatum.</li>
+            <li><strong>Startpunkt immer = Auftragsdatum aus der AU-Nummer</strong> (AU2026<em>0622</em>… = 22.06.2026).</li>
+            <li><strong>Kunden-Schreibweisen zusammengeführt:</strong> 21 Dubletten-Gruppen (z. B. Hermans Trading/BV, Hanseatic georgia/Georgia, IG International-Varianten, Ovitshop/OVIT Shop, Sinzig-Typo) — Legal-Suffixe (GmbH, BV, Ltd, Kft, D.O.O., UAB, …) normalisiert.</li>
+            <li><strong>⚠ Ära-Befund:</strong> 2025 Median 4 Tage → 2026 Median 11 Tage. Die Durchlaufzeit hat sich fast verdreifacht — Systemumstellung (JTL→Odoo), mehr Vorkasse-Wartezeiten und Abhol-Verzug als mögliche Treiber. Kunden mit Schwerpunkt 2026 wirken dadurch langsamer.</li>
+            <li><strong>Ranking nach Median, N ≥ 3</strong> — robust gegen Ausreißer. ⚠-Flag = Ø mehr als doppelt so hoch wie Median. Phasen-Split (Vorlauf/Lager) nur für 2026-Aufträge verfügbar.</li>
+            <li>Interne Aufträge (Elvinci.de GmbH) ausgeschlossen. Storno nicht immer unterscheidbar — Langläufer einzeln prüfen.</li>
         </ul>
     </div>
 
-    <footer>Quelle: NH5_Pipeline_MAX-STATUS.xlsx (WA-Pipeline + Archiv) · AU-Nummern-Datumscodierung · Rohdaten: analyse_durchlaufzeit_v3_master.csv</footer>
+    <footer>Quellen: AMM-WA-Buchungen 2025 + NH5_Pipeline_MAX-STATUS 2026 · AU-Nummern-Datumscodierung · Rohdaten: analyse_durchlaufzeit_v4_master.csv</footer>
 </div>
 
 <script>
 const DATA=[
-{"k": "RU Recycling und Umweltdienst GmbH", "n": 3, "avg": 3.7, "med": 2.0, "max": 7, "vor": 1.0, "lag": 3.5, "va": "Spedition"},
-{"k": "NAS ELECTROMENAGER", "n": 2, "avg": 3.5, "med": 3.5, "max": 4, "vor": 0.0, "lag": 3.0, "va": "Abholung"},
-{"k": "Nagy Szabolcs Bela", "n": 2, "avg": 4.0, "med": 4.0, "max": 8, "vor": 3.0, "lag": 5.0, "va": "Abholung"},
-{"k": "Outlet Loket", "n": 2, "avg": 4.0, "med": 4.0, "max": 5, "vor": 0.0, "lag": 5.0, "va": "Spedition"},
-{"k": "Ados Witgoed", "n": 2, "avg": 4.5, "med": 4.5, "max": 6, "vor": 0.0, "lag": 6.5, "va": "Spedition"},
-{"k": "Online Shopping Trade", "n": 2, "avg": 4.5, "med": 4.5, "max": 7, "vor": 0.5, "lag": 4.0, "va": "Spedition"},
-{"k": "GGY Trade s.r.o.", "n": 4, "avg": 11.2, "med": 5.0, "max": 35, "vor": 0.5, "lag": 2.5, "va": "Abholung"},
-{"k": "Soutis Electrics", "n": 4, "avg": 5.0, "med": 5.5, "max": 8, "vor": 0.0, "lag": 5.0, "va": "Abholung"},
-{"k": "Online Shopping Trade S.R.O. Számlázási", "n": 8, "avg": 5.8, "med": 6.5, "max": 8, "vor": 0.8, "lag": 5.2, "va": "Spedition"},
-{"k": "Enno Kundendienst", "n": 3, "avg": 10.7, "med": 7.0, "max": 19, "vor": 4.0, "lag": 6.7, "va": "Spedition"},
-{"k": "Buy24", "n": 3, "avg": 8.3, "med": 7.0, "max": 14, "vor": 2.0, "lag": 8.5, "va": "Spedition"},
+{"k": "SIA Baltic Marketplace", "n": 3, "avg": 0.7, "med": 1.0, "max": 1, "vor": null, "lag": null, "va": ""},
+{"k": "PowerSoft Vertriebs GmbH", "n": 19, "avg": 3.3, "med": 1.0, "max": 21, "vor": null, "lag": null, "va": ""},
+{"k": "Vieru", "n": 10, "avg": 1.8, "med": 1.0, "max": 6, "vor": null, "lag": null, "va": ""},
+{"k": "GLOBAL LIQUIDACIONES SL", "n": 9, "avg": 3.7, "med": 2.0, "max": 9, "vor": 0.0, "lag": 8.0, "va": "Spedition"},
+{"k": "Lubomir Karwot Outlet AGD", "n": 5, "avg": 3.2, "med": 2.0, "max": 8, "vor": null, "lag": null, "va": ""},
+{"k": "UAB Portana", "n": 17, "avg": 6.2, "med": 2.0, "max": 33, "vor": 1.0, "lag": 7.0, "va": "Abholung"},
+{"k": "Nagy Szabolcs Bela", "n": 8, "avg": 6.4, "med": 2.0, "max": 29, "vor": 3.0, "lag": 5.0, "va": "Abholung"},
+{"k": "Cads Engineering GmbH", "n": 13, "avg": 2.2, "med": 2.0, "max": 8, "vor": 1.0, "lag": 2.0, "va": "Spedition"},
+{"k": "Sefik", "n": 9, "avg": 3.9, "med": 2.0, "max": 15, "vor": null, "lag": null, "va": ""},
+{"k": "Stock House Nikaias", "n": 11, "avg": 4.3, "med": 2.0, "max": 18, "vor": 11.0, "lag": 7.0, "va": "Abholung"},
+{"k": "SC Interm Grup SRL", "n": 18, "avg": 3.1, "med": 2.0, "max": 11, "vor": null, "lag": null, "va": ""},
+{"k": "Zeyad Hasoo Afdi company", "n": 3, "avg": 3.7, "med": 2.0, "max": 7, "vor": null, "lag": null, "va": ""},
+{"k": "RU Recycling und Umweltdienst GmbH", "n": 18, "avg": 3.7, "med": 2.0, "max": 13, "vor": 1.0, "lag": 3.5, "va": "Spedition"},
+{"k": "TP-Resale", "n": 4, "avg": 2.5, "med": 2.5, "max": 5, "vor": null, "lag": null, "va": ""},
+{"k": "KD Elektromes S.R.L", "n": 13, "avg": 5.3, "med": 3.0, "max": 15, "vor": null, "lag": null, "va": ""},
+{"k": "Jet DP Sp z.o.o", "n": 16, "avg": 6.5, "med": 3.0, "max": 27, "vor": null, "lag": null, "va": ""},
+{"k": "Emporia antalaktikon-Ilektrikon syskeuon", "n": 10, "avg": 6.2, "med": 3.0, "max": 31, "vor": 10.0, "lag": 4.0, "va": "Abholung"},
+{"k": "TECHNO ELECTRONICS 5 Ltd", "n": 22, "avg": 7.2, "med": 3.0, "max": 27, "vor": 5.8, "lag": 8.2, "va": "Abholung"},
+{"k": "NAS ELECTROMENAGER", "n": 26, "avg": 3.9, "med": 3.0, "max": 31, "vor": 0.0, "lag": 3.0, "va": "Abholung"},
+{"k": "Bastounis Anastasios", "n": 17, "avg": 3.4, "med": 3.0, "max": 10, "vor": null, "lag": null, "va": ""},
+{"k": "Green Loop GmbH", "n": 5, "avg": 3.2, "med": 3.0, "max": 6, "vor": 1.0, "lag": 2.0, "va": "Spedition"},
+{"k": "AGILA", "n": 4, "avg": 12.5, "med": 3.5, "max": 42, "vor": null, "lag": null, "va": ""},
+{"k": "SADI", "n": 6, "avg": 4.7, "med": 3.5, "max": 14, "vor": 0.0, "lag": 10.0, "va": "Abholung"},
+{"k": "IG international trading GmbH", "n": 108, "avg": 5.4, "med": 4.0, "max": 21, "vor": 3.4, "lag": 5.9, "va": "Spedition"},
+{"k": "SIOKOS DIM.GEORGIOS", "n": 4, "avg": 4.5, "med": 4.0, "max": 7, "vor": 1.0, "lag": 4.0, "va": "Abholung"},
+{"k": "KAJTEK Patrycja Minkina", "n": 8, "avg": 4.4, "med": 4.0, "max": 7, "vor": 0.0, "lag": 7.0, "va": "Abholung"},
+{"k": "L&L Electronics Kft", "n": 12, "avg": 8.6, "med": 4.0, "max": 59, "vor": null, "lag": null, "va": "Abholung"},
+{"k": "Outlet Loket", "n": 4, "avg": 6.2, "med": 4.5, "max": 13, "vor": 0.0, "lag": 5.0, "va": "Spedition"},
+{"k": "Trade S.R.O. Számlázási", "n": 28, "avg": 4.8, "med": 4.5, "max": 15, "vor": 0.7, "lag": 4.6, "va": "Spedition"},
+{"k": "Gujjar Begum", "n": 20, "avg": 5.9, "med": 4.5, "max": 17, "vor": 6.0, "lag": 10.0, "va": "Spedition"},
+{"k": "Outlet Mebeli Ltd", "n": 17, "avg": 10.5, "med": 5.0, "max": 40, "vor": 1.8, "lag": 18.2, "va": "Abholung"},
+{"k": "KOUTLIANOS NIKOS", "n": 15, "avg": 11.7, "med": 5.0, "max": 32, "vor": 0.0, "lag": 30.0, "va": "Abholung"},
+{"k": "ELECTRO BALKAN DI BOJANIC ZELJKO", "n": 15, "avg": 5.5, "med": 5.0, "max": 11, "vor": 5.0, "lag": 2.0, "va": "Spedition"},
+{"k": "Enno Kundendienst", "n": 12, "avg": 5.2, "med": 5.0, "max": 19, "vor": 4.0, "lag": 6.7, "va": "Spedition"},
+{"k": "Elektro Outlet Bonn", "n": 4, "avg": 4.0, "med": 5.0, "max": 5, "vor": null, "lag": null, "va": ""},
+{"k": "Othman Hasan", "n": 7, "avg": 3.6, "med": 5.0, "max": 6, "vor": 2.0, "lag": 4.0, "va": "Spedition"},
+{"k": "Enterijer D.O.O.", "n": 18, "avg": 8.6, "med": 5.5, "max": 49, "vor": 3.0, "lag": 10.0, "va": "Abholung"},
+{"k": "Ados Witgoed", "n": 8, "avg": 4.8, "med": 5.5, "max": 10, "vor": 0.0, "lag": 6.5, "va": "Spedition"},
+{"k": "FSMM HAUSGERÄTE", "n": 4, "avg": 5.8, "med": 5.5, "max": 10, "vor": 6.0, "lag": 3.0, "va": "Spedition"},
+{"k": "Nikokira Outlet", "n": 11, "avg": 5.5, "med": 6.0, "max": 13, "vor": 2.0, "lag": 7.2, "va": "Abholung"},
+{"k": "Buy24", "n": 9, "avg": 6.1, "med": 6.0, "max": 14, "vor": 1.3, "lag": 8.3, "va": "Spedition"},
+{"k": "Ovitshop", "n": 9, "avg": 5.4, "med": 6.0, "max": 12, "vor": 1.0, "lag": 11.0, "va": "Abholung"},
+{"k": "Oli Outlet Kft.", "n": 4, "avg": 6.5, "med": 6.0, "max": 9, "vor": 2.0, "lag": 7.0, "va": "Spedition"},
+{"k": "Outlet Simex D.O.O", "n": 19, "avg": 8.3, "med": 6.0, "max": 25, "vor": 3.0, "lag": 8.3, "va": "Abholung"},
+{"k": "PUKO Sp z.o.o.", "n": 5, "avg": 6.2, "med": 6.0, "max": 8, "vor": 0.0, "lag": 6.0, "va": "Spedition"},
+{"k": "Karakitsos Stock House IKE", "n": 15, "avg": 9.1, "med": 6.0, "max": 20, "vor": 2.5, "lag": 10.5, "va": "Abholung"},
+{"k": "Nader Hasan", "n": 14, "avg": 9.1, "med": 6.0, "max": 32, "vor": null, "lag": null, "va": ""},
+{"k": "AMY Witgoed", "n": 8, "avg": 7.2, "med": 6.0, "max": 20, "vor": 2.0, "lag": 8.0, "va": "Abholung"},
+{"k": "Hermans Trading BV", "n": 39, "avg": 8.7, "med": 6.0, "max": 26, "vor": 7.5, "lag": 10.8, "va": "Abholung"},
+{"k": "GGY Trade s.r.o.", "n": 5, "avg": 10.6, "med": 6.0, "max": 35, "vor": 0.5, "lag": 2.5, "va": "Abholung"},
+{"k": "Soutis Electrics", "n": 16, "avg": 7.9, "med": 6.0, "max": 35, "vor": 0.0, "lag": 5.0, "va": "Abholung"},
+{"k": "Todo Cash", "n": 7, "avg": 9.6, "med": 6.0, "max": 23, "vor": 1.0, "lag": 18.0, "va": "Spedition"},
+{"k": "Ya-Sec Handel GmbH", "n": 4, "avg": 7.5, "med": 6.5, "max": 12, "vor": null, "lag": null, "va": ""},
+{"k": "Techno Planet LTD", "n": 6, "avg": 6.3, "med": 7.0, "max": 14, "vor": null, "lag": null, "va": "Abholung"},
+{"k": "Marketvibe Srl", "n": 7, "avg": 5.6, "med": 7.0, "max": 12, "vor": 2.5, "lag": 7.0, "va": "Abholung"},
+{"k": "V&A Tehimpex SRL", "n": 8, "avg": 6.1, "med": 7.0, "max": 7, "vor": null, "lag": null, "va": ""},
+{"k": "Electro B.P. SRL", "n": 22, "avg": 13.5, "med": 7.0, "max": 36, "vor": null, "lag": null, "va": ""},
+{"k": "Buy4less GmbH", "n": 12, "avg": 10.3, "med": 7.5, "max": 36, "vor": 2.2, "lag": 7.5, "va": "Abholung"},
 {"k": "Ovit Shop V.O.F.", "n": 4, "avg": 8.0, "med": 7.5, "max": 14, "vor": 2.3, "lag": 5.3, "va": "Abholung"},
-{"k": "GLOBAL LIQUIDACIONES SL", "n": 2, "avg": 8.0, "med": 8.0, "max": 9, "vor": 0.0, "lag": 8.0, "va": "Spedition"},
+{"k": "AC Service", "n": 4, "avg": 8.0, "med": 8.0, "max": 11, "vor": null, "lag": null, "va": ""},
 {"k": "M&J TRADE D.O.O.", "n": 7, "avg": 10.4, "med": 8.0, "max": 22, "vor": 2.0, "lag": 11.2, "va": "Abholung"},
-{"k": "New Returns", "n": 2, "avg": 8.0, "med": 8.0, "max": 12, "vor": 4.0, "lag": 4.0, "va": "Spedition"},
-{"k": "Nikokira Outlet", "n": 5, "avg": 9.2, "med": 8.0, "max": 13, "vor": 2.0, "lag": 7.2, "va": "Abholung"},
-{"k": "IG international trading GmbH", "n": 6, "avg": 9.8, "med": 9.0, "max": 13, "vor": 1.6, "lag": 7.6, "va": "Spedition"},
-{"k": "UAB Portana", "n": 3, "avg": 16.3, "med": 9.0, "max": 33, "vor": 1.0, "lag": 7.0, "va": "Abholung"},
-{"k": "Emporia antalaktikon", "n": 3, "avg": 14.0, "med": 9.0, "max": 31, "vor": 10.0, "lag": 4.0, "va": "Abholung"},
-{"k": "Buy 24", "n": 2, "avg": 9.0, "med": 9.0, "max": 10, "vor": 0.0, "lag": 8.0, "va": "Spedition"},
-{"k": "Marketvibe Srl", "n": 3, "avg": 9.3, "med": 9.0, "max": 12, "vor": 2.5, "lag": 7.0, "va": "Abholung"},
-{"k": "Gujjar Begum", "n": 2, "avg": 9.5, "med": 9.5, "max": 16, "vor": 6.0, "lag": 10.0, "va": "Spedition"},
-{"k": "SUNELECTRO OÜ", "n": 2, "avg": 10.0, "med": 10.0, "max": 13, "vor": 0.0, "lag": 10.0, "va": "Abholung"},
-{"k": "SADI", "n": 2, "avg": 10.0, "med": 10.0, "max": 14, "vor": 0.0, "lag": 10.0, "va": "Abholung"},
-{"k": "IG International", "n": 9, "avg": 9.3, "med": 10.0, "max": 15, "vor": 4.3, "lag": 5.0, "va": "Spedition"},
+{"k": "Elektro Sinizig", "n": 19, "avg": 9.3, "med": 8.0, "max": 22, "vor": 0.0, "lag": 18.0, "va": "Spedition"},
+{"k": "Hanseatic georgia LLC", "n": 52, "avg": 10.2, "med": 8.0, "max": 29, "vor": 1.6, "lag": 12.1, "va": "Abholung"},
+{"k": "MON-LIP ROCK KFT", "n": 5, "avg": 9.4, "med": 9.0, "max": 18, "vor": 0.0, "lag": 18.0, "va": "Abholung"},
+{"k": "Kaldi Prime Kft", "n": 9, "avg": 12.1, "med": 9.0, "max": 23, "vor": 3.0, "lag": 10.8, "va": "Abholung"},
+{"k": "Rati Marti", "n": 22, "avg": 11.3, "med": 9.5, "max": 47, "vor": 0.0, "lag": 13.5, "va": "Abholung"},
+{"k": "Home Discount S.R.L.", "n": 5, "avg": 8.2, "med": 10.0, "max": 16, "vor": 0.5, "lag": 9.5, "va": "Abholung"},
 {"k": "P&C Trading B.V.", "n": 4, "avg": 10.2, "med": 10.0, "max": 14, "vor": 0.0, "lag": 11.2, "va": "Abholung"},
-{"k": "Home Discount S.R.L.", "n": 2, "avg": 10.0, "med": 10.0, "max": 10, "vor": 0.5, "lag": 9.5, "va": "Abholung"},
-{"k": "Outlet Simex D.O.O", "n": 4, "avg": 10.8, "med": 10.5, "max": 14, "vor": 3.0, "lag": 8.3, "va": "Abholung"},
-{"k": "Buy4less GmbH", "n": 4, "avg": 9.8, "med": 11.0, "max": 12, "vor": 2.2, "lag": 7.5, "va": "Abholung"},
-{"k": "Techno Vision Group Ltd.", "n": 3, "avg": 8.3, "med": 11.0, "max": 11, "vor": 0.0, "lag": 11.0, "va": "Abholung"},
-{"k": "Simex D.O.O", "n": 5, "avg": 14.2, "med": 11.0, "max": 29, "vor": 2.0, "lag": 8.5, "va": "Abholung"},
-{"k": "IDEA EOOD", "n": 2, "avg": 11.5, "med": 11.5, "max": 14, "vor": 2.5, "lag": 9.0, "va": "Abholung"},
-{"k": "Elektroshop Enny Dizdarevic Ernesa e.U.", "n": 2, "avg": 11.5, "med": 11.5, "max": 16, "vor": 0.0, "lag": 11.5, "va": "Spedition"},
-{"k": "AMY Witgoed", "n": 4, "avg": 12.5, "med": 11.5, "max": 20, "vor": 2.0, "lag": 8.0, "va": "Abholung"},
+{"k": "Warriors Cascade Lda", "n": 3, "avg": 10.0, "med": 10.0, "max": 11, "vor": 3.0, "lag": 6.0, "va": "Abholung"},
+{"k": "Simex D.O.O", "n": 22, "avg": 11.6, "med": 10.5, "max": 49, "vor": 2.0, "lag": 8.5, "va": "Abholung"},
+{"k": "Techno Vision Group Ltd.", "n": 4, "avg": 10.2, "med": 11.0, "max": 16, "vor": 0.0, "lag": 11.0, "va": "Abholung"},
+{"k": "Elektroshop Enny Dizdarevic Ernesa e.U.", "n": 4, "avg": 14.0, "med": 11.5, "max": 28, "vor": 0.0, "lag": 11.5, "va": "Spedition"},
 {"k": "Sefik Saracevic", "n": 6, "avg": 12.3, "med": 12.0, "max": 19, "vor": 6.4, "lag": 5.8, "va": "Abholung"},
-{"k": "Enterijer D.O.O.", "n": 3, "avg": 12.7, "med": 12.0, "max": 14, "vor": 3.0, "lag": 10.0, "va": "Abholung"},
-{"k": "Karakitsos Stock House IKE", "n": 4, "avg": 12.8, "med": 12.5, "max": 20, "vor": 2.5, "lag": 10.5, "va": "Abholung"},
-{"k": "Deland Ltd EOOD", "n": 3, "avg": 12.7, "med": 13.0, "max": 15, "vor": 1.0, "lag": 14.0, "va": "Abholung"},
-{"k": "KOUTLIANOS", "n": 2, "avg": 13.5, "med": 13.5, "max": 14, "vor": 11.5, "lag": 2.0, "va": "Abholung"},
-{"k": "Rati Marti", "n": 2, "avg": 13.5, "med": 13.5, "max": 20, "vor": 0.0, "lag": 13.5, "va": "Abholung"},
+{"k": "UAB STEVIJA", "n": 26, "avg": 13.5, "med": 12.0, "max": 42, "vor": 1.8, "lag": 9.0, "va": "Abholung"},
+{"k": "EvroStok SRL", "n": 7, "avg": 14.0, "med": 12.0, "max": 30, "vor": null, "lag": null, "va": ""},
+{"k": "Deland Ltd EOOD", "n": 7, "avg": 11.9, "med": 12.0, "max": 15, "vor": 1.0, "lag": 14.0, "va": "Abholung"},
+{"k": "Egzoni Sh.P.K", "n": 9, "avg": 19.4, "med": 12.0, "max": 81, "vor": 5.0, "lag": 7.0, "va": "Abholung"},
+{"k": "Euroda Transport & Handel", "n": 4, "avg": 16.0, "med": 13.0, "max": 35, "vor": 20.0, "lag": 15.0, "va": "Abholung"},
+{"k": "SUNELECTRO OÜ", "n": 5, "avg": 14.6, "med": 13.0, "max": 21, "vor": 0.0, "lag": 10.0, "va": "Abholung"},
+{"k": "Banat Electrocasnice S.R.L.", "n": 9, "avg": 15.4, "med": 14.0, "max": 30, "vor": 3.0, "lag": 11.0, "va": "Abholung"},
 {"k": "UAB Buitikas", "n": 3, "avg": 12.7, "med": 14.0, "max": 15, "vor": null, "lag": null, "va": "Abholung"},
-{"k": "Egzoni Sh.P.K", "n": 3, "avg": 20.3, "med": 14.0, "max": 35, "vor": 5.0, "lag": 7.0, "va": "Abholung"},
-{"k": "Hanseatic Georgia LLC", "n": 11, "avg": 15.9, "med": 15.0, "max": 26, "vor": 1.6, "lag": 12.1, "va": "Abholung"},
-{"k": "TECHNO ELECTRONICS 5 Ltd", "n": 5, "avg": 15.4, "med": 15.0, "max": 22, "vor": 5.8, "lag": 8.2, "va": "Abholung"},
-{"k": "Hermans Trading", "n": 2, "avg": 16.0, "med": 16.0, "max": 18, "vor": 2.5, "lag": 15.5, "va": "Abholung"},
-{"k": "Kaldi Prime Kft", "n": 5, "avg": 15.4, "med": 16.0, "max": 23, "vor": 3.0, "lag": 10.8, "va": "Abholung"},
-{"k": "Outlet Mebeli Ltd", "n": 5, "avg": 18.2, "med": 17.0, "max": 40, "vor": 2.2, "lag": 20.0, "va": "Abholung"},
-{"k": "Alayham Shakantana", "n": 2, "avg": 17.5, "med": 17.5, "max": 20, "vor": 0.5, "lag": 17.0, "va": "Abholung"},
 {"k": "HOSTELCOL SUECA S.L.U", "n": 3, "avg": 17.0, "med": 18.0, "max": 19, "vor": 1.3, "lag": 15.7, "va": "Spedition"},
-{"k": "Todo Cash", "n": 2, "avg": 19.0, "med": 19.0, "max": 23, "vor": 1.0, "lag": 18.0, "va": "Spedition"},
-{"k": "Banat Electrocasnice S.R.L", "n": 4, "avg": 20.8, "med": 19.5, "max": 30, "vor": 3.0, "lag": 11.0, "va": "Abholung"},
-{"k": "UAB Stevija", "n": 9, "avg": 19.9, "med": 20.0, "max": 42, "vor": 1.8, "lag": 9.0, "va": "Abholung"},
-{"k": "Almost New LTD", "n": 2, "avg": 20.5, "med": 20.5, "max": 25, "vor": 0.5, "lag": 20.0, "va": "Abholung"},
-{"k": "Hermans Trading BV", "n": 2, "avg": 21.0, "med": 21.0, "max": 23, "vor": 17.0, "lag": 6.0, "va": "Abholung"},
-{"k": "Elektro Outlet Sinzig GmbH I.G.", "n": 3, "avg": 19.3, "med": 21.0, "max": 22, "vor": 0.0, "lag": 18.0, "va": "Spedition"},
-{"k": "KOUTLIANOS NIKOS", "n": 2, "avg": 25.0, "med": 25.0, "max": 30, "vor": 0.0, "lag": 30.0, "va": "Abholung"},
-{"k": "Euroda Transport & Handel", "n": 2, "avg": 28.0, "med": 28.0, "max": 35, "vor": 20.0, "lag": 15.0, "va": "Abholung"}
+{"k": "Almost New LTD", "n": 5, "avg": 19.2, "med": 23.0, "max": 30, "vor": 0.5, "lag": 20.0, "va": "Abholung"}
 ];
 const sorted=[...DATA].sort((a,b)=>a.med-b.med||a.avg-b.avg);
 const t1=Math.floor(sorted.length/3), t2=Math.floor(2*sorted.length/3);
@@ -259,7 +285,7 @@ function renderList(){
             <div class="rank">${d.rank}</div>
             <div class="kname">
                 <div class="n1">${esc(d.k)}</div>
-                <div class="n2">${d.n} Aufträge · ${d.va||''} · Median ${d.med} T · Max ${d.max} T · Vorlauf Ø ${d.vor===null?'—':d.vor} T + Lager Ø ${d.lag===null?'—':d.lag} T ${outlier?'<span class="flag">· ⚠ Ø durch Ausreißer verzerrt</span>':''}</div>
+                <div class="n2">${d.n} Aufträge · ${d.va||''} · Median ${d.med} T · Max ${d.max} T ${d.vor!==null&&d.lag!==null?`· Vorlauf Ø ${d.vor} T + Lager Ø ${d.lag} T `:''}${outlier?'<span class="flag">· ⚠ Ø durch Ausreißer verzerrt</span>':''}</div>
             </div>
             <div class="barwrap">
                 <div class="bar"><i style="width:${wVor}%;background:var(--info)"></i><i style="width:${wLag}%;background:var(--accent)"></i></div>
