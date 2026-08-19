@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Durchlaufzeit-Ranking · elvinci</title>
+<style>
+:root{
+    --bg-primary:#f5f5f7;--bg-secondary:#ffffff;--bg-tertiary:#fbfbfd;
+    --bg-glass:rgba(255,255,255,0.72);
+    --separator:rgba(60,60,67,0.12);--separator-strong:rgba(60,60,67,0.22);
+    --label:#1d1d1f;--label-2:#6e6e73;--label-3:#86868b;
+    --accent:#0071e3;--success:#00c896;--warning:#ff9500;--error:#ff3b30;--info:#5856d6;
+    --shadow-1:0 1px 2px rgba(0,0,0,.04),0 1px 3px rgba(0,0,0,.06);
+    --shadow-2:0 4px 6px rgba(0,0,0,.05),0 2px 4px rgba(0,0,0,.04);
+    --r-card:14px;--r-pill:999px;--r-input:10px;
+    --ease-out:cubic-bezier(.32,.72,0,1);
+}
+@media(prefers-color-scheme:dark){:root{
+    --bg-primary:#1d1d1f;--bg-secondary:#2c2c2e;--bg-tertiary:#3a3a3c;
+    --bg-glass:rgba(28,28,30,0.72);
+    --separator:rgba(255,255,255,0.10);--separator-strong:rgba(255,255,255,0.18);
+    --label:#f5f5f7;--label-2:#a1a1a6;--label-3:#8e8e93;
+    --accent:#0a84ff;--success:#30d158;--warning:#ff9f0a;--error:#ff453a;--info:#bf5af2;
+    --shadow-1:0 1px 2px rgba(0,0,0,.2),0 1px 3px rgba(0,0,0,.3);
+    --shadow-2:0 4px 6px rgba(0,0,0,.22),0 2px 4px rgba(0,0,0,.18);
+}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","SF Pro Text","Inter",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;background:var(--bg-primary);color:var(--label);
+    font-size:15px;line-height:1.45;letter-spacing:-0.005em;min-height:100vh}
+.mono{font-family:"SF Mono","JetBrains Mono",ui-monospace,monospace;letter-spacing:0}
+
+.topbar{position:sticky;top:0;z-index:50;background:var(--bg-glass);
+    -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:1px solid var(--separator);padding:14px 24px;display:flex;align-items:center;gap:12px}
+.brand-mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--info));
+    color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.topbar h1{font-size:16px;font-weight:600;letter-spacing:-.02em}
+.topbar .sub{font-size:12px;color:var(--label-3);margin-left:auto}
+
+.wrap{max-width:840px;margin:0 auto;padding:40px 24px 100px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-card);
+    padding:18px 20px;box-shadow:var(--shadow-1)}
+.kpi .l{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--label-3)}
+.kpi .v{font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.kpi .v .unit{font-size:14px;font-weight:500;color:var(--label-3)}
+.kpi .h{font-size:11px;color:var(--label-3);margin-top:2px}
+.kpi.hero .v{color:var(--accent)}
+.pipenote{background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-input);
+    padding:10px 16px;font-size:12px;color:var(--label-2);margin-bottom:32px;box-shadow:var(--shadow-1)}
+
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.section-head h2{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.section-head .controls{display:flex;gap:8px;align-items:center}
+.seg{display:inline-flex;background:var(--bg-tertiary);border:1px solid var(--separator);border-radius:var(--r-pill);padding:2px}
+.seg button{border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:500;
+    color:var(--label-2);padding:5px 14px;border-radius:var(--r-pill);cursor:pointer;transition:all .15s var(--ease-out)}
+.seg button.on{background:var(--bg-secondary);color:var(--label);box-shadow:var(--shadow-1);font-weight:600}
+input.search{background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-pill);
+    padding:6px 14px;font-family:inherit;font-size:12px;color:var(--label);width:170px;transition:all .15s var(--ease-out)}
+input.search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.15)}
+
+.list{background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-card);
+    box-shadow:var(--shadow-1);overflow:hidden}
+.row{display:grid;grid-template-columns:44px 1fr 200px 100px;gap:14px;align-items:center;
+    padding:13px 20px;border-bottom:1px solid var(--separator)}
+.row:last-child{border-bottom:none}
+.row.head{background:var(--bg-tertiary);font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+    font-weight:600;color:var(--label-3);padding:9px 20px;position:sticky;top:57px;z-index:10}
+.rank{font-size:14px;font-weight:700;color:var(--label-3);text-align:center}
+.row:nth-child(2) .rank,.row:nth-child(3) .rank,.row:nth-child(4) .rank{color:var(--accent)}
+.kname{min-width:0}
+.kname .n1{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kname .n2{font-size:11px;color:var(--label-3);margin-top:1px}
+.barwrap{display:flex;align-items:center;gap:10px}
+.bar{flex:1;height:6px;border-radius:3px;background:var(--bg-tertiary);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;transition:width .4s var(--ease-out)}
+.bar-v{font-size:13px;font-weight:700;min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
+.tempo{justify-self:end;display:inline-flex;align-items:center;padding:3px 12px;border-radius:var(--r-pill);
+    font-size:11px;font-weight:600}
+.t-schnell{background:rgba(0,200,150,.12);color:var(--success)}
+.t-mittel{background:rgba(255,149,0,.12);color:var(--warning)}
+.t-langsam{background:rgba(255,59,48,.10);color:var(--error)}
+.flag{font-size:10px;color:var(--warning);font-weight:500}
+
+.note{margin-top:28px;background:var(--bg-secondary);border:1px solid var(--separator);
+    border-radius:var(--r-card);padding:18px 22px;box-shadow:var(--shadow-1)}
+.note h3{font-size:13px;font-weight:600;margin-bottom:10px}
+.note li{font-size:12px;color:var(--label-2);margin-left:18px;margin-bottom:6px;line-height:1.5}
+footer{text-align:center;font-size:11px;color:var(--label-3);margin-top:28px}
+
+@media(max-width:720px){
+    .kpis{grid-template-columns:1fr 1fr}
+    .row{grid-template-columns:34px 1fr 90px;gap:10px}
+    .barwrap{display:none}
+    .row.head .hd-bar{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="brand-mark">D</div>
+    <h1>Durchlaufzeit-Ranking</h1>
+    <span class="sub">elvinci.de · Auftrag → Ware hat Lager verlassen · Stand 19.08.2026</span>
+</header>
+
+<div class="wrap">
+
+    <div class="kpis">
+        <div class="kpi hero"><div class="l">Median</div><div class="v">9 <span class="unit">Tage</span></div><div class="h">robuste Steuerungsgröße</div></div>
+        <div class="kpi"><div class="l">Durchschnitt</div><div class="v">12,5 <span class="unit">Tage</span></div><div class="h">verzerrt durch Ausreißer</div></div>
+        <div class="kpi"><div class="l">Aufträge</div><div class="v">192</div><div class="h">AMM · Apr–Aug 2026</div></div>
+        <div class="kpi"><div class="l">Unsicherheit</div><div class="v">±4,5 <span class="unit">Tage</span></div><div class="h">aus Snapshot-Lücken</div></div>
+    </div>
+    <div class="pipenote">📎 Vergleichswert Fulfilment-Pipeline Jan–Apr (Anmeldung → Versand): <strong>Ø 8,1 · Median 7 Tage</strong> bei 88 Aufträgen — anderer Startpunkt, nicht direkt mischbar.</div>
+
+    <div class="section-head">
+        <h2>Kunden-Ranking</h2>
+        <div class="controls">
+            <input class="search" id="q" placeholder="Kunde suchen…" oninput="renderList()">
+            <div class="seg">
+                <button id="b-fast" class="on" onclick="setSort('fast')">Schnellste zuerst</button>
+                <button id="b-slow" onclick="setSort('slow')">Langsamste zuerst</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="list" id="list"></div>
+
+    <div class="note">
+        <h3>Methodik &amp; Lesart</h3>
+        <ul>
+            <li><strong>Quelle:</strong> 30 AMM-AUFTRAG_STATUS-Snapshots (Apr–Aug 2026). Ein Auftrag, der aus der aktiven Liste verschwindet, gilt als „Lager verlassen" — Exit-Datum = Mitte zwischen letztem und erstem fehlenden Snapshot.</li>
+            <li><strong>Nur Kunden mit ≥ 2 Aufträgen</strong> im Ranking (46 von 79). Interner Auftrag „Elvinci.de GmbH" ausgeschlossen.</li>
+            <li><strong>Tempo-Terzile:</strong> grün = schnellstes Drittel, gelb = Mitte, rot = langsamstes Drittel.</li>
+            <li><strong>⚠-Markierung:</strong> Ø mehr als doppelt so hoch wie Median → einzelner Ausreißer verzerrt (Vorkasse-Wartezeit oder stiller Storno) — Kunde ist operativ meist schneller als der Ø suggeriert.</li>
+            <li><strong>Vorkasse-Kunden erscheinen systembedingt langsamer</strong> — sie warten auf Zahlungseingang. Vor Kundengesprächen Zahlungsart prüfen.</li>
+        </ul>
+    </div>
+
+    <footer>Erstellt aus AMM AUFTRAG_STATUS-Snapshots + Fulfilment-Pipeline · Detail-Zahlen: Durchlaufzeit_Analyse_2026-08-19.xlsx</footer>
+</div>
+
+<script>
+const DATA=[
+{"k":"RU Recycling und Umweltdienst GmbH","n":3,"avg":2.0,"med":3.0,"max":3},
+{"k":"Trade S.R.O. Számlázási","n":6,"avg":3.3,"med":3.0,"max":8},
+{"k":"Techno Vision Group Ltd","n":2,"avg":3.5,"med":3.5,"max":6},
+{"k":"Elektro Sinizig","n":2,"avg":3.5,"med":3.5,"max":5},
+{"k":"Soutis Electrics","n":2,"avg":4.0,"med":4.0,"max":6},
+{"k":"L&L Electronics Kft","n":2,"avg":5.0,"med":5.0,"max":5},
+{"k":"Buy4less GmbH","n":2,"avg":5.0,"med":5.0,"max":7},
+{"k":"Buy24","n":3,"avg":5.3,"med":7.0,"max":7},
+{"k":"Warriors Cascade Lda","n":2,"avg":5.5,"med":5.5,"max":8},
+{"k":"Marketvibe Srl","n":2,"avg":6.0,"med":6.0,"max":8},
+{"k":"Nikokira Outlet","n":3,"avg":6.3,"med":8.0,"max":10},
+{"k":"P&C Trading B.V.","n":4,"avg":7.0,"med":7.5,"max":10},
+{"k":"Gujjar Begum","n":2,"avg":7.5,"med":7.5,"max":14},
+{"k":"Sefik","n":3,"avg":7.7,"med":5.0,"max":16},
+{"k":"IG international trading GmbH","n":9,"avg":7.8,"med":5.0,"max":18},
+{"k":"Emporia antalaktikon-Ilektrikon syskeuon","n":2,"avg":8.0,"med":8.0,"max":15},
+{"k":"UAB Buitikas","n":5,"avg":8.0,"med":9.0,"max":14},
+{"k":"M&J TRADE D.O.O.","n":5,"avg":8.0,"med":8.0,"max":16},
+{"k":"Outlet Loket","n":2,"avg":9.0,"med":9.0,"max":9},
+{"k":"Simex D.O.O","n":3,"avg":9.0,"med":7.0,"max":14},
+{"k":"J&B EXPRESS","n":3,"avg":10.7,"med":11.0,"max":11},
+{"k":"UAB Portana","n":4,"avg":11.8,"med":12.5,"max":16},
+{"k":"Outlet Simex D.O.O","n":5,"avg":11.8,"med":4.0,"max":39},
+{"k":"Hanseatic georgia LLC","n":11,"avg":12.3,"med":12.0,"max":29},
+{"k":"Almost New LTD","n":2,"avg":13.0,"med":13.0,"max":25},
+{"k":"Deland Ltd EOOD","n":3,"avg":13.3,"med":15.0,"max":17},
+{"k":"Kaldi Prime Kft","n":3,"avg":13.3,"med":12.0,"max":22},
+{"k":"Rati Marti","n":2,"avg":14.5,"med":14.5,"max":20},
+{"k":"SUNELECTRO OÜ","n":2,"avg":14.5,"med":14.5,"max":25},
+{"k":"KOUTLIANOS NIKOS","n":5,"avg":14.8,"med":11.0,"max":30},
+{"k":"Egzoni Sh.P.K","n":4,"avg":15.0,"med":15.0,"max":28},
+{"k":"Alayham Shakantana","n":2,"avg":15.5,"med":15.5,"max":18},
+{"k":"Todo Cash","n":2,"avg":16.0,"med":16.0,"max":19},
+{"k":"SADI","n":2,"avg":16.0,"med":16.0,"max":18},
+{"k":"Banat Electrocasnice S.R.L.","n":4,"avg":16.5,"med":15.0,"max":26},
+{"k":"TECHNO ELECTRONICS 5 Ltd","n":4,"avg":18.0,"med":12.0,"max":45},
+{"k":"Ovitshop","n":7,"avg":20.0,"med":7.0,"max":81},
+{"k":"UAB STEVIJA","n":6,"avg":20.7,"med":20.5,"max":31},
+{"k":"GGY Trade s.r.o.","n":2,"avg":22.0,"med":22.0,"max":27},
+{"k":"Hermans Trading BV","n":7,"avg":23.6,"med":12.0,"max":101},
+{"k":"Outlet Mebeli Ltd","n":2,"avg":25.0,"med":25.0,"max":36},
+{"k":"AMY Witgoed","n":4,"avg":26.0,"med":26.0,"max":48},
+{"k":"Euroda Transport &Handel","n":2,"avg":29.5,"med":29.5,"max":45},
+{"k":"Enterijer D.O.O.","n":2,"avg":34.0,"med":34.0,"max":66},
+{"k":"Karakitsos Stock House IKE","n":3,"avg":34.7,"med":8.0,"max":88}
+];
+// Tempo-Terzile über die nach avg sortierte Liste (fix, unabhängig von Anzeige-Sortierung)
+const sorted=[...DATA].sort((a,b)=>a.avg-b.avg);
+const t1=Math.floor(sorted.length/3), t2=Math.floor(2*sorted.length/3);
+sorted.forEach((d,i)=>{ d.tempo = i<t1?'schnell':(i<t2?'mittel':'langsam'); d.rankFast=i+1; });
+const MAXAVG=Math.max(...DATA.map(d=>d.avg));
+let sortMode='fast';
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function setSort(m){sortMode=m;
+    document.getElementById('b-fast').classList.toggle('on',m==='fast');
+    document.getElementById('b-slow').classList.toggle('on',m==='slow');
+    renderList();}
+
+function renderList(){
+    const q=(document.getElementById('q').value||'').toLowerCase();
+    let rows=[...sorted];
+    if(sortMode==='slow') rows.reverse();
+    if(q) rows=rows.filter(d=>d.k.toLowerCase().includes(q));
+    const barColor={schnell:'var(--success)',mittel:'var(--warning)',langsam:'var(--error)'};
+    let html=`<div class="row head"><div>Rang</div><div>Kunde</div><div class="hd-bar">Ø Tage</div><div style="text-align:right">Tempo</div></div>`;
+    html+=rows.map(d=>{
+        const outlier=d.avg>2*d.med && d.med>0;
+        const w=Math.max(4,Math.round(d.avg/MAXAVG*100));
+        return `<div class="row">
+            <div class="rank">${d.rankFast}</div>
+            <div class="kname">
+                <div class="n1">${esc(d.k)}</div>
+                <div class="n2">${d.n} Aufträge · Median ${d.med} T · Max ${d.max} T ${outlier?'<span class="flag">· ⚠ Ø durch Ausreißer verzerrt</span>':''}</div>
+            </div>
+            <div class="barwrap"><div class="bar"><i style="width:${w}%;background:${barColor[d.tempo]}"></i></div><div class="bar-v">${d.avg.toLocaleString('de-DE')} T</div></div>
+            <div class="tempo t-${d.tempo}">${d.tempo}</div>
+        </div>`;
+    }).join('');
+    if(rows.length===0) html+=`<div class="row" style="grid-template-columns:1fr;color:var(--label-3);font-size:13px;text-align:center">Kein Kunde gefunden.</div>`;
+    document.getElementById('list').innerHTML=html;
+}
+renderList();
+</script>
+</body>
+</html>
