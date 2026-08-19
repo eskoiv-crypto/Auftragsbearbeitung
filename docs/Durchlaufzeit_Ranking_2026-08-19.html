@@ -121,164 +121,114 @@ footer{text-align:center;font-size:11px;color:var(--label-3);margin-top:28px}
 <div class="wrap">
 
     <div class="defbox">
-        <div class="t">Was wird gemessen? — Auftrag erstellt → Ware hat Lager verlassen &nbsp;·&nbsp; Zerlegung auf Basis planbarer Aufträge 2026 (N=178, Ø-Werte — addieren sich)</div>
+        <div class="t">Kombinierte Messung — beide Phasen, klare Verantwortung · planbare Aufträge 2026 (N=246, Ø-Werte addieren sich)</div>
         <div class="phases">
-            <div class="phase"><span class="p1">📝 Auftrag erstellt</span><span class="p2">Tag 0</span><span class="p3">Datum aus der AU-Nummer</span></div>
+            <div class="phase"><span class="p1">📝 Auftrag angelegt</span><span class="p2">Tag 0</span><span class="p3">AU-Nummern-Datum · Fallback AMM-Anmeldung</span></div>
             <div class="phase-arrow">→</div>
-            <div class="phase"><span class="p1">Phase 1 · Vorlauf</span><span class="p2">Ø 2,9 T</span><span class="p3">bis Anmeldung bei AMM (Klärung, Zahlung, Bearbeitung)</span></div>
+            <div class="phase" style="border:1px solid rgba(0,113,227,.35)"><span class="p1" style="color:var(--accent)">🏭 elvinci-Phase</span><span class="p2">Ø 7,0 T</span><span class="p3">bis Ware kommissioniert — Janna · Dustin · AMM</span></div>
             <div class="phase-arrow">＋</div>
-            <div class="phase"><span class="p1">Phase 2 · Lager</span><span class="p2">Ø 8,6 T</span><span class="p3">Kommissionierung + Warten auf Abholung/Versand</span></div>
+            <div class="phase" style="border:1px solid rgba(255,149,0,.4)"><span class="p1" style="color:var(--warning)">👤 Kunden-Phase</span><span class="p2">Ø 5,1 T</span><span class="p3">Liegezeit: fertige Ware wartet auf Abholung / Zahlung / Versandfreigabe</span></div>
             <div class="phase-arrow">=</div>
-            <div class="phase total"><span class="p1">📦 GESAMT</span><span class="p2">Ø 11,5 T</span><span class="p3">Auftrag → Ware verlässt Lager (2026)</span></div>
+            <div class="phase total"><span class="p1">📦 GESAMT</span><span class="p2">Ø 12,1 T</span><span class="p3">Auftrag → Ware verlässt Lager</span></div>
         </div>
     </div>
 
     <div class="kpis">
-        <div class="kpi hero"><div class="l">Aktuelles Tempo 2026</div><div class="v">11 <span class="unit">Med</span></div><div class="h">planbare Aufträge · Ø 12,1 · N=247</div></div>
-        <div class="kpi"><div class="l">2025 vergleichbar</div><div class="v">7 <span class="unit">Med</span></div><div class="h">ohne Sofort-Abholer → +5 T Anstieg zu 2026</div></div>
-        <div class="kpi"><div class="l">Sofort-Abholer</div><div class="v">24 <span class="unit">%</span></div><div class="h">der 2025er-Aufträge ≤1 Tag — eigenes Segment</div></div>
-        <div class="kpi"><div class="l">Datenbasis</div><div class="v">1.122</div><div class="h">Aufträge · Jun 25 – Aug 26 · 2 Quellen</div></div>
+        <div class="kpi hero"><div class="l">Kunden-Phase</div><div class="v" style="color:var(--warning)">4 <span class="unit">Med</span></div><div class="h">Liegezeit fertiger Ware · Ø 5,1 T</div></div>
+        <div class="kpi"><div class="l">elvinci-Phase</div><div class="v">6 <span class="unit">Med</span></div><div class="h">Auftrag → kommissioniert · Ø 7,0 T</div></div>
+        <div class="kpi"><div class="l">Gesamt</div><div class="v">11 <span class="unit">Med</span></div><div class="h">Ø 12,1 T · N=246 · 2026</div></div>
+        <div class="kpi"><div class="l">Historie 14 Mon.</div><div class="v">1.122</div><div class="h">Aufträge gesamt · Split nur 2026 messbar</div></div>
     </div>
 
     <div class="section-head">
-        <h2>Kunden-Ranking <span style="font-size:12px;font-weight:500;color:var(--label-3)">Metrik wählbar: Ø / Median / Liegetage · N ≥ 3 · 83 Kunden</span></h2>
+        <h2>Kunden-Ranking <span style="font-size:12px;font-weight:500;color:var(--label-3)">kombinierte Phasen · Default: Kunden-Phase, langsamste zuerst · N ≥ 3 · 34 Kunden (2026)</span></h2>
         <div class="controls">
             <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--label-2);cursor:pointer;background:var(--bg-secondary);border:1px solid var(--separator);border-radius:var(--r-pill);padding:5px 12px">
                 <input type="checkbox" id="hideWalkin" onchange="renderList()" style="accent-color:var(--accent)">⚡ Sofort-Abholer ausblenden
             </label>
             <input class="search" id="q" placeholder="Kunde suchen…" oninput="renderList()">
             <div class="seg" id="metricSeg">
-                <button data-m="avg" class="on" onclick="setMetric('avg')" title="Durchschnitt — inkl. Ausreißer = echte Lagerbelastung pro Auftrag">Ø</button>
-                <button data-m="med" onclick="setMetric('med')" title="Median — typisches Tempo, ignoriert Ausreißer">Median</button>
-                <button data-m="impact" onclick="setMetric('impact')" title="Gesamt-Liegetage (Ø × Aufträge) — wer belastet das Lager in Summe am meisten">Liegetage gesamt</button>
+                <button data-m="kun" class="on" onclick="setMetric('kun')" title="Kunden-Phase (Liegezeit): wie lange lässt der Kunde fertige Ware stehen — DIE Bewertungsgröße">👤 Kunden-Phase</button>
+                <button data-m="ges" onclick="setMetric('ges')" title="Gesamt: Auftrag bis Ware verlässt Lager">Gesamt</button>
+                <button data-m="elv" onclick="setMetric('elv')" title="elvinci-Phase: interne Bearbeitung bis Kommissionierung">🏭 elvinci</button>
+                <button data-m="impact" onclick="setMetric('impact')" title="Gesamt-Liegetage (Gesamt-Ø × Aufträge)">Liegetage ges.</button>
             </div>
             <div class="seg">
-                <button id="b-fast" class="on" onclick="setSort('fast')">Schnellste zuerst</button>
-                <button id="b-slow" onclick="setSort('slow')">Langsamste zuerst</button>
+                <button id="b-fast" onclick="setSort('fast')">Schnellste zuerst</button>
+                <button id="b-slow" class="on" onclick="setSort('slow')">Langsamste zuerst</button>
             </div>
         </div>
     </div>
 
     <div class="list" id="list"></div>
     <div class="legend">
-        <span><span class="sw" style="background:var(--info)"></span>Vorlauf (Auftrag → AMM-Anmeldung)</span>
-        <span><span class="sw" style="background:var(--accent)"></span>Lager (AMM → Ware verlässt Lager)</span>
-        <span>Balkenlänge = Ø Gesamt-Tage</span>
+        <span><span class="sw" style="background:var(--accent)"></span>🏭 elvinci-Phase (Auftrag → kommissioniert)</span>
+        <span><span class="sw" style="background:var(--warning)"></span>👤 Kunden-Phase (Liegezeit bis Abholung/Versand)</span>
+        <span>Balkenlänge = Gesamt-Ø</span>
     </div>
 
     <div class="note">
-        <h3>Methodik &amp; Lesart — v4 (14 Monate, zwei Quellen)</h3>
+        <h3>Methodik — v5: kombinierte Phasen mit klarer Verantwortung</h3>
         <ul>
-            <li><strong>Quelle A — AMM-Warenausgangs-Buchungen (Jun–Dez 2025, N=875):</strong> 223 tägliche WA-Dateien; Exit = letzte WA-Buchung des Auftrags. Aufträge mit Exit nach 31.12.2025 hier ausgeschlossen (Trunkierungs-Schutz), ab Januar übernimmt Quelle B.</li>
-            <li><strong>Quelle B — NH5-Pipeline (Jan–Aug 2026, N=247):</strong> Spalte „Auftrag abgeschlossen (Ware hat das Lager verlassen)" — deckt sich im Archiv exakt mit dem Versand-/Abholdatum.</li>
-            <li><strong>Startpunkt immer = Auftragsdatum aus der AU-Nummer</strong> (AU2026<em>0622</em>… = 22.06.2026).</li>
-            <li><strong>Kunden-Schreibweisen zusammengeführt:</strong> 21 Dubletten-Gruppen (z. B. Hermans Trading/BV, Hanseatic georgia/Georgia, IG International-Varianten, Ovitshop/OVIT Shop, Sinzig-Typo) — Legal-Suffixe (GmbH, BV, Ltd, Kft, D.O.O., UAB, …) normalisiert.</li>
-            <li><strong>⚠ Ära-Vergleich nur segmentbereinigt zulässig:</strong> Die 2025-WA-Quelle erfasst JEDEN Auftrag inkl. 24 % Sofort-Abholungen (≤1 Tag, Walk-in/Barzahler) — die 2026-Pipeline trackt nur planbare Aufträge (3 % ≤1 Tag) und nur ~40 statt ~125 Aufträge/Monat. Roh-Mediane (4 vs. 11) sind daher NICHT vergleichbar. Im vergleichbaren Segment (Aufträge &gt;3 Tage): 2025 Median 7 vs. 2026 Median 12 — realer Anstieg +5 Tage (Kandidaten: Odoo-Umstellung, Vorkasse-Wartezeiten). Kunden mit Schwerpunkt Sofortabholung wirken im Ranking schneller.</li>
-            <li><strong>Metrik-Wahl (Umschalter oben):</strong> <strong>Ø</strong> = echte Lagerbelastung pro Auftrag inkl. Ausreißer — empfohlen für Kunden-Bewertung. <strong>Median</strong> = typisches Tempo, gut zur Planung des nächsten Auftrags. <strong>Liegetage gesamt</strong> (Ø × Aufträge) = wer das Lager in Summe am stärksten belastet. ⚠-Flag = Ø mehr als doppelt so hoch wie Median — dann liegt die Belastung an einzelnen Hängern, nicht am typischen Verhalten.</li>
-            <li><strong>⚡ Sofort-Abholer</strong> (Median ≤1 Tag): AU wird oft erst bei der Abholung erstellt — Durchlaufzeit misst dann nicht Kundenverhalten, sondern den Buchungsmoment. Per Toggle ausblendbar.</li>
-            <li>Interne Aufträge (Elvinci.de GmbH) ausgeschlossen. Storno nicht immer unterscheidbar — Langläufer einzeln prüfen.</li>
+            <li><strong>Start = AU-Anlage</strong> (Datum aus AU-Nummer, Fallback AMM-Anmeldedatum bei Odoo-S-Nummern). Achtung: misst die System-Anlage durch Verkauf — der echte Bestellzeitpunkt (WhatsApp-Zusage) ist nirgends erfasst. Bei Sofort-Abholern entsteht die AU erst im Abholmoment (⚡-Badge).</li>
+            <li><strong>🏭 elvinci-Phase</strong> = AU-Anlage → Kommissionierung abgeschlossen (Fallback: geplanter Kommissioniertag). Verantwortung: Janna / Dustin / AMM.</li>
+            <li><strong>👤 Kunden-Phase</strong> = Kommissionierung → Ware verlässt Lager (Fallback: Versand-/Abholdatum). Fertige Ware wartet auf Abholung, Zahlungseingang oder Versandfreigabe — <strong>die Bewertungsgröße für Kunden</strong>. Berechnung deckt sich zu 83 % (±1 T) mit der manuell gepflegten Pipeline-Spalte „Liegezeit n. Komm".</li>
+            <li><strong>Datenbasis Split:</strong> nur 2026-Pipeline (N=246 voll zerlegbar, 34 Kunden mit N ≥ 3) — die 2025-WA-Dateien enthalten kein Kommissionier-Datum. Gesamt-Historie (1.122 Aufträge) in den Rohdaten-CSVs.</li>
+            <li><strong>Vorkasse-Effekt:</strong> unbezahlte Ware liegt in der Kunden-Phase — das ist gewollt (Zahlungsverzug ist Kundenverhalten). Ranking nach Ø, weil Ausreißer echte Lagerbelastung sind.</li>
+            <li>Kunden-Schreibweisen zusammengeführt · interne Aufträge ausgeschlossen · Terzile grün/gelb/rot je gewählter Metrik.</li>
         </ul>
     </div>
 
-    <footer>Quellen: AMM-WA-Buchungen 2025 + NH5_Pipeline_MAX-STATUS 2026 · AU-Nummern-Datumscodierung · Rohdaten: analyse_durchlaufzeit_v4_master.csv</footer>
+    <footer>Quelle Split: NH5_Pipeline_MAX-STATUS 2026 · Historie: + AMM-WA 2025 · Rohdaten: analyse_durchlaufzeit_v5_split.csv / v4_master.csv</footer>
 </div>
 
 <script>
 const DATA=[
-{"k": "SIA Baltic Marketplace", "n": 3, "avg": 0.7, "med": 1.0, "max": 1, "vor": null, "lag": null, "va": ""},
-{"k": "PowerSoft Vertriebs GmbH", "n": 19, "avg": 3.3, "med": 1.0, "max": 21, "vor": null, "lag": null, "va": ""},
-{"k": "Vieru", "n": 10, "avg": 1.8, "med": 1.0, "max": 6, "vor": null, "lag": null, "va": ""},
-{"k": "GLOBAL LIQUIDACIONES SL", "n": 9, "avg": 3.7, "med": 2.0, "max": 9, "vor": 0.0, "lag": 8.0, "va": "Spedition"},
-{"k": "Lubomir Karwot Outlet AGD", "n": 5, "avg": 3.2, "med": 2.0, "max": 8, "vor": null, "lag": null, "va": ""},
-{"k": "UAB Portana", "n": 17, "avg": 6.2, "med": 2.0, "max": 33, "vor": 1.0, "lag": 7.0, "va": "Abholung"},
-{"k": "Nagy Szabolcs Bela", "n": 8, "avg": 6.4, "med": 2.0, "max": 29, "vor": 3.0, "lag": 5.0, "va": "Abholung"},
-{"k": "Cads Engineering GmbH", "n": 13, "avg": 2.2, "med": 2.0, "max": 8, "vor": 1.0, "lag": 2.0, "va": "Spedition"},
-{"k": "Sefik", "n": 9, "avg": 3.9, "med": 2.0, "max": 15, "vor": null, "lag": null, "va": ""},
-{"k": "Stock House Nikaias", "n": 11, "avg": 4.3, "med": 2.0, "max": 18, "vor": 11.0, "lag": 7.0, "va": "Abholung"},
-{"k": "SC Interm Grup SRL", "n": 18, "avg": 3.1, "med": 2.0, "max": 11, "vor": null, "lag": null, "va": ""},
-{"k": "Zeyad Hasoo Afdi company", "n": 3, "avg": 3.7, "med": 2.0, "max": 7, "vor": null, "lag": null, "va": ""},
-{"k": "RU Recycling und Umweltdienst GmbH", "n": 18, "avg": 3.7, "med": 2.0, "max": 13, "vor": 1.0, "lag": 3.5, "va": "Spedition"},
-{"k": "TP-Resale", "n": 4, "avg": 2.5, "med": 2.5, "max": 5, "vor": null, "lag": null, "va": ""},
-{"k": "KD Elektromes S.R.L", "n": 13, "avg": 5.3, "med": 3.0, "max": 15, "vor": null, "lag": null, "va": ""},
-{"k": "Jet DP Sp z.o.o", "n": 16, "avg": 6.5, "med": 3.0, "max": 27, "vor": null, "lag": null, "va": ""},
-{"k": "Emporia antalaktikon-Ilektrikon syskeuon", "n": 10, "avg": 6.2, "med": 3.0, "max": 31, "vor": 10.0, "lag": 4.0, "va": "Abholung"},
-{"k": "TECHNO ELECTRONICS 5 Ltd", "n": 22, "avg": 7.2, "med": 3.0, "max": 27, "vor": 5.8, "lag": 8.2, "va": "Abholung"},
-{"k": "NAS ELECTROMENAGER", "n": 26, "avg": 3.9, "med": 3.0, "max": 31, "vor": 0.0, "lag": 3.0, "va": "Abholung"},
-{"k": "Bastounis Anastasios", "n": 17, "avg": 3.4, "med": 3.0, "max": 10, "vor": null, "lag": null, "va": ""},
-{"k": "Green Loop GmbH", "n": 5, "avg": 3.2, "med": 3.0, "max": 6, "vor": 1.0, "lag": 2.0, "va": "Spedition"},
-{"k": "AGILA", "n": 4, "avg": 12.5, "med": 3.5, "max": 42, "vor": null, "lag": null, "va": ""},
-{"k": "SADI", "n": 6, "avg": 4.7, "med": 3.5, "max": 14, "vor": 0.0, "lag": 10.0, "va": "Abholung"},
-{"k": "IG international trading GmbH", "n": 108, "avg": 5.4, "med": 4.0, "max": 21, "vor": 3.4, "lag": 5.9, "va": "Spedition"},
-{"k": "SIOKOS DIM.GEORGIOS", "n": 4, "avg": 4.5, "med": 4.0, "max": 7, "vor": 1.0, "lag": 4.0, "va": "Abholung"},
-{"k": "KAJTEK Patrycja Minkina", "n": 8, "avg": 4.4, "med": 4.0, "max": 7, "vor": 0.0, "lag": 7.0, "va": "Abholung"},
-{"k": "L&L Electronics Kft", "n": 12, "avg": 8.6, "med": 4.0, "max": 59, "vor": null, "lag": null, "va": "Abholung"},
-{"k": "Outlet Loket", "n": 4, "avg": 6.2, "med": 4.5, "max": 13, "vor": 0.0, "lag": 5.0, "va": "Spedition"},
-{"k": "Trade S.R.O. Számlázási", "n": 28, "avg": 4.8, "med": 4.5, "max": 15, "vor": 0.7, "lag": 4.6, "va": "Spedition"},
-{"k": "Gujjar Begum", "n": 20, "avg": 5.9, "med": 4.5, "max": 17, "vor": 6.0, "lag": 10.0, "va": "Spedition"},
-{"k": "Outlet Mebeli Ltd", "n": 17, "avg": 10.5, "med": 5.0, "max": 40, "vor": 1.8, "lag": 18.2, "va": "Abholung"},
-{"k": "KOUTLIANOS NIKOS", "n": 15, "avg": 11.7, "med": 5.0, "max": 32, "vor": 0.0, "lag": 30.0, "va": "Abholung"},
-{"k": "ELECTRO BALKAN DI BOJANIC ZELJKO", "n": 15, "avg": 5.5, "med": 5.0, "max": 11, "vor": 5.0, "lag": 2.0, "va": "Spedition"},
-{"k": "Enno Kundendienst", "n": 12, "avg": 5.2, "med": 5.0, "max": 19, "vor": 4.0, "lag": 6.7, "va": "Spedition"},
-{"k": "Elektro Outlet Bonn", "n": 4, "avg": 4.0, "med": 5.0, "max": 5, "vor": null, "lag": null, "va": ""},
-{"k": "Othman Hasan", "n": 7, "avg": 3.6, "med": 5.0, "max": 6, "vor": 2.0, "lag": 4.0, "va": "Spedition"},
-{"k": "Enterijer D.O.O.", "n": 18, "avg": 8.6, "med": 5.5, "max": 49, "vor": 3.0, "lag": 10.0, "va": "Abholung"},
-{"k": "Ados Witgoed", "n": 8, "avg": 4.8, "med": 5.5, "max": 10, "vor": 0.0, "lag": 6.5, "va": "Spedition"},
-{"k": "FSMM HAUSGERÄTE", "n": 4, "avg": 5.8, "med": 5.5, "max": 10, "vor": 6.0, "lag": 3.0, "va": "Spedition"},
-{"k": "Nikokira Outlet", "n": 11, "avg": 5.5, "med": 6.0, "max": 13, "vor": 2.0, "lag": 7.2, "va": "Abholung"},
-{"k": "Buy24", "n": 9, "avg": 6.1, "med": 6.0, "max": 14, "vor": 1.3, "lag": 8.3, "va": "Spedition"},
-{"k": "Ovitshop", "n": 9, "avg": 5.4, "med": 6.0, "max": 12, "vor": 1.0, "lag": 11.0, "va": "Abholung"},
-{"k": "Oli Outlet Kft.", "n": 4, "avg": 6.5, "med": 6.0, "max": 9, "vor": 2.0, "lag": 7.0, "va": "Spedition"},
-{"k": "Outlet Simex D.O.O", "n": 19, "avg": 8.3, "med": 6.0, "max": 25, "vor": 3.0, "lag": 8.3, "va": "Abholung"},
-{"k": "PUKO Sp z.o.o.", "n": 5, "avg": 6.2, "med": 6.0, "max": 8, "vor": 0.0, "lag": 6.0, "va": "Spedition"},
-{"k": "Karakitsos Stock House IKE", "n": 15, "avg": 9.1, "med": 6.0, "max": 20, "vor": 2.5, "lag": 10.5, "va": "Abholung"},
-{"k": "Nader Hasan", "n": 14, "avg": 9.1, "med": 6.0, "max": 32, "vor": null, "lag": null, "va": ""},
-{"k": "AMY Witgoed", "n": 8, "avg": 7.2, "med": 6.0, "max": 20, "vor": 2.0, "lag": 8.0, "va": "Abholung"},
-{"k": "Hermans Trading BV", "n": 39, "avg": 8.7, "med": 6.0, "max": 26, "vor": 7.5, "lag": 10.8, "va": "Abholung"},
-{"k": "GGY Trade s.r.o.", "n": 5, "avg": 10.6, "med": 6.0, "max": 35, "vor": 0.5, "lag": 2.5, "va": "Abholung"},
-{"k": "Soutis Electrics", "n": 16, "avg": 7.9, "med": 6.0, "max": 35, "vor": 0.0, "lag": 5.0, "va": "Abholung"},
-{"k": "Todo Cash", "n": 7, "avg": 9.6, "med": 6.0, "max": 23, "vor": 1.0, "lag": 18.0, "va": "Spedition"},
-{"k": "Ya-Sec Handel GmbH", "n": 4, "avg": 7.5, "med": 6.5, "max": 12, "vor": null, "lag": null, "va": ""},
-{"k": "Techno Planet LTD", "n": 6, "avg": 6.3, "med": 7.0, "max": 14, "vor": null, "lag": null, "va": "Abholung"},
-{"k": "Marketvibe Srl", "n": 7, "avg": 5.6, "med": 7.0, "max": 12, "vor": 2.5, "lag": 7.0, "va": "Abholung"},
-{"k": "V&A Tehimpex SRL", "n": 8, "avg": 6.1, "med": 7.0, "max": 7, "vor": null, "lag": null, "va": ""},
-{"k": "Electro B.P. SRL", "n": 22, "avg": 13.5, "med": 7.0, "max": 36, "vor": null, "lag": null, "va": ""},
-{"k": "Buy4less GmbH", "n": 12, "avg": 10.3, "med": 7.5, "max": 36, "vor": 2.2, "lag": 7.5, "va": "Abholung"},
-{"k": "Ovit Shop V.O.F.", "n": 4, "avg": 8.0, "med": 7.5, "max": 14, "vor": 2.3, "lag": 5.3, "va": "Abholung"},
-{"k": "AC Service", "n": 4, "avg": 8.0, "med": 8.0, "max": 11, "vor": null, "lag": null, "va": ""},
-{"k": "M&J TRADE D.O.O.", "n": 7, "avg": 10.4, "med": 8.0, "max": 22, "vor": 2.0, "lag": 11.2, "va": "Abholung"},
-{"k": "Elektro Sinizig", "n": 19, "avg": 9.3, "med": 8.0, "max": 22, "vor": 0.0, "lag": 18.0, "va": "Spedition"},
-{"k": "Hanseatic georgia LLC", "n": 52, "avg": 10.2, "med": 8.0, "max": 29, "vor": 1.6, "lag": 12.1, "va": "Abholung"},
-{"k": "MON-LIP ROCK KFT", "n": 5, "avg": 9.4, "med": 9.0, "max": 18, "vor": 0.0, "lag": 18.0, "va": "Abholung"},
-{"k": "Kaldi Prime Kft", "n": 9, "avg": 12.1, "med": 9.0, "max": 23, "vor": 3.0, "lag": 10.8, "va": "Abholung"},
-{"k": "Rati Marti", "n": 22, "avg": 11.3, "med": 9.5, "max": 47, "vor": 0.0, "lag": 13.5, "va": "Abholung"},
-{"k": "Home Discount S.R.L.", "n": 5, "avg": 8.2, "med": 10.0, "max": 16, "vor": 0.5, "lag": 9.5, "va": "Abholung"},
-{"k": "P&C Trading B.V.", "n": 4, "avg": 10.2, "med": 10.0, "max": 14, "vor": 0.0, "lag": 11.2, "va": "Abholung"},
-{"k": "Warriors Cascade Lda", "n": 3, "avg": 10.0, "med": 10.0, "max": 11, "vor": 3.0, "lag": 6.0, "va": "Abholung"},
-{"k": "Simex D.O.O", "n": 22, "avg": 11.6, "med": 10.5, "max": 49, "vor": 2.0, "lag": 8.5, "va": "Abholung"},
-{"k": "Techno Vision Group Ltd.", "n": 4, "avg": 10.2, "med": 11.0, "max": 16, "vor": 0.0, "lag": 11.0, "va": "Abholung"},
-{"k": "Elektroshop Enny Dizdarevic Ernesa e.U.", "n": 4, "avg": 14.0, "med": 11.5, "max": 28, "vor": 0.0, "lag": 11.5, "va": "Spedition"},
-{"k": "Sefik Saracevic", "n": 6, "avg": 12.3, "med": 12.0, "max": 19, "vor": 6.4, "lag": 5.8, "va": "Abholung"},
-{"k": "UAB STEVIJA", "n": 26, "avg": 13.5, "med": 12.0, "max": 42, "vor": 1.8, "lag": 9.0, "va": "Abholung"},
-{"k": "EvroStok SRL", "n": 7, "avg": 14.0, "med": 12.0, "max": 30, "vor": null, "lag": null, "va": ""},
-{"k": "Deland Ltd EOOD", "n": 7, "avg": 11.9, "med": 12.0, "max": 15, "vor": 1.0, "lag": 14.0, "va": "Abholung"},
-{"k": "Egzoni Sh.P.K", "n": 9, "avg": 19.4, "med": 12.0, "max": 81, "vor": 5.0, "lag": 7.0, "va": "Abholung"},
-{"k": "Euroda Transport & Handel", "n": 4, "avg": 16.0, "med": 13.0, "max": 35, "vor": 20.0, "lag": 15.0, "va": "Abholung"},
-{"k": "SUNELECTRO OÜ", "n": 5, "avg": 14.6, "med": 13.0, "max": 21, "vor": 0.0, "lag": 10.0, "va": "Abholung"},
-{"k": "Banat Electrocasnice S.R.L.", "n": 9, "avg": 15.4, "med": 14.0, "max": 30, "vor": 3.0, "lag": 11.0, "va": "Abholung"},
-{"k": "UAB Buitikas", "n": 3, "avg": 12.7, "med": 14.0, "max": 15, "vor": null, "lag": null, "va": "Abholung"},
-{"k": "HOSTELCOL SUECA S.L.U", "n": 3, "avg": 17.0, "med": 18.0, "max": 19, "vor": 1.3, "lag": 15.7, "va": "Spedition"},
-{"k": "Almost New LTD", "n": 5, "avg": 19.2, "med": 23.0, "max": 30, "vor": 0.5, "lag": 20.0, "va": "Abholung"}
+{"k": "RU Recycling und Umweltdienst GmbH", "n": 3, "elv": 2.7, "kun": 1.0, "ges": 3.7, "medg": 2.0, "medk": 1.0, "max": 7, "va": "Spedition"},
+{"k": "Marketvibe Srl", "n": 3, "elv": 7.7, "kun": 1.7, "ges": 9.3, "medg": 9.0, "medk": 1.0, "max": 12, "va": "Abholung"},
+{"k": "Ados Witgoed", "n": 3, "elv": 4.3, "kun": 2.0, "ges": 6.3, "medg": 6.0, "medk": 2.0, "max": 10, "va": "Spedition"},
+{"k": "Enno Kundendienst", "n": 3, "elv": 8.7, "kun": 2.0, "ges": 10.7, "medg": 7.0, "medk": 1.0, "max": 19, "va": "Spedition"},
+{"k": "Soutis Electrics", "n": 4, "elv": 3.0, "kun": 2.0, "ges": 5.0, "medg": 5.5, "medk": 1.5, "max": 8, "va": "Abholung"},
+{"k": "Ovit Shop V.O.F.", "n": 4, "elv": 6.0, "kun": 2.0, "ges": 8.0, "medg": 7.5, "medk": 1.5, "max": 14, "va": "Abholung"},
+{"k": "Sefik Saracevic", "n": 6, "elv": 10.2, "kun": 2.2, "ges": 12.3, "medg": 12.0, "medk": 2.0, "max": 19, "va": "Abholung"},
+{"k": "Online Shopping Trade S.R.O. Számlázási", "n": 11, "elv": 3.0, "kun": 2.2, "ges": 5.2, "medg": 6.0, "medk": 1.0, "max": 8, "va": "Spedition"},
+{"k": "Enterijer D.O.O.", "n": 3, "elv": 10.0, "kun": 2.7, "ges": 12.7, "medg": 12.0, "medk": 3.0, "max": 14, "va": "Abholung"},
+{"k": "IG International", "n": 15, "elv": 6.7, "kun": 2.9, "ges": 9.5, "medg": 10.0, "medk": 3.0, "max": 15, "va": "Spedition"},
+{"k": "TECHNO ELECTRONICS 5 Ltd", "n": 5, "elv": 12.4, "kun": 3.0, "ges": 15.4, "medg": 15.0, "medk": 1.0, "max": 22, "va": "Abholung"},
+{"k": "Buy24", "n": 5, "elv": 5.4, "kun": 3.2, "ges": 8.6, "medg": 8.0, "medk": 4.0, "max": 14, "va": "Spedition"},
+{"k": "Nikokira Outlet", "n": 5, "elv": 5.8, "kun": 3.4, "ges": 9.2, "medg": 8.0, "medk": 4.0, "max": 13, "va": "Abholung"},
+{"k": "Emporia antalaktikon", "n": 3, "elv": 10.3, "kun": 3.7, "ges": 14.0, "medg": 9.0, "medk": 2.0, "max": 31, "va": "Abholung"},
+{"k": "Buy4less GmbH", "n": 4, "elv": 5.8, "kun": 4.0, "ges": 9.8, "medg": 11.0, "medk": 4.0, "max": 12, "va": "Abholung"},
+{"k": "Deland Ltd EOOD", "n": 3, "elv": 8.3, "kun": 4.3, "ges": 12.7, "medg": 13.0, "medk": 4.0, "max": 15, "va": "Abholung"},
+{"k": "P&C Trading B.V.", "n": 4, "elv": 5.8, "kun": 4.5, "ges": 10.2, "medg": 10.0, "medk": 5.0, "max": 14, "va": "Abholung"},
+{"k": "Outlet Simex D.O.O", "n": 4, "elv": 6.0, "kun": 4.8, "ges": 10.8, "medg": 10.5, "medk": 5.0, "max": 14, "va": "Abholung"},
+{"k": "HOSTELCOL SUECA S.L.U", "n": 3, "elv": 12.0, "kun": 5.0, "ges": 17.0, "medg": 18.0, "medk": 5.0, "max": 19, "va": "Spedition"},
+{"k": "Simex D.O.O", "n": 5, "elv": 8.8, "kun": 5.4, "ges": 14.2, "medg": 11.0, "medk": 7.0, "max": 29, "va": "Abholung"},
+{"k": "Karakitsos Stock House IKE", "n": 4, "elv": 7.0, "kun": 5.8, "ges": 12.8, "medg": 12.5, "medk": 5.0, "max": 20, "va": "Abholung"},
+{"k": "Hermans Trading", "n": 5, "elv": 11.8, "kun": 5.8, "ges": 17.6, "medg": 18.0, "medk": 5.0, "max": 23, "va": "Abholung"},
+{"k": "AMY Witgoed", "n": 4, "elv": 6.2, "kun": 6.2, "ges": 12.5, "medg": 11.5, "medk": 7.5, "max": 20, "va": "Abholung"},
+{"k": "GGY Trade s.r.o.", "n": 4, "elv": 4.8, "kun": 6.5, "ges": 11.2, "medg": 5.0, "medk": 2.0, "max": 35, "va": "Abholung"},
+{"k": "UAB Portana", "n": 3, "elv": 9.7, "kun": 6.7, "ges": 16.3, "medg": 9.0, "medk": 4.0, "max": 33, "va": "Abholung"},
+{"k": "Elektro Outlet Sinzig GmbH I.G.", "n": 3, "elv": 12.7, "kun": 6.7, "ges": 19.3, "medg": 21.0, "medk": 7.0, "max": 22, "va": "Spedition"},
+{"k": "M&J TRADE D.O.O.", "n": 6, "elv": 4.3, "kun": 6.8, "ges": 11.2, "medg": 10.0, "medk": 6.5, "max": 22, "va": "Abholung"},
+{"k": "UAB Buitikas", "n": 3, "elv": 5.0, "kun": 7.7, "ges": 12.7, "medg": 14.0, "medk": 8.0, "max": 15, "va": "Abholung"},
+{"k": "Kaldi Prime Kft", "n": 5, "elv": 6.6, "kun": 8.8, "ges": 15.4, "medg": 16.0, "medk": 7.0, "max": 23, "va": "Abholung"},
+{"k": "Outlet Mebeli Ltd", "n": 6, "elv": 8.0, "kun": 9.0, "ges": 17.0, "medg": 14.5, "medk": 8.0, "max": 40, "va": "Abholung"},
+{"k": "Hanseatic Georgia LLC", "n": 12, "elv": 7.9, "kun": 9.6, "ges": 17.5, "medg": 15.0, "medk": 9.5, "max": 35, "va": "Abholung"},
+{"k": "UAB Stevija", "n": 9, "elv": 8.6, "kun": 11.3, "ges": 19.9, "medg": 20.0, "medk": 13.0, "max": 42, "va": "Abholung"},
+{"k": "Egzoni Sh.P.K", "n": 3, "elv": 5.3, "kun": 15.0, "ges": 20.3, "medg": 14.0, "medk": 11.0, "max": 35, "va": "Abholung"},
+{"k": "Banat Electrocasnice S.R.L", "n": 4, "elv": 3.2, "kun": 17.5, "ges": 20.8, "medg": 19.5, "medk": 15.5, "max": 30, "va": "Abholung"}
 ];
-let metric='avg';
-let sortMode='fast';
-function metricVal(d){ return metric==='med'?d.med:metric==='impact'?Math.round(d.avg*d.n):d.avg; }
+let metric='kun';
+let sortMode='slow';
+function metricVal(d){ return metric==='kun'?d.kun:metric==='elv'?d.elv:metric==='impact'?Math.round(d.ges*d.n):d.ges; }
 function metricUnit(){ return metric==='impact'?' T ges.':' T'; }
-let sorted=[], MAXV=1;
+let sorted=[], MAXBAR=1;
 function recompute(){
-    sorted=[...DATA].sort((a,b)=>metricVal(a)-metricVal(b)||a.avg-b.avg);
+    sorted=[...DATA].sort((a,b)=>metricVal(a)-metricVal(b)||a.ges-b.ges);
     const t1=Math.floor(sorted.length/3), t2=Math.floor(2*sorted.length/3);
     sorted.forEach((d,i)=>{d.tempo=i<t1?'schnell':(i<t2?'mittel':'langsam');d.rank=i+1;});
-    MAXV=Math.max(...DATA.map(metricVal));
+    MAXBAR=Math.max(...DATA.map(d=>d.ges));
 }
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function setMetric(m){metric=m;
@@ -293,24 +243,23 @@ function renderList(){
     let rows=[...sorted];
     if(sortMode==='slow') rows.reverse();
     if(q) rows=rows.filter(d=>d.k.toLowerCase().includes(q));
-    if(document.getElementById('hideWalkin').checked) rows=rows.filter(d=>d.med>1);
-    const mLabel=metric==='med'?'Median':metric==='impact'?'Liegetage gesamt':'Ø Tage';
-    let html='<div class="row head"><div>Rang</div><div>Kunde</div><div class="hd-bar">'+mLabel+' · Phasen-Split</div><div style="text-align:right">Tempo</div></div>';
+    if(document.getElementById('hideWalkin').checked) rows=rows.filter(d=>d.medg>1);
+    const mLabel=metric==='kun'?'Kunden-Phase Ø':metric==='elv'?'elvinci-Phase Ø':metric==='impact'?'Liegetage gesamt':'Gesamt Ø';
+    let html='<div class="row head"><div>Rang</div><div>Kunde</div><div class="hd-bar">🏭 elvinci ＋ 👤 Kunde = Gesamt</div><div style="text-align:right">'+mLabel+'</div></div>';
     html+=rows.map(d=>{
-        const outlier=d.avg>2*d.med&&d.med>0;
         const mv=metricVal(d);
-        const wTotal=Math.max(5,Math.round(mv/MAXV*100));
-        const vor=d.vor||0, lag=d.lag||0, sum=(vor+lag)||1;
-        const wVor=Math.round(wTotal*vor/sum), wLag=wTotal-wVor;
+        const wTotal=Math.max(6,Math.round(d.ges/MAXBAR*100));
+        const sum=(d.elv+d.kun)||1;
+        const wElv=Math.round(wTotal*d.elv/sum), wKun=wTotal-wElv;
         return `<div class="row">
             <div class="rank">${d.rank}</div>
             <div class="kname">
-                <div class="n1">${esc(d.k)}${d.med<=1?' <span style="font-size:10px;font-weight:600;color:var(--warning)" title="Median ≤1 Tag — Kunde holt typischerweise sofort ab (AU wird erst bei Abholung erstellt)">⚡ Sofort-Abholer</span>':''}</div>
-                <div class="n2">${d.n} Aufträge · ${d.va||''} · Ø ${d.avg} T · Median ${d.med} T · Max ${d.max} T ${d.vor!==null&&d.lag!==null?`· Vorlauf Ø ${d.vor} T + Lager Ø ${d.lag} T `:''}${outlier?'<span class="flag">· ⚠ Ø durch Ausreißer verzerrt</span>':''}</div>
+                <div class="n1">${esc(d.k)}${d.medg<=1?' <span style="font-size:10px;font-weight:600;color:var(--warning)" title="Median ≤1 Tag — AU wird oft erst bei Abholung erstellt">⚡ Sofort-Abholer</span>':''}</div>
+                <div class="n2">${d.n} Aufträge · ${d.va||''} · 🏭 elvinci Ø ${d.elv} T ＋ 👤 Kunde Ø ${d.kun} T = Ø ${d.ges} T · Median gesamt ${d.medg} T · Max ${d.max} T</div>
             </div>
             <div class="barwrap">
-                <div class="bar"><i style="width:${wVor}%;background:var(--info)"></i><i style="width:${wLag}%;background:var(--accent)"></i></div>
-                <div class="bar-v">${mv.toLocaleString('de-DE')}${metricUnit()}</div>
+                <div class="bar"><i style="width:${wElv}%;background:var(--accent)"></i><i style="width:${wKun}%;background:var(--warning)"></i></div>
+                <div class="bar-v" style="${metric==='kun'?'color:var(--warning)':''}">${mv.toLocaleString('de-DE')}${metricUnit()}</div>
             </div>
             <div class="tempo t-${d.tempo}">${d.tempo}</div>
         </div>`;
