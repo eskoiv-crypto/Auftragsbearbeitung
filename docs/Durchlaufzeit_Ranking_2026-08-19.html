@@ -135,9 +135,9 @@ footer{text-align:center;font-size:11px;color:var(--label-3);margin-top:28px}
 
     <div class="kpis">
         <div class="kpi hero"><div class="l">Median gesamt</div><div class="v">5 <span class="unit">Tage</span></div><div class="h">1.122 Aufträge · Jun 25 – Aug 26</div></div>
-        <div class="kpi"><div class="l">Ø gesamt</div><div class="v">7,6 <span class="unit">Tage</span></div><div class="h">Auftrag → Ware verlässt Lager</div></div>
-        <div class="kpi"><div class="l">2025 (Jun–Dez)</div><div class="v">4 <span class="unit">Med</span></div><div class="h">N=875 · AMM-WA-Buchungen</div></div>
-        <div class="kpi"><div class="l">2026 (Jan–Aug)</div><div class="v">11 <span class="unit">Med</span></div><div class="h">N=247 · deutlich langsamer geworden!</div></div>
+        <div class="kpi"><div class="l">Sofort-Abholer</div><div class="v">24 <span class="unit">%</span></div><div class="h">2025er-Aufträge ≤1 Tag (Walk-in/Barzahler)</div></div>
+        <div class="kpi"><div class="l">2025 vergleichbar*</div><div class="v">7 <span class="unit">Med</span></div><div class="h">*ohne Sofort-Abholer (≤3 T)</div></div>
+        <div class="kpi"><div class="l">2026 (Pipeline)</div><div class="v">12 <span class="unit">Med</span></div><div class="h">planbare Aufträge · +5 T vs. 2025</div></div>
     </div>
 
     <div class="section-head">
@@ -165,7 +165,7 @@ footer{text-align:center;font-size:11px;color:var(--label-3);margin-top:28px}
             <li><strong>Quelle B — NH5-Pipeline (Jan–Aug 2026, N=247):</strong> Spalte „Auftrag abgeschlossen (Ware hat das Lager verlassen)" — deckt sich im Archiv exakt mit dem Versand-/Abholdatum.</li>
             <li><strong>Startpunkt immer = Auftragsdatum aus der AU-Nummer</strong> (AU2026<em>0622</em>… = 22.06.2026).</li>
             <li><strong>Kunden-Schreibweisen zusammengeführt:</strong> 21 Dubletten-Gruppen (z. B. Hermans Trading/BV, Hanseatic georgia/Georgia, IG International-Varianten, Ovitshop/OVIT Shop, Sinzig-Typo) — Legal-Suffixe (GmbH, BV, Ltd, Kft, D.O.O., UAB, …) normalisiert.</li>
-            <li><strong>⚠ Ära-Befund:</strong> 2025 Median 4 Tage → 2026 Median 11 Tage. Die Durchlaufzeit hat sich fast verdreifacht — Systemumstellung (JTL→Odoo), mehr Vorkasse-Wartezeiten und Abhol-Verzug als mögliche Treiber. Kunden mit Schwerpunkt 2026 wirken dadurch langsamer.</li>
+            <li><strong>⚠ Ära-Vergleich nur segmentbereinigt zulässig:</strong> Die 2025-WA-Quelle erfasst JEDEN Auftrag inkl. 24 % Sofort-Abholungen (≤1 Tag, Walk-in/Barzahler) — die 2026-Pipeline trackt nur planbare Aufträge (3 % ≤1 Tag) und nur ~40 statt ~125 Aufträge/Monat. Roh-Mediane (4 vs. 11) sind daher NICHT vergleichbar. Im vergleichbaren Segment (Aufträge &gt;3 Tage): 2025 Median 7 vs. 2026 Median 12 — realer Anstieg +5 Tage (Kandidaten: Odoo-Umstellung, Vorkasse-Wartezeiten). Kunden mit Schwerpunkt Sofortabholung wirken im Ranking schneller.</li>
             <li><strong>Ranking nach Median, N ≥ 3</strong> — robust gegen Ausreißer. ⚠-Flag = Ø mehr als doppelt so hoch wie Median. Phasen-Split (Vorlauf/Lager) nur für 2026-Aufträge verfügbar.</li>
             <li>Interne Aufträge (Elvinci.de GmbH) ausgeschlossen. Storno nicht immer unterscheidbar — Langläufer einzeln prüfen.</li>
         </ul>
